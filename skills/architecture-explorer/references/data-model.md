@@ -240,7 +240,7 @@ Within one group of siblings, either give `at` to every node or to none. A group
 - Top level: three bands, people on top, systems and siblings in the middle, externals at the bottom. The system row is centred; people and externals are then slid sideways to sit above or below the boxes they talk to (including boxes inside an open system), so their arrows run close to vertical. This is recomputed whenever a box opens or closes.
 - Inside a box: boxes are ranked by who uses whom, then several grids are tried and the one with the fewest arrows behind boxes and the fewest crossings wins. Boxes reached from outside the group are pulled to the top row, boxes that only reach out to the bottom.
 
-Start without `at`, then read the LAYOUT section printed by `check-model.mjs`: it lists, per group, arrows that bend around a box and arrows that cross. Add `at` to a group only when that list shows something a different grid would fix.
+Start without `at`, then read the LAYOUT section printed by `check-model.mjs`: it lists, per group, arrows that bend around a box and arrows that cross. Add `at` to a group only when that list shows something a different grid would fix. Moving a box in the page's edit mode writes `at` for its whole group, renumbered from 0.
 
 With explicit `at` at the top level, each row is centred on its own and columns only give the left-to-right order within a row. The automatic alignment applies only when no top-level node has `at`.
 

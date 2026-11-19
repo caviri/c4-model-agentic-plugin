@@ -78,6 +78,7 @@ Present only when `MODEL.scenarios` is non-empty; no model fields are needed. An
 | Ctrl / ⌘ / Shift + click, or + `Enter` on a focused box | Add the box to the selection, or take it out |
 | `S` | Sequence inside the selected box, or its boxes again (Map) · all scenarios (Dynamic) |
 | `L`, `E`, `T` | Arrow labels, arrow style (right-angled / straight), next colour theme (the `theme ▾` menu lists them all) |
+| Delete, Ctrl+Z, Ctrl+Y | In edit mode: delete the selected box, undo, redo. Alt+drag connects two boxes |
 | `Esc` | Clear the selection |
 | `←` `→` `space` | Previous step, next step, play (Dynamic) |
 | `Tab`, `Enter`, `Space` on a box | Focus, select, open or close |
@@ -154,15 +155,44 @@ The URL hash mirrors what is on screen and is read at load, so any state can be 
 
 Example: `index.html#open=api&zoom=api&theme=dark`.
 
+### Sizes
+
+`size ▾` in the toolbar has three rows of − / +, remembered per browser:
+
+- **Interface** (80–120 %) scales the toolbars, the details panel and the map's text overlays, so more of the screen goes to the map.
+- **Spacing between boxes** (70–200 %) widens or narrows every gap; boxes keep their size, and the map is laid out again.
+- **Labels and arrows** (70–140 %) scales the arrow label font and the arrow widths; labels are placed again for the new size.
+
+At 100 % the gaps are a little wider than box size would suggest, the arrow labels are 0.9 × 11 px and the arrows 0.85 × the theme's `--arrow-w`. The Pinned board and the Dynamic diagrams follow the interface and arrow sizes, not the label size.
+
+### Export the diagram on screen
+
+`export ▾` → **This view** saves what is on screen as an **SVG** image, a **PNG** picture (twice the screen resolution, smaller for very large maps) or an **HTML** page with the diagram on its own. The map goes out whole, every box that is drawn and not only the part in the window; the Pinned board and the Dynamic diagrams (collaboration or sequence) as drawn. The step table goes out as HTML only. The file carries the page's CSS with the current colour theme fixed and the reader sizes, so it looks like the screen. SVG and HTML load the web font when opened online; PNG uses the system font.
+
+### Edit mode
+
+`✎ edit` in the toolbar turns the page into an editor of its own model. An edit bar appears under the toolbar and the details panel becomes a form.
+
+- **Add a box**: drag a type from the edit bar onto the map (into an open box, or at the top level), or click it to add one inside the selected box (people, systems, externals and separate systems always go to the top level). The new box is selected with its name ready to type.
+- **Move a box**: drag it. Dropped on a sibling it swaps places with it; dropped in a gap it takes a new row or column; dropped inside another open box it moves into that box. The whole group then keeps hand-set `at` positions.
+- **Connect two boxes**: Alt+drag from one box to the other, or `→ connect to…` in the panel and then click the other box. The new connection's label field gets the focus.
+- **Edit anything in the panel**: name, id (renaming updates every reference: parent, connections, scenario steps, pins), type, tag, second line, description, notes, technology, source path and line, link, colour, dashed border, the box it is inside, its variants, initial / final for states; each connection's label, colour and dashed style, its direction, or delete it. With nothing selected the panel edits the project (name, subtitle, title, introduction, id), the source links, the RDF base and vocabulary IRIs, the opening view (start level, theme, arrow style), and the scenarios: name, id, description and every step (from, to, label, reply), with steps added, moved up or down and deleted. An **RDF** section on each box shows its IRI and its triples.
+- **Delete**: the `delete` button, or Delete / Backspace on the map. What is inside goes too, with its connections and the scenario steps through it (a scenario left without steps goes as well).
+- **Undo and redo**: the edit bar, Ctrl+Z, Ctrl+Y (or Ctrl+Shift+Z), 200 steps.
+- Every change is checked with the page's own validator first; a change it rejects is not made, and the message says why.
+- **Keep the result**: `download` → `model.js` (the source to rebuild from with `build-explorer.mjs`), `page` (this page as `index.html` with the edited MODEL block, ready to use as is), `JSON-LD` or `.rete` (the edited graph). Until then the edits are kept in this browser: reopening the page offers to restore them. `discard edits` goes back to the model the page was built with, and can itself be undone. `✓ done` leaves edit mode and keeps the edits on the page.
+
+Things edit mode leaves to `model.js`: variants, level names and the legend.
+
 ### Export as an RDF graph
 
-`export ▾` in the toolbar downloads the model as JSON-LD (generated locally) or as a `.rete` file (built in the browser; the builder is fetched from a CDN only when that entry is clicked, and a message explains what to do if it cannot be loaded). Vocabulary, mapping and example SPARQL queries: `rdf-graph.md`.
+`export ▾` → **The model** downloads the model as JSON-LD (generated locally) or as a `.rete` file (built in the browser; the builder is fetched from a CDN only when that entry is clicked, and a message explains what to do if it cannot be loaded). Vocabulary, mapping and example SPARQL queries: `rdf-graph.md`.
 
 ### Model errors
 
 A broken model never renders half a diagram. Schema errors replace the page with a list (unknown ids, duplicate ids, overlapping `at` cells, missing labels, …). A syntax error in the MODEL block shows "The MODEL block did not load". Warnings (truncated names, missing descriptions, crowded groups, undocumented colours) go to the console and to `check-model.mjs`.
 
-For automated checks the page sets `data-explorer="ready"` or `"error"` on `<html>` and exposes `window.ARCH_EXPLORER` (`ready`, `errors`, `warnings`, `counts`, `layout()`, `rdf`, and an `api` with `setView`, `setLevel`, `setMode`, `reveal`, `toggle`, `setScenario`, `setDynStyle`, `setDynLevel`, `sourceUrl`).
+For automated checks the page sets `data-explorer="ready"` or `"error"` on `<html>` and exposes `window.ARCH_EXPLORER` (`ready`, `errors`, `warnings`, `counts`, `layout()`, `rdf`, `viewSvg()` (the SVG that export saves), `teardown()`, and an `api` with `setView`, `setLevel`, `setMode`, `reveal`, `toggle`, `setScenario`, `setDynStyle`, `setDynLevel`, `sourceUrl`, `showSeq`, `showBoxes`, `pickSeqStep`, `select`, `selectedId`, `selectedIds`, `cam`, `geo`, `core`, `toWorld`). The engine is `window.archEngine(prev)`: `teardown()` releases everything one run attached, and running it again on a changed `window.MODEL` redraws the page in place (`prev` may carry `cam`, `open` and `select`); edit mode works this way. `window.ARCH_EDIT` is the editor (`active`, `model()`, `modelJs()`, `pageHtml()`).
 
 ### Command-line checks
 
@@ -260,7 +290,10 @@ Small edits outside the MODEL block (keep them minimal and say so in your report
 | Force a theme | Set `view.theme` in the model and delete the `<div class="themes">` element (button and menu). The page then ignores `#theme=`, stored picks and `T`. |
 | Hide the minimap or hint | Delete `#minimap` / `.hint` in the markup, or add `display: none` |
 | Start with labels off | Remove `class="labels"` from `#map` and set `aria-pressed="false"` on `#btn-labels`, and `showLabels = false` in the engine |
-| Change box sizes or spacing | `SIZE`, `HEAD`, `PAD`, `GX`, `GY`, `RGX`, `RGY` in the `core` script; keep `BOXW` in the validator in step. How far busy gutters grow: `GROW`, `GMAX`, `GROUNDS` (set `GROUNDS = 0` for fixed gaps) |
+| Change box sizes or spacing | `SIZE`, `HEAD`, `PAD` and the gaps at 100 % spacing, `GAP0` (`GX`, `GY`, `RGX`, `RGY`), in the `core` script; keep `BOXW` in the validator in step. How far busy gutters grow: `GROW`, `GMAX`, `GROUNDS` (set `GROUNDS = 0` for fixed gaps) |
+| Change the default label or arrow size | Labels: `LABEL_SCALE` in the core (× the 11 px font and `LBL0`); arrows: the `.85` fallback of `--ink-scale` in the `.e` rules and in `applySizes()`. The steps of the size menu: `SIZE_STEPS` in the engine |
+| Remove the size menu | Delete the `<div class="sizes">` element; the defaults apply |
+| Remove edit mode | Delete the `#btn-edit` button (the edit bar never opens); to drop the code too, also delete `<script id="editor">`, `#editbar` and `#ed-restore` |
 | Add a colour tone | Add `--name` / `--name-soft` to every theme block (light, both dark blocks, and each `[data-theme]` block), a `.tone-name` rule, and the name to both `TONES` arrays (validator and core) |
 | Add a node type | Add it to `LEVEL` and `BOXW` in the validator, to `BASE_LEVEL`, `DEFAULT_KIND`, `DEFAULT_TAG`, `SIZE` in the core, and to `CLASS` and `BASE_LEVEL` in the `rdf` script |
 | Add a field to the details panel | Carry it through the `NODES = MODEL.nodes.map(...)` normaliser in the core and print it in `renderPanel()`; escape with `esc()`. Add it to the `rdf` script if it should be exported. |

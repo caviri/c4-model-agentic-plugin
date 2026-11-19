@@ -264,7 +264,10 @@ window.MODEL = {
 .tone-rose { --tone: var(--rose); --tone-soft: var(--rose-soft); }
 html, body { height: 100%; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); overflow: hidden; }
-.app { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-columns: minmax(0, 1fr) 380px; }
+.app { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-columns: minmax(0, 1fr) calc(380px * var(--ui, 1)); }
+/* reader sizes (the "size" menu): --ui scales the toolbars, the panel and the map's text overlays; --ink-scale the arrow widths;
+   --lbl-scale the arrow label font (the core sizes labels with the same number). The page sets all three on <html>. */
+.bar, .panel, .vbar, .hud.crumb, .hint { zoom: var(--ui, 1); }
 [hidden] { display: none !important; }
 
 /* ---------- toolbar ---------- */
@@ -353,15 +356,15 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .modes .off { fill: none; opacity: .5; }
 .lowzoom .t-sub, .lowzoom .elab, .lowzoom .modes { display: none; }
 /* arrow widths: --arrow-w normal, --arrow-w-hot selected or hovered, --arrow-hit hover / click target (unset: the fallbacks) */
-.e { fill: none; stroke: var(--muted); stroke-width: var(--arrow-w, 1.6px); transition: opacity .25s; }
+.e { fill: none; stroke: var(--muted); stroke-width: calc(var(--arrow-w, 1.6px) * var(--ink-scale, .85)); transition: opacity .25s; }
 .e.k-tone { stroke: var(--tone); } .e.k-accent { stroke: var(--accent); }
 .e.dash { stroke-dasharray: 6 5; }
 .mk { fill: var(--muted); } .mk.k-tone { fill: var(--tone); } .mk.k-accent { fill: var(--accent); }
 .elab rect { fill: var(--bg); stroke: var(--line); }
-.elab text { font-family: var(--f-mono); font-size: 11px; fill: var(--muted); }   /* the core sizes labels for this font: LBL in the core script */
+.elab text { font-family: var(--f-mono); font-size: calc(11px * var(--lbl-scale, .9)); fill: var(--muted); }   /* the core sizes labels for this font: LBL0 × LABEL_SCALE in the core script */
 .elab.k-tone text { fill: var(--tone); } .elab.k-accent text { fill: var(--accent); }
 .has-sel .e:not(.hot), .has-sel .elab:not(.hot) { opacity: var(--dim-edge, .16); }
-.e.hot { stroke-width: var(--arrow-w-hot, 2.4px); }
+.e.hot { stroke-width: calc(var(--arrow-w-hot, 2.4px) * var(--ink-scale, .85)); }
 .elab.hot rect { stroke: var(--muted); }
 #map:not(.labels) .elab { display: none; }
 /* folded labels: a marker on the arrow; the full label shows on hover or click of the arrow or marker, or when an end box is selected */
@@ -375,7 +378,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .elab.k-tone .emark rect { stroke: var(--tone); } .elab.k-tone .emark circle { fill: var(--tone); }
 .elab.k-accent .emark rect { stroke: var(--accent); } .elab.k-accent .emark circle { fill: var(--accent); }
 .elab.reveal > rect { stroke: var(--ink); stroke-width: 1.2; }
-.e.hover { stroke-width: var(--arrow-w-hot, 2.4px); }
+.e.hover { stroke-width: calc(var(--arrow-w-hot, 2.4px) * var(--ink-scale, .85)); }
 .has-sel .e.hover, .has-sel .elab.reveal { opacity: 1; }
 /* sequence inside a box (map): lifelines for its parts, dashed cards for what is outside it */
 .seq-rule { stroke: var(--line); stroke-width: 1; }
@@ -391,7 +394,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .seqin .hitbox { fill: transparent; }
 .seqin .seq-msg { cursor: pointer; transition: opacity .25s; }
 .seqin .seq-msg:hover .hitbox { fill: var(--accent-soft); opacity: .7; }
-.seqin .e.hot { stroke-width: 1.8; } .seqin .e.cur { stroke-width: 2.6; }
+.seqin .e.hot { stroke-width: calc(1.8px * var(--ink-scale, .85)); } .seqin .e.cur { stroke-width: calc(2.6px * var(--ink-scale, .85)); }
 .has-sel .seqin .seq-msg:not(.hot):not(.cur) { opacity: .3; }
 .lowzoom .seqin .lbl, .lowzoom .seq-bar text, .lowzoom .sp-tag { display: none; }
 .seq-play.on rect { fill: var(--accent); stroke: var(--accent); } .seq-play.on text { fill: var(--bg); }
@@ -442,15 +445,24 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .stats small { font-family: var(--f-mono); font-size: 10px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
 .sheet-toggle { display: none; }
 .export, .themes { position: relative; }
-#export-menu, #theme-menu { position: absolute; top: calc(100% + 4px); right: 0; width: 290px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 30px var(--shadow); padding: 4px; z-index: 20; }
+#export-menu, #theme-menu, #size-menu { position: absolute; top: calc(100% + 4px); right: 0; width: 290px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 30px var(--shadow); padding: 4px; z-index: 20; }
 #export-menu button, #theme-menu button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 7px 8px; border-radius: 7px; cursor: pointer; color: var(--ink); font: 500 13px var(--f-body); }
 #export-menu button:hover, #export-menu button:focus-visible, #theme-menu button:hover, #theme-menu button:focus-visible { background: var(--accent-soft); outline: none; }
 #export-menu small, #theme-menu small { display: block; color: var(--muted); font: 11px var(--f-mono); margin-top: 2px; }
+.menu-h { margin: 6px 8px 2px; font: 500 10.5px var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 #export-msg { margin: 0; padding: 0 8px; font: 11.5px/1.45 var(--f-mono); color: var(--muted); overflow-wrap: anywhere; }
 #export-msg:not(:empty) { padding: 6px 8px 8px; border-top: 1px solid var(--line); margin-top: 4px; }
 #export-msg.bad { color: var(--orange); }
 /* theme menu: one row per theme with a swatch drawn in that theme's own tokens (the swatch carries data-theme) */
 #theme-menu { width: 264px; max-width: calc(100vw - 32px); }
+.sizes { position: relative; }
+#size-menu { width: 300px; max-width: calc(100vw - 32px); padding: 8px 10px 10px; }
+.size-row { display: grid; grid-template-columns: 1fr 30px 52px 30px; align-items: center; gap: 4px; padding: 5px 0; font-size: 13px; color: var(--ink); }
+.size-row b { text-align: center; font: 500 12px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.size-row button, .size-reset { font: 600 14px var(--f-mono); height: 28px; border: 1px solid var(--line); border-radius: 7px; background: var(--bg); color: var(--ink); cursor: pointer; }
+.size-row button:hover, .size-reset:hover { border-color: var(--accent); }
+.size-row button:disabled { opacity: .35; cursor: default; }
+.size-reset { width: 100%; margin-top: 6px; font: 500 12px var(--f-mono); color: var(--muted); }
 #theme-menu button { display: grid; grid-template-columns: 40px minmax(0, 1fr) 14px; gap: 0 10px; align-items: center; }
 #theme-menu button[aria-checked="true"]::after { content: "✓"; color: var(--accent); font: 600 13px var(--f-mono); }
 #theme-menu button:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
@@ -501,7 +513,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .dlab text { font-family: var(--f-mono); font-size: 11.5px; fill: var(--ink); cursor: pointer; }
 .dlab text.k-tone { fill: var(--tone); }
 .dlab text.cur { fill: var(--accent); font-weight: 600; }
-.e.cur { stroke: var(--accent); stroke-width: 3; }
+.e.cur { stroke: var(--accent); stroke-width: calc(3px * var(--ink-scale, .85)); }
 .life { stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 2 5; }
 .num { fill: var(--accent); }
 .num-t { font-family: var(--f-mono); font-size: 10px; font-weight: 500; fill: var(--bg); }
@@ -563,6 +575,67 @@ table.steps tr.cur td { background: var(--accent-soft); }
   #minimap, .hint { display: none; }
   .brand b { font-size: 16px; }
 }
+/* ---------- edit mode (editor script) ---------- */
+#btn-edit[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.editbar, .ed-restore { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 10px; border-radius: 10px; background: var(--accent-soft); }
+.editbar { border: 1px dashed var(--accent); }
+.ed-restore { font-size: 13px; color: var(--ink); }
+.ed-title { font-family: var(--f-display); font-size: 15px; color: var(--accent); }
+.ed-count { font: 11.5px var(--f-mono); color: var(--muted); }
+.ed-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.ed-k { font: 500 10.5px var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.editbar button, .ed-chip { font: 500 12px var(--f-mono); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 5px 9px; cursor: pointer; }
+.editbar button:hover { border-color: var(--accent); }
+.editbar button:disabled { opacity: .4; cursor: default; }
+.ed-chip { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.editbar .ed-done { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.ed-hint { flex-basis: 100%; margin: 0; font: 11.5px var(--f-mono); color: var(--muted); }
+.ed-msg { flex-basis: 100%; margin: 0; font: 12px var(--f-mono); color: var(--ink); }
+.ed-msg:empty { display: none; }
+.ed-msg.bad { color: var(--orange); }
+.ed-ghost { position: fixed; z-index: 50; transform: translate(-50%, -130%); pointer-events: none; font: 600 12px var(--f-mono); padding: 6px 10px; border-radius: 8px;
+  background: var(--surface); border: 1.5px dashed var(--muted); color: var(--muted); box-shadow: 0 8px 20px var(--shadow); }
+.ed-ghost.ok { border-color: var(--accent); color: var(--accent); }
+html.editing #map .nd { cursor: grab; }
+#map .nd.dragging { pointer-events: none; opacity: .85; }
+#map .nd.drop-target > .box { stroke: var(--accent); stroke-width: 3; stroke-dasharray: 9 6; }
+.ed-link { fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-dasharray: 6 5; pointer-events: none; }
+/* the panel's forms while editing */
+.ed-form { display: grid; gap: 8px; margin: 10px 0; }
+.ed-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.ed-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ed-f { display: grid; gap: 3px; min-width: 0; }
+.ed-f > span { font: 500 10.5px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ed-form input:not([type="checkbox"]), .ed-form select, .ed-form textarea, .ed-edge input:not([type="checkbox"]), .ed-edge select, .ed-step input:not([type="checkbox"]), .ed-step select {
+  font: 13px var(--f-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; min-width: 0; width: 100%; box-sizing: border-box; }
+.ed-form textarea { resize: vertical; line-height: 1.45; }
+.panel input:focus-visible, .panel select:focus-visible, .panel textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
+.ed-checks { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.ed-c { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--ink); cursor: pointer; }
+.ed-edge { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) 76px auto auto auto; gap: 4px; align-items: center; margin: 4px 0; }
+.ed-edge .ed-c span { font-size: 11px; }
+.ed-link-btn { background: none; border: 0; padding: 0; text-align: left; color: var(--accent); font: 13px var(--f-body); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ed-link-btn:hover { text-decoration: underline; }
+.ed-mini { font: 12px var(--f-mono); width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); cursor: pointer; }
+.ed-mini:hover { border-color: var(--accent); }
+.ed-mini:disabled { opacity: .35; cursor: default; }
+.ed-danger { color: var(--rose) !important; }
+.ed-help { color: var(--muted) !important; font-size: 12.5px !important; }
+.ed-rdf { margin-top: 18px; }
+.ed-rdf summary { cursor: pointer; font: 500 11px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.ed-rdf pre { font: 11px/1.5 var(--f-mono); background: var(--code-bg); border-radius: 7px; padding: 8px 10px; max-height: 220px; overflow: auto; white-space: pre; color: var(--ink); }
+.ed-sc { border: 1px solid var(--line); border-radius: 9px; padding: 6px 10px; margin: 6px 0; background: var(--bg); }
+.ed-sc summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.ed-sc summary small { font: 11px var(--f-mono); color: var(--muted); margin-left: 6px; }
+.ed-steps { display: grid; }
+.ed-step { display: grid; grid-template-columns: 18px minmax(0, 1fr) 14px minmax(0, 1fr); grid-template-areas: "n a s b" ". l l l" ". r o o"; gap: 4px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+.ed-step > b { grid-area: n; font: 500 11px var(--f-mono); color: var(--muted); }
+.ed-step > select:first-of-type { grid-area: a; }
+.ed-step > span:not(.ed-ops) { grid-area: s; text-align: center; color: var(--muted); }
+.ed-step > select:last-of-type { grid-area: b; }
+.ed-step > input { grid-area: l; }
+.ed-step > .ed-c { grid-area: r; }
+.ed-step > .ed-ops { grid-area: o; justify-self: end; display: inline-flex; gap: 4px; }
 @media (prefers-reduced-motion: reduce) { .box, .e { transition: none; } }
 </style>
 </head>
@@ -589,13 +662,32 @@ table.steps tr.cur td { background: var(--accent-soft); }
       <button type="button" class="btn" id="btn-edges" title="Arrow style: right-angled or straight (E)">edges</button>
       <div class="themes"><button type="button" class="btn" id="btn-theme" aria-haspopup="menu" aria-expanded="false" aria-controls="theme-menu" title="Colour theme (T cycles through them)">theme: auto ▾</button>
         <div id="theme-menu" role="menu" aria-label="Colour theme" hidden></div></div>
-      <div class="export"><button type="button" class="btn" id="btn-export" aria-haspopup="true" aria-expanded="false" title="Download the model as an RDF graph">export ▾</button>
+      <div class="sizes"><button type="button" class="btn" id="btn-size" aria-haspopup="true" aria-expanded="false" aria-controls="size-menu" title="Interface size, spacing between boxes, label and arrow size">size ▾</button>
+        <div id="size-menu" role="group" aria-label="Sizes" hidden></div></div>
+      <button type="button" class="btn" id="btn-edit" aria-pressed="false" title="Edit the model in the browser: boxes, names, properties, connections, scenarios, RDF">✎ edit</button>
+      <div class="export"><button type="button" class="btn" id="btn-export" aria-haspopup="true" aria-expanded="false" title="Download the diagram on screen, or the model as an RDF graph">export ▾</button>
         <div id="export-menu" hidden>
+          <p class="menu-h">This view</p>
+          <button type="button" data-export="svg">SVG image<small>the diagram on screen, whole, as a vector image (.svg)</small></button>
+          <button type="button" data-export="png">PNG image<small>the same diagram as a picture, twice the screen resolution (.png)</small></button>
+          <button type="button" data-export="html">HTML page<small>the diagram on a page of its own, with its colours (.html)</small></button>
+          <p class="menu-h">The model</p>
           <button type="button" data-export="jsonld">JSON-LD<small>the architecture as an RDF graph (.jsonld)</small></button>
           <button type="button" data-export="rete">rete graph<small>one queryable file (.rete); fetches the builder from a CDN</small></button>
           <p id="export-msg" role="status"></p>
         </div></div>
     </div>
+    <div class="editbar" id="editbar" role="toolbar" aria-label="Editing the model" hidden>
+      <b class="ed-title">✎ Editing</b><span class="ed-count" id="ed-count"></span>
+      <span class="ed-group" id="ed-palette" title="Drag a type onto the map, or click it to add one inside the selected box"></span>
+      <span class="ed-group"><button type="button" data-ed="undo" title="Undo (Ctrl+Z)">↶ undo</button><button type="button" data-ed="redo" title="Redo (Ctrl+Y)">↷ redo</button></span>
+      <span class="ed-group"><span class="ed-k">download</span><button type="button" data-ed="dl-model" title="The edited model, to rebuild the page from">model.js</button><button type="button" data-ed="dl-page" title="This page with the edited model in it">page</button><button type="button" data-ed="dl-jsonld" title="The edited graph as JSON-LD">JSON-LD</button><button type="button" data-ed="dl-rete" title="The edited graph as a .rete file (fetches the builder from a CDN)">.rete</button></span>
+      <span class="spacer"></span>
+      <button type="button" data-ed="discard" title="Go back to the model this page was built with (undoable)">discard edits</button><button type="button" class="ed-done" data-ed="done">✓ done</button>
+      <p class="ed-hint">Drag a box to move it, or into an open box to put it inside · Alt+drag from one box to another to connect them · Delete removes the selected box · edits stay in this browser until you download them</p>
+      <p class="ed-msg" id="ed-msg" role="status"></p>
+    </div>
+    <div class="ed-restore" id="ed-restore" role="status" hidden></div>
   </header>
 
   <main class="stage" id="stage">
@@ -926,7 +1018,16 @@ window.archCore = function (MODEL) {
   // closed box size per type [width, height]; an open box is as large as the grid of its children plus a header
   var SIZE = { person: [250, 104], system: [300, 124], container: [260, 108], store: [240, 108], component: [264, 96], code: [272, 84], ext: [224, 96], sibling: [250, 104], state: [200, 68] };
   // HEAD header of an open box · PAD inner padding · GX/GY gaps between cells · RGX/RGY gaps at the top level
-  var HEAD = 84, PAD = 30, GX = 112, GY = 76, RGX = 90, RGY = 110;   // HEAD leaves an arrow lane (18px above the first row) below the 60px title strip
+  var HEAD = 84, PAD = 30;   // HEAD leaves an arrow lane (18px above the first row) below the 60px title strip
+  // the gaps at spacing 1 (the default); setSpacing(f) scales them for the reader's "size" menu. Boxes keep their size.
+  var GAP0 = { GX: 134, GY: 92, RGX: 108, RGY: 132 }, SPACING = 1, GX, GY, RGX, RGY;
+  var GAPS = { HEAD: HEAD, PAD: PAD };
+  function setSpacing(f) {
+    SPACING = Math.max(0.5, Math.min(3, +f || 1));
+    GX = Math.round(GAP0.GX * SPACING); GY = Math.round(GAP0.GY * SPACING); RGX = Math.round(GAP0.RGX * SPACING); RGY = Math.round(GAP0.RGY * SPACING);
+    GAPS.GX = GX; GAPS.GY = GY; GAPS.RGX = RGX; GAPS.RGY = RGY;
+  }
+  setSpacing(1);
   // GX/GY/RGX/RGY are the sizes of quiet gutters; a busy gutter gets more (see "gutter sizes" below). Extra room per gutter:
   // group ('' = top level) → { r: {row value: px}, c: {column value: px}, n: {id of the box on its left: px} (top level) }
   var GUT = {};
@@ -1459,10 +1560,16 @@ window.archCore = function (MODEL) {
      and of the labels placed before it. Labels of hot arrows (the selected box's) go first and are always drawn in full;
      the others go most constrained first. A label that still overlaps something is not drawn in full: it becomes a small
      marker on its arrow. layout() uses this placement to size busy gutters; check-model.mjs reports what is left. */
-  // label geometry, in px. CH: width of one character and LH: line height of the 11px label font (keep in step with the
-  // .elab text font-size in the CSS) · BASE: baseline below a line's centre · PADW / PADH: padding added to the text
-  // (both sides together) · GAP: clearance kept around a label · MW × MH: the marker of a folded label
-  var LBL = { CH: 6.7, LH: 13, BASE: 4, PADW: 14, PADH: 7, GAP: 4, MW: 20, MH: 12 };
+  // label geometry, in px. LBL0 is for the 11px label font: CH width of one character, LH line height, BASE baseline below
+  // a line's centre, PADW / PADH padding added to the text (both sides together), GAP clearance kept around a label,
+  // MW × MH the marker of a folded label. The labels are drawn at 11px × LABEL_SCALE (the CSS reads --lbl-scale, which the
+  // page sets from the same value), and LBL holds LBL0 × LABEL_SCALE. Default 0.9; setLabelScale() changes it.
+  var LBL0 = { CH: 6.7, LH: 13, BASE: 4, PADW: 14, PADH: 7, GAP: 4, MW: 20, MH: 12 }, LBL = {}, LABEL_SCALE = 0.9;
+  function setLabelScale(s) {
+    LABEL_SCALE = Math.max(0.5, Math.min(2, +s || 0.9));
+    Object.keys(LBL0).forEach(function (k) { LBL[k] = k === 'GAP' ? LBL0[k] : LBL0[k] * LABEL_SCALE; });
+  }
+  setLabelScale(LABEL_SCALE);
   var TRIES = [0.5, 0.4, 0.6, 0.32, 0.68, 0.24, 0.76, 0.16, 0.84];
   function wrapLabel(s) {
     if (s.length <= 16) return [s];
@@ -1656,7 +1763,8 @@ window.archCore = function (MODEL) {
 
   return { TONES: TONES, NV: NV, VAR_LABEL: VAR_LABEL, VCH: VCH, ALLM: ALLM, VBY: VBY, modeTone: modeTone,
     NODES: NODES, EDGES: EDGES, SCEN: SCEN, byId: byId, ROOTS: ROOTS, MAXL: MAXL, LEVELS: LEVELS, LEVEL_NAME: LEVEL_NAME,
-    SIZE: SIZE, GAPS: { HEAD: HEAD, PAD: PAD, GX: GX, GY: GY, RGX: RGX, RGY: RGY }, rootAuto: ROOT_AUTO,
+    SIZE: SIZE, GAPS: GAPS, rootAuto: ROOT_AUTO,
+    setSpacing: setSpacing, spacing: function () { return SPACING; }, setLabelScale: setLabelScale, labelScale: function () { return LABEL_SCALE; },
     parentOf: parentOf, ancestors: ancestors, depthOf: depthOf, within: within, expanded: expanded, isOpen: isOpen, visible: visible, rep: rep,
     seqView: seqView, isSeq: isSeq, innerSeq: innerSeq, SEQ: SEQ,
     layout: layout, aggregate: aggregate, route: route, pathPoints: pathPoints, analyse: analyse, mergeInto: mergeInto, finishMerged: finishMerged,
@@ -1789,10 +1897,583 @@ window.archRdf = function (MODEL) {
 /* END RDF */
 </script>
 
-<script id="engine">
+<script id="editor">
+/* EDITOR. Edit mode (the ✎ edit button) changes a working copy of the MODEL in the browser and redraws the page from it:
+   add boxes (drag a type from the edit bar onto the map, or click it to add one inside the selected box), drag boxes to
+   move them or to put them inside an open box, Alt+drag from one box to another to connect them, and edit any field,
+   connection, scenario step, project or RDF setting in the panel. Every change is checked with the page's validator,
+   can be undone, and is kept in this browser until it is downloaded: model.js (the source to rebuild from), the whole
+   page with the edited MODEL block, or the graph as JSON-LD / .rete.
+   It drives the engine through window.ARCH_EXPLORER (teardown, api) and window.archEngine (run again on the new model);
+   the engine calls back through window.ARCH_EDIT (panel, onDrop, onConnect, onClick). */
 (function () {
 'use strict';
+var E = window.ARCH_EDIT = { active: false, panel: renderPanel, onDrop: onDrop, onConnect: onConnect, onClick: onClick,
+  // read-only, for scripts and tests: the working copy, and what the two downloads would contain
+  model: function () { return work ? clone(work) : null; }, pageHtml: function () { return pageHtml(work || window.MODEL); }, modelJs: function () { return modelJs(work || window.MODEL); } };
+var work = null, undo = [], redo = [], connectFrom = null, delArm = null, openSc = {}, timer = null, storeKey = null;
+var TYPES = [['person', 'person'], ['system', 'system'], ['ext', 'external'], ['sibling', 'separate system'], ['container', 'container'], ['store', 'store'], ['component', 'component'], ['code', 'code'], ['state', 'state']];
+var TOP_TYPES = ['person', 'system', 'ext', 'sibling'];
+var CHILD_TYPES = { system: ['container', 'store'], sibling: ['container', 'store'], container: ['component'], store: ['component'], component: ['code', 'state'], code: ['state'] };
+var KINDS = ['', 'highlight', 'plain', 'person', 'system', 'container', 'store', 'code', 'ext', 'sibling', 'teal', 'orange', 'green', 'violet', 'rose'];
+var EDGE_KINDS = ['', 'accent', 'teal', 'orange', 'green', 'violet', 'rose'];
+
+function X() { return window.ARCH_EXPLORER || {}; }
+function api() { return X().api || {}; }
+function core() { return api().core ? api().core() : null; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function $(id) { return document.getElementById(id); }
+function label(t) { for (var i = 0; i < TYPES.length; i++) if (TYPES[i][0] === t) return TYPES[i][1]; return t; }
+function node(m, id) { for (var i = 0; i < m.nodes.length; i++) if (m.nodes[i].id === id) return m.nodes[i]; return null; }
+function kidsOf(m, id) { return m.nodes.filter(function (n) { return (n.parent == null ? null : n.parent) === id; }); }
+function inside(m, id, root) { for (var n = node(m, id), hops = 0; n && hops <= m.nodes.length; n = n.parent != null ? node(m, n.parent) : null, hops++) if (n.id === root) return true; return false; }
+function say(text, bad) { var p = $('ed-msg'); if (p) { p.textContent = text || ''; p.classList.toggle('bad', !!bad); } }
+
+/* ---------- keeping the working copy: storage, undo, redraw ---------- */
+function keyFor() {
+  if (!storeKey) { var o = {}; try { o = JSON.parse(window.ARCH_ORIGINAL || '{}').project || {}; } catch (e) {} storeKey = 'architecture-explorer-edit:' + (o.id || o.name || 'model'); }
+  return storeKey;
+}
+function save() { try { localStorage.setItem(keyFor(), JSON.stringify({ at: Date.now(), model: work })); } catch (e) {} }
+function loadSaved() { try { var v = JSON.parse(localStorage.getItem(keyFor()) || 'null'); return v && v.model && Array.isArray(v.model.nodes) ? v : null; } catch (e) { return null; } }
+function dropSaved() { try { localStorage.removeItem(keyFor()); } catch (e) {} }
+function focusKey() { var a = document.activeElement; return a && a.closest && a.closest('#panel') ? a.getAttribute('data-k') : null; }
+// run the engine again on the working copy; keep the camera, the panel's scroll and the field that has focus
+function redrawNow(opts) {
+  opts = opts || {};
+  var fk = opts.focus || focusKey(), pnl = $('panel'), top = pnl ? pnl.scrollTop : 0, cam = api().cam ? api().cam() : null;
+  window.MODEL = work;
+  if (X().teardown) X().teardown();
+  window.archEngine({ cam: cam, open: opts.open || [], select: opts.select });
+  if (pnl && !opts.top) pnl.scrollTop = top;
+  if (fk) { var el = document.querySelector('#panel [data-k="' + fk.replace(/"/g, '\\"') + '"]'); if (el) { el.focus(); if (opts.focus && el.select) el.select(); } }
+  syncBar();
+}
+function later(opts) { clearTimeout(timer); timer = setTimeout(function () { redrawNow(opts); }, 0); }
+// change the working copy with fn(copy); refuse what the validator rejects; then redraw (after the current event)
+function commit(fn, opts) {
+  var before = JSON.stringify(work), next = JSON.parse(before);
+  if (fn(next) === false) { if (api().refreshPanel) setTimeout(api().refreshPanel, 0); syncBar(); return false; }
+  if (JSON.stringify(next) === before) return false;
+  var chk = window.validateArchModel(next);
+  if (chk.errors.length) { say('Not changed: ' + chk.errors[0], true); later({ select: api().selectedId ? api().selectedId() : undefined }); return false; }
+  undo.push(before); if (undo.length > 200) undo.shift(); redo = []; delArm = null;
+  work = next; save();
+  if (!opts || !opts.keepMsg) say('');
+  later(opts || { select: api().selectedId ? api().selectedId() : undefined });
+  return true;
+}
+function undoStep(back) {
+  var from = back ? undo : redo, to = back ? redo : undo;
+  if (!from.length) return;
+  to.push(JSON.stringify(work)); work = JSON.parse(from.pop()); save();
+  say(back ? 'Undone.' : 'Redone.');
+  later({ select: api().selectedId ? api().selectedId() : undefined });
+}
+
+/* ---------- entering and leaving edit mode ---------- */
+function enter() {
+  if (!work) work = clone(window.MODEL);
+  E.active = true;
+  document.documentElement.classList.add('editing');
+  $('editbar').hidden = false; $('ed-restore').hidden = true;
+  $('btn-edit').setAttribute('aria-pressed', 'true');
+  if (api().refreshPanel) api().refreshPanel();
+  syncBar();
+}
+function leave() {
+  E.active = false; connectFrom = null; delArm = null;
+  document.documentElement.classList.remove('editing');
+  $('editbar').hidden = true; $('btn-edit').setAttribute('aria-pressed', 'false');
+  if (api().refreshPanel) api().refreshPanel();
+}
+function syncBar() {
+  if (!work) return;
+  var u = document.querySelector('#editbar [data-ed="undo"]'), r = document.querySelector('#editbar [data-ed="redo"]');
+  if (u) u.disabled = !undo.length; if (r) r.disabled = !redo.length;
+  var t = $('ed-count'); if (t) t.textContent = work.nodes.length + ' boxes · ' + (work.edges || []).length + ' connections · ' + (work.scenarios || []).length + ' scenarios';
+  if (connectFrom) { var n = node(work, connectFrom); say('Connect ' + (n ? n.name : connectFrom) + ' to…: click the box it uses (Esc cancels).'); }
+}
+
+/* ---------- creating, moving, connecting ---------- */
+function newId(m, type) {
+  var base = { ext: 'external', sibling: 'system' }[type] || type, i = 1;
+  while (node(m, base + '-' + i)) i++;
+  return base + '-' + i;
+}
+// grid cell under world point w inside the open box `pid` (or at the top level), for `id` (a box being moved or created)
+function placeAt(m, pid, id, w) {
+  var C = core(), geo = api().geo(), G = C.GAPS, top = !pid;
+  var sibs = (pid ? C.byId[pid].kids : C.ROOTS).filter(function (x) { return x.id !== id && geo.has(x.id) && x.at; });
+  function ranges(list, ax) {
+    var r = new Map();
+    list.forEach(function (x) { var g = geo.get(x.id), lo = ax ? g.y : g.x, hi = ax ? g.y + g.h : g.x + g.w, k = x.at[ax], c = r.get(k); r.set(k, c ? [Math.min(c[0], lo), Math.max(c[1], hi)] : [lo, hi]); });
+    return r;
+  }
+  function pick(r, v, gap) {
+    var ks = Array.from(r.keys()).sort(function (a, b) { return a - b; }), tol = gap * 0.3, i;
+    if (!ks.length) return 0;
+    for (i = 0; i < ks.length; i++) { var g = r.get(ks[i]); if (v >= g[0] - tol && v <= g[1] + tol) return ks[i]; }
+    if (v < r.get(ks[0])[0]) return ks[0] - 1;
+    if (v > r.get(ks[ks.length - 1])[1]) return ks[ks.length - 1] + 1;
+    for (i = 0; i + 1 < ks.length; i++) if (v > r.get(ks[i])[1] && v < r.get(ks[i + 1])[0]) return (ks[i] + ks[i + 1]) / 2;
+    return ks[0];
+  }
+  var row = pick(ranges(sibs, 1), w[1], top ? G.RGY : G.GY);
+  var col = pick(ranges(top ? sibs.filter(function (x) { return x.at[1] === row; }) : sibs, 0), w[0], top ? G.RGX : G.GX);
+  var me = C.byId[id], same = me && (me.p || null) === (pid || null), at = {};
+  sibs.forEach(function (x) { at[x.id] = x.at.slice(); });
+  var occ = sibs.filter(function (x) { return x.at[0] === col && x.at[1] === row; })[0];
+  if (occ) {
+    if (same) at[occ.id] = me.at.slice();   // swap with the box that was there
+    else { var g = geo.get(occ.id); col += w[0] < g.x + g.w / 2 ? -0.5 : 0.5; }   // squeeze in beside it
+  }
+  if (same && me.at && me.at[0] === col && me.at[1] === row) return false;
+  at[id] = [col, row];
+  // whole numbers again, in the same order
+  var cs = [], rs = [];
+  Object.keys(at).forEach(function (k) { if (cs.indexOf(at[k][0]) < 0) cs.push(at[k][0]); if (rs.indexOf(at[k][1]) < 0) rs.push(at[k][1]); });
+  cs.sort(function (a, b) { return a - b; }); rs.sort(function (a, b) { return a - b; });
+  Object.keys(at).forEach(function (k) { var n = node(m, k); if (n) n.at = [cs.indexOf(at[k][0]), rs.indexOf(at[k][1])]; });
+  return true;
+}
+function onDrop(id, w) {
+  var C = core(), pid = null, best = null;
+  api().geo().forEach(function (r, bid) {
+    var b = C.byId[bid];
+    if (!api().isOpen(bid) || C.within(b, C.byId[id])) return;
+    if (w[0] >= r.x && w[0] <= r.x + r.w && w[1] >= r.y && w[1] <= r.y + r.h && (!best || C.depthOf(b) > C.depthOf(best))) best = b;
+  });
+  pid = best ? best.id : null;
+  return commit(function (m) {
+    var n = node(m, id), was = n.parent == null ? null : n.parent;
+    if (was !== pid) { if (pid) n.parent = pid; else delete n.parent; delete n.at; }
+    if (placeAt(m, pid, id, w) === false && was === pid) return false;
+  }, { select: id, open: pid ? [pid] : [] });
+}
+function addNode(type, pid, w) {
+  var id;
+  var ok = commit(function (m) {
+    id = newId(m, type);
+    var n = { id: id, type: type, name: 'New ' + label(type) };
+    if (pid) n.parent = pid;
+    m.nodes.push(n);
+    if (w) placeAt(m, pid, id, w);
+    else {
+      // inside a group that is laid out by hand: a new row at the bottom
+      var sibs = m.nodes.filter(function (x) { return x !== n && (x.parent == null ? null : x.parent) === (pid || null); });
+      if (sibs.length && sibs.every(function (x) { return Array.isArray(x.at); })) n.at = [0, Math.max.apply(null, sibs.map(function (x) { return x.at[1]; })) + 1];
+    }
+  }, { select: null, open: pid ? [pid] : [] });
+  if (ok) { clearTimeout(timer); timer = setTimeout(function () { redrawNow({ select: id, open: pid ? [pid] : [], focus: 'f:name' }); say('Added a ' + label(type) + '. Name it in the panel.'); }, 0); }
+  return ok;
+}
+function onConnect(from, to) {
+  var C = core(), a = C.byId[from], b = C.byId[to];
+  if (!a || !b || from === to) return false;
+  if (C.within(a, b) || C.within(b, a)) { say('A box cannot be connected to a box it is inside, or that is inside it.', true); return false; }
+  var idx = (work.edges || []).length;
+  return commit(function (m) { (m.edges = m.edges || []).push({ from: from, to: to, label: 'uses' }); }, { select: from, focus: 'e:' + idx + ':label' });
+}
+function onClick(id) {
+  if (!connectFrom) return false;
+  var from = connectFrom; connectFrom = null; say('');
+  if (id !== from) onConnect(from, id);
+  return true;
+}
+function gone(m, ids) {
+  var out = {};
+  ids.forEach(function (id) { m.nodes.forEach(function (n) { if (inside(m, n.id, id)) out[n.id] = true; }); });
+  return out;
+}
+function deleteIds(ids) {
+  var names = ids.map(function (id) { var n = node(work, id); return n ? n.name : id; }), dropped = [];
+  var ok = commit(function (m) {
+    var g = gone(m, ids);
+    m.nodes = m.nodes.filter(function (n) { return !g[n.id]; });
+    if (!m.nodes.length) return false;
+    m.edges = (m.edges || []).filter(function (e) { return !g[e.from] && !g[e.to]; });
+    if (m.scenarios) {
+      m.scenarios.forEach(function (s) { s.steps = s.steps.filter(function (st) { return !g[st.from] && !g[st.to]; }); });
+      m.scenarios = m.scenarios.filter(function (s) { if (!s.steps.length) dropped.push(s.name); return s.steps.length; });
+    }
+    if (m.defaultPins) m.defaultPins = m.defaultPins.filter(function (id) { return !g[id]; });
+    if (m.view && m.view.open) m.view.open = m.view.open.filter(function (id) { return !g[id]; });
+  }, { select: null, keepMsg: true });
+  if (ok) say('Deleted ' + names.join(', ') + (dropped.length ? '; scenario ' + dropped.join(', ') + ' had no steps left and went too' : '') + '. Ctrl+Z undoes it.');
+  else if (work.nodes.length <= ids.length) say('The model needs at least one box.', true);
+}
+function renameId(m, a, b) {
+  m.nodes.forEach(function (n) { if (n.id === a) n.id = b; if (n.parent === a) n.parent = b; });
+  (m.edges || []).forEach(function (e) { if (e.from === a) e.from = b; if (e.to === a) e.to = b; });
+  (m.scenarios || []).forEach(function (s) { s.steps.forEach(function (st) { if (st.from === a) st.from = b; if (st.to === a) st.to = b; }); });
+  if (m.defaultPins) m.defaultPins = m.defaultPins.map(function (x) { return x === a ? b : x; });
+  if (m.view && m.view.open) m.view.open = m.view.open.map(function (x) { return x === a ? b : x; });
+}
+
+/* ---------- field changes from the panel ---------- */
+function list(v, sep) { return String(v).split(sep).map(function (x) { return x.trim(); }).filter(Boolean); }
+function setOrDrop(o, k, v) { if (v === '' || v == null || v === false || (Array.isArray(v) && !v.length)) delete o[k]; else o[k] = v; }
+function setNode(id, f, v) {
+  if (f === 'id') {
+    v = String(v).trim();
+    if (!/^[A-Za-z0-9_.\-]+$/.test(v)) { say('An id may use letters, digits, - _ and . only.', true); later({ select: id }); return; }
+    if (v !== id && node(work, v)) { say('There is already a box with the id "' + v + '".', true); later({ select: id }); return; }
+    var wasOpen = api().isOpen && api().isOpen(id);
+    commit(function (m) { renameId(m, id, v); }, { select: v, open: wasOpen ? [v] : [] });
+    return;
+  }
+  commit(function (m) {
+    var n = node(m, id); if (!n) return false;
+    if (f === 'name') { v = String(v).trim(); if (!v) { say('A box needs a name.', true); return false; } n.name = v; }
+    else if (f === 'notes') setOrDrop(n, 'notes', list(v, '\n'));
+    else if (f === 'tech') setOrDrop(n, 'tech', list(v, ','));
+    else if (f === 'line') setOrDrop(n, 'line', v === '' ? '' : Math.max(1, Math.round(+v) || 1));
+    else if (f === 'parent') {
+      if (v && inside(m, v, id)) { say('A box cannot go inside itself or inside one of its own boxes.', true); return false; }
+      setOrDrop(n, 'parent', v); delete n.at;
+      var sibs = m.nodes.filter(function (x) { return x !== n && (x.parent == null ? '' : x.parent) === v; });
+      if (sibs.length && sibs.every(function (x) { return Array.isArray(x.at); })) n.at = [0, Math.max.apply(null, sibs.map(function (x) { return x.at[1]; })) + 1];
+    }
+    else if (f === 'dashed' || f === 'initial' || f === 'final') setOrDrop(n, f, !!v);
+    else if (f === 'path') setOrDrop(n, 'path', v === '' ? '' : String(v).trim());
+    else setOrDrop(n, f, typeof v === 'string' ? v.trim() : v);
+  }, { select: id, open: f === 'parent' && v ? [v] : [] });
+}
+function setVariant(id, vid, on) {
+  commit(function (m) {
+    var n = node(m, id), all = ((m.variants && m.variants.items) || []).map(function (x) { return x.id; });
+    var cur = n.variants ? n.variants.slice() : all.slice();
+    if (on && cur.indexOf(vid) < 0) cur.push(vid);
+    if (!on) cur = cur.filter(function (x) { return x !== vid; });
+    if (!cur.length) { say('A box has to exist in at least one variant.', true); return false; }
+    if (cur.length === all.length) delete n.variants; else n.variants = all.filter(function (x) { return cur.indexOf(x) >= 0; });
+  }, { select: id });
+}
+function setEdge(i, f, v) {
+  commit(function (m) {
+    var e = m.edges[i]; if (!e) return false;
+    if (f === 'label') { v = String(v).trim(); if (!v) { say('A connection needs a label: what happens along it.', true); return false; } e.label = v; }
+    else if (f === 'dashed') setOrDrop(e, 'dashed', !!v);
+    else setOrDrop(e, f, v);
+  }, { select: api().selectedId() });
+}
+function setPath(m, path, v) {
+  var ks = path.split('.'), o = m;
+  for (var i = 0; i < ks.length - 1; i++) { o[ks[i]] = o[ks[i]] || {}; o = o[ks[i]]; }
+  setOrDrop(o, ks[ks.length - 1], v);
+  // drop emptied groups (source, rdf, view)
+  if (ks.length > 1 && !Object.keys(m[ks[0]]).length && ks[0] !== 'project') delete m[ks[0]];
+}
+function setProject(path, v) {
+  commit(function (m) {
+    if (path === 'project.name' && !String(v).trim()) { say('The project needs a name.', true); return false; }
+    if (path === 'view.startLevel') v = v === '' ? '' : +v;
+    setPath(m, path, typeof v === 'string' ? v.trim() : v);
+  }, { select: null });
+}
+function setScenario(i, f, v) {
+  commit(function (m) {
+    var s = m.scenarios[i]; if (!s) return false;
+    v = String(v).trim();
+    if ((f === 'name' || f === 'id') && !v) { say('A scenario needs a ' + f + '.', true); return false; }
+    if (f === 'id' && m.scenarios.some(function (x, j) { return j !== i && x.id === v; })) { say('Another scenario already has the id "' + v + '".', true); return false; }
+    setOrDrop(s, f, v);
+  }, { select: null });
+}
+function setStep(i, j, f, v) {
+  commit(function (m) {
+    var st = m.scenarios[i] && m.scenarios[i].steps[j]; if (!st) return false;
+    if (f === 'reply') setOrDrop(st, 'reply', !!v);
+    else if (f === 'label') { v = String(v).trim(); if (!v) { say('A step needs a label.', true); return false; } st.label = v; }
+    else st[f] = v;
+  }, { select: null });
+}
+
+/* ---------- the panel while editing ---------- */
+function opts(values, cur, names) { return values.map(function (v, i) { return '<option value="' + esc(v) + '"' + (String(v) === String(cur == null ? '' : cur) ? ' selected' : '') + '>' + esc(names ? names[i] : v) + '</option>'; }).join(''); }
+function field(k, lab, val, extra) { return '<label class="ed-f"><span>' + lab + '</span><input data-k="' + k + '" value="' + esc(val == null ? '' : val) + '"' + (extra || '') + '></label>'; }
+function area(k, lab, val, rows) { return '<label class="ed-f"><span>' + lab + '</span><textarea data-k="' + k + '" rows="' + (rows || 3) + '">' + esc(val == null ? '' : val) + '</textarea></label>'; }
+function check(k, lab, on) { return '<label class="ed-c"><input type="checkbox" data-k="' + k + '"' + (on ? ' checked' : '') + '><span>' + lab + '</span></label>'; }
+function nodeOptions(m, cur, blank) {
+  return (blank ? '<option value="">' + esc(blank) + '</option>' : '') + m.nodes.map(function (n) { return '<option value="' + esc(n.id) + '"' + (n.id === cur ? ' selected' : '') + '>' + esc(n.name) + ' · ' + esc(n.id) + '</option>'; }).join('');
+}
+function renderPanel(el, sel) {
+  if (!work) work = clone(window.MODEL);
+  var head = '<button type="button" class="btn sheet-toggle" data-act="sheet">details ▾</button>';
+  el.innerHTML = head + (sel && node(work, sel.id) ? nodeForm(sel.id) : projectForm());
+}
+function nodeForm(id) {
+  var m = work, n = node(m, id), C = core(), cn = C && C.byId[id], VARS = (m.variants && m.variants.items) || [];
+  var crumbs = [], p = n.parent != null ? node(m, n.parent) : null;
+  for (var hops = 0; p && hops < 20; p = p.parent != null ? node(m, p.parent) : null, hops++) crumbs.unshift('<button type="button" data-ed="sel:' + esc(p.id) + '">' + esc(p.name) + '</button><span>›</span>');
+  var parents = m.nodes.filter(function (x) { return x.id !== id && !inside(m, x.id, id); });
+  var kids = CHILD_TYPES[n.type] || ['container', 'component', 'code'];
+  var outs = [], ins = [];
+  (m.edges || []).forEach(function (e, i) { if (e.from === id) outs.push(i); if (e.to === id) ins.push(i); });
+  function edgeRow(i, dir) {
+    var e = m.edges[i], other = node(m, dir === 'out' ? e.to : e.from);
+    return '<div class="ed-edge"><button type="button" class="ed-link-btn" data-ed="sel:' + esc(other.id) + '" title="Show ' + esc(other.name) + '">' + (dir === 'out' ? '→ ' : '← ') + esc(other.name) + '</button>' +
+      '<input data-k="e:' + i + ':label" value="' + esc(e.label) + '" aria-label="Label of the connection ' + esc(dir === 'out' ? 'to ' : 'from ') + esc(other.name) + '">' +
+      '<select data-k="e:' + i + ':kind" aria-label="Colour">' + opts(EDGE_KINDS, e.kind || '', EDGE_KINDS.map(function (k) { return k || 'grey'; })) + '</select>' +
+      '<label class="ed-c" title="dashed: asynchronous or optional"><input type="checkbox" data-k="e:' + i + ':dashed"' + (e.dashed ? ' checked' : '') + '><span>dashed</span></label>' +
+      '<button type="button" class="ed-mini" data-ed="edge-rev:' + i + '" title="Reverse its direction">⇄</button><button type="button" class="ed-mini" data-ed="edge-del:' + i + '" title="Delete this connection">✕</button></div>';
+  }
+  var rdf = '';
+  try {
+    var g = window.archRdf(m), iri = g.nodeIri(id), lines = g.toNTriples().split('\n').filter(function (l) { return l.indexOf('<' + iri + '>') === 0; });
+    rdf = '<details class="ed-rdf"><summary>RDF · ' + lines.length + ' triples about this box</summary><code class="path">' + esc(iri) + '</code><pre>' + esc(lines.join('\n')) + '</pre>' +
+      '<p class="ed-help">The graph is generated from the fields above; the IRI is the base (project panel → RDF) plus the id.</p></details>';
+  } catch (e) { rdf = ''; }
+  return '<div class="pcrumb">' + crumbs.join('') + '<span>' + esc(n.name) + '</span></div>' +
+    '<span class="ptag">Editing · L' + (cn ? cn.lv : '?') + ' · ' + esc(label(n.type)) + '</span>' +
+    '<div class="ed-form">' +
+      field('f:name', 'Name', n.name, ' required') +
+      '<div class="ed-2">' + field('f:id', 'Id', n.id, ' spellcheck="false"') +
+        '<label class="ed-f"><span>Type</span><select data-k="f:type">' + opts(TYPES.map(function (t) { return t[0]; }), n.type, TYPES.map(function (t) { return t[1]; })) + '</select></label></div>' +
+      '<div class="ed-2">' + field('f:tag', 'Tag', n.tag, ' placeholder="' + esc(cn ? cn.tag : '') + '"') + field('f:sub', 'Second line', n.sub, ' placeholder="five words"') + '</div>' +
+      area('f:desc', 'Description', n.desc, 3) +
+      area('f:notes', 'Notes (one per line)', (n.notes || []).join('\n'), 2) +
+      field('f:tech', 'Technology (comma-separated)', (n.tech ? [].concat(n.tech) : []).join(', ')) +
+      '<div class="ed-2">' + field('f:path', 'Source path', n.path, ' spellcheck="false" placeholder="api/app/main.py"') + field('f:line', 'Line', n.line, ' type="number" min="1"') + '</div>' +
+      field('f:url', 'Link (docs, for externals)', n.url, ' spellcheck="false" placeholder="https://…"') +
+      '<div class="ed-2"><label class="ed-f"><span>Colour</span><select data-k="f:kind">' + opts(KINDS, n.kind || '', KINDS.map(function (k) { return k || 'default for its type'; })) + '</select></label>' +
+        '<label class="ed-f"><span>Inside</span><select data-k="f:parent">' + nodeOptions({ nodes: parents }, n.parent, '(top level)') + '</select></label></div>' +
+      '<div class="ed-checks">' + check('f:dashed', 'dashed border (optional or planned)', n.dashed) +
+        (n.type === 'state' ? check('f:initial', 'initial state', n.initial) + check('f:final', 'final state', n.final) : '') + '</div>' +
+      (VARS.length ? '<div class="ed-f"><span>' + esc((m.variants.label || 'Variant')) + '</span><div class="ed-checks">' + VARS.map(function (v) { return check('v:' + v.id, esc(v.name || v.id), !n.variants || n.variants.indexOf(v.id) >= 0); }).join('') + '</div></div>' : '') +
+    '</div>' +
+    '<div class="actions">' + kids.map(function (t) { return '<button type="button" class="btn" data-ed="add-child:' + t + '">+ ' + esc(label(t)) + ' inside</button>'; }).join('') +
+      '<button type="button" class="btn" data-ed="connect">→ connect to…</button><button type="button" class="btn" data-ed="dup">duplicate</button>' +
+      '<button type="button" class="btn ed-danger" data-ed="delete">' + (delArm === id ? 'click again to delete' + (kidsOf(m, id).length ? ' it and what is inside' : '') : 'delete') + '</button></div>' +
+    '<h3>Uses (' + outs.length + ')</h3>' + (outs.length ? outs.map(function (i) { return edgeRow(i, 'out'); }).join('') : '<p class="none">none' + (kidsOf(m, id).length ? ' on this box itself; the boxes inside it have their own' : '') + ' · Alt+drag from a box to another to add one</p>') +
+    '<h3>Used by (' + ins.length + ')</h3>' + (ins.length ? ins.map(function (i) { return edgeRow(i, 'in'); }).join('') : '<p class="none">none</p>') +
+    rdf +
+    '<p class="ed-help"><button type="button" class="ed-link-btn" data-ed="deselect">← project, scenarios and RDF settings</button></p>';
+}
+function projectForm() {
+  var m = work, P = m.project || {}, S = m.source || {}, R = m.rdf || {}, V = m.view || {}, g = null;
+  try { g = window.archRdf(m); } catch (e) {}
+  var themes = ['', 'auto'].concat((window.ARCH_THEMES || []).map(function (t) { return t.id; }));
+  var html = '<span class="ptag">Editing · the whole model</span><h2>' + esc(P.name) + '</h2>' +
+    '<p class="ed-help">Select a box on the map to edit it. Drag types from the edit bar onto the map to add boxes; drag boxes to move them; Alt+drag from one box to another to connect them.</p>' +
+    '<h3>Project</h3><div class="ed-form">' + field('pf:project.name', 'Name', P.name) +
+      '<div class="ed-2">' + field('pf:project.subtitle', 'Subtitle', P.subtitle, ' placeholder="org/repo"') + field('pf:project.title', 'Title', P.title, ' placeholder="Architecture map"') + '</div>' +
+      area('pf:project.intro', 'Introduction (shown first in the panel)', P.intro, 3) + field('pf:project.id', 'Id (keeps pins and edits per project)', P.id, ' spellcheck="false"') + '</div>' +
+    '<h3>Source links</h3><div class="ed-form"><div class="ed-2">' + field('pf:source.repoUrl', 'Repository URL', S.repoUrl, ' spellcheck="false" placeholder="https://github.com/org/repo"') + field('pf:source.branch', 'Branch', S.branch, ' placeholder="main"') + '</div></div>' +
+    '<h3>RDF</h3><div class="ed-form"><div class="ed-2">' + field('pf:rdf.base', 'Base IRI of the boxes', R.base, ' spellcheck="false" placeholder="' + esc(g ? g.base : '') + '"') +
+      field('pf:rdf.vocab', 'Vocabulary IRI', R.vocab, ' spellcheck="false" placeholder="' + esc(g ? g.vocab : '') + '"') + '</div>' +
+      '<p class="ed-help">' + (g ? g.tripleCount() + ' triples. ' : '') + 'Each box is base + id. Download the graph from the edit bar as JSON-LD or .rete.</p></div>' +
+    '<h3>Opening view</h3><div class="ed-form"><div class="ed-3">' +
+      '<label class="ed-f"><span>Start level</span><select data-k="pf:view.startLevel">' + opts(['', 1, 2, 3, 4], V.startLevel || '', ['default (2)', 'L1', 'L2', 'L3', 'L4']) + '</select></label>' +
+      '<label class="ed-f"><span>Theme</span><select data-k="pf:view.theme">' + opts(themes, V.theme || '', themes.map(function (t) { return t || 'default (auto)'; })) + '</select></label>' +
+      '<label class="ed-f"><span>Arrows</span><select data-k="pf:view.edges">' + opts(['', 'orthogonal', 'straight'], V.edges || '', ['default (square)', 'square', 'straight']) + '</select></label></div></div>' +
+    '<h3>Add at the top level</h3><div class="actions">' + TOP_TYPES.map(function (t) { return '<button type="button" class="btn" data-ed="top-add:' + t + '">+ ' + esc(label(t)) + '</button>'; }).join('') + '</div>';
+  var sc = m.scenarios || [];
+  html += '<h3>Scenarios (' + sc.length + ')</h3>' + sc.map(function (s, i) {
+    return '<details class="ed-sc" data-sc="' + i + '"' + (openSc[s.id] ? ' open' : '') + '><summary>' + esc(s.name) + ' <small>' + s.steps.length + ' steps</small></summary><div class="ed-form">' +
+      '<div class="ed-2">' + field('s:' + i + ':name', 'Name', s.name) + field('s:' + i + ':id', 'Id', s.id, ' spellcheck="false"') + '</div>' + area('s:' + i + ':desc', 'Description', s.desc, 2) +
+      '<div class="ed-steps">' + s.steps.map(function (st, j) {
+        return '<div class="ed-step"><b>' + (j + 1) + '</b><select data-k="st:' + i + ':' + j + ':from" aria-label="From">' + nodeOptions(m, st.from) + '</select><span>' + (st.reply ? '⇠' : '→') + '</span>' +
+          '<select data-k="st:' + i + ':' + j + ':to" aria-label="To">' + nodeOptions(m, st.to) + '</select>' +
+          '<input data-k="st:' + i + ':' + j + ':label" value="' + esc(st.label) + '" aria-label="What happens">' +
+          '<label class="ed-c" title="a reply going back"><input type="checkbox" data-k="st:' + i + ':' + j + ':reply"' + (st.reply ? ' checked' : '') + '><span>reply</span></label>' +
+          '<span class="ed-ops"><button type="button" class="ed-mini" data-ed="st-up:' + i + ':' + j + '" title="Earlier"' + (j ? '' : ' disabled') + '>↑</button><button type="button" class="ed-mini" data-ed="st-down:' + i + ':' + j + '" title="Later"' + (j < s.steps.length - 1 ? '' : ' disabled') + '>↓</button>' +
+          '<button type="button" class="ed-mini" data-ed="st-del:' + i + ':' + j + '" title="Delete this step">✕</button></span></div>';
+      }).join('') + '</div><div class="actions"><button type="button" class="btn" data-ed="st-add:' + i + '">+ step</button><button type="button" class="btn ed-danger" data-ed="sc-del:' + i + '">delete scenario</button></div></div></details>';
+  }).join('') + '<div class="actions"><button type="button" class="btn" data-ed="sc-add">+ scenario</button></div>' +
+  '<p class="ed-help">Variants, levels names and the legend are edited in model.js; download it from the edit bar.</p>';
+  return html;
+}
+
+/* ---------- panel and edit bar events ---------- */
+function onPanelChange(ev) {
+  if (!E.active) return;
+  var t = ev.target, k = t.getAttribute && t.getAttribute('data-k');
+  if (!k) return;
+  var p = k.split(':'), v = t.type === 'checkbox' ? t.checked : t.value, id = api().selectedId ? api().selectedId() : null;
+  if (p[0] === 'f' && id) setNode(id, p[1], v);
+  else if (p[0] === 'v' && id) setVariant(id, p.slice(1).join(':'), v);
+  else if (p[0] === 'e') setEdge(+p[1], p[2], v);
+  else if (p[0] === 'pf') setProject(p[1], v);
+  else if (p[0] === 's') setScenario(+p[1], p[2], v);
+  else if (p[0] === 'st') setStep(+p[1], +p[2], p[3], v);
+}
+function moveStep(i, j, d) {
+  commit(function (m) { var a = m.scenarios[i].steps, k = j + d; if (k < 0 || k >= a.length) return false; var t = a[j]; a[j] = a[k]; a[k] = t; }, { select: null });
+}
+function act(cmd) {
+  var p = cmd.split(':'), a = p[0], id = api().selectedId ? api().selectedId() : null;
+  if (a === 'sel') { if (api().select) api().select(p.slice(1).join(':')); return; }
+  if (a === 'deselect') { if (api().select) api().select(null); return; }
+  if (a === 'add-child' && id) { addNode(p[1], id); return; }
+  if (a === 'top-add') { addNode(p[1], null); return; }
+  if (a === 'connect' && id) { connectFrom = id; syncBar(); return; }
+  if (a === 'dup' && id) {
+    var nid;
+    commit(function (m) { var n = node(m, id), c = clone(n); nid = newId(m, n.type); c.id = nid; c.name = n.name + ' (copy)'; delete c.at; m.nodes.push(c); }, { select: null });
+    clearTimeout(timer); timer = setTimeout(function () { redrawNow({ select: nid, focus: 'f:name' }); }, 0);
+    return;
+  }
+  if (a === 'delete' && id) {
+    if (delArm !== id && kidsOf(work, id).length) { delArm = id; if (api().refreshPanel) api().refreshPanel(); return; }
+    deleteIds(api().selectedIds ? api().selectedIds() : [id]); return;
+  }
+  if (a === 'edge-del') { commit(function (m) { m.edges.splice(+p[1], 1); }, { select: id }); return; }
+  if (a === 'edge-rev') { commit(function (m) { var e = m.edges[+p[1]], t = e.from; e.from = e.to; e.to = t; }, { select: id }); return; }
+  if (a === 'sc-add') {
+    var first = work.nodes[0], second = work.nodes[1] || first, sid = 'scenario-1', n = 1;
+    while ((work.scenarios || []).some(function (s) { return s.id === sid; })) sid = 'scenario-' + (++n);
+    openSc[sid] = true;
+    commit(function (m) { (m.scenarios = m.scenarios || []).push({ id: sid, name: 'New scenario', steps: [{ from: first.id, to: second === first ? first.id : second.id, label: 'first step' }] }); }, { select: null });
+    return;
+  }
+  if (a === 'sc-del') { commit(function (m) { m.scenarios.splice(+p[1], 1); if (!m.scenarios.length) delete m.scenarios; }, { select: null }); return; }
+  if (a === 'st-add') {
+    commit(function (m) { var s = m.scenarios[+p[1]], last = s.steps[s.steps.length - 1]; s.steps.push({ from: last ? last.to : m.nodes[0].id, to: last ? last.from : m.nodes[0].id, label: 'next step' }); }, { select: null });
+    return;
+  }
+  if (a === 'st-up') { moveStep(+p[1], +p[2], -1); return; }
+  if (a === 'st-down') { moveStep(+p[1], +p[2], 1); return; }
+  if (a === 'st-del') {
+    commit(function (m) { var s = m.scenarios[+p[1]]; if (s.steps.length < 2) { say('A scenario needs at least one step; delete the scenario instead.', true); return false; } s.steps.splice(+p[2], 1); }, { select: null });
+  }
+}
+function download(text, type, name) {
+  var url = URL.createObjectURL(new Blob([text], { type: type })), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+}
+function modelJs(m) { return 'window.MODEL = ' + JSON.stringify(m, null, 2).replace(/<\//g, '<\\/') + ';\n'; }
+function pageHtml(m) {
+  var src = window.ARCH_SOURCE || '', B = '/* BEGIN ' + 'MODEL */', Z = '/* END ' + 'MODEL */', b = src.indexOf(B), e = src.indexOf(Z, b);
+  return b < 0 || e < 0 ? null : src.slice(0, b) + B + '\n' + modelJs(m) + src.slice(e);
+}
+function bar(cmd) {
+  if (cmd === 'undo') undoStep(true);
+  else if (cmd === 'redo') undoStep(false);
+  else if (cmd === 'done') leave();
+  else if (cmd === 'discard') {
+    if (!window.ARCH_ORIGINAL) return;
+    commit(function (m) { var o = JSON.parse(window.ARCH_ORIGINAL); Object.keys(m).forEach(function (k) { delete m[k]; }); Object.keys(o).forEach(function (k) { m[k] = o[k]; }); }, { select: null, keepMsg: true });
+    say('Back to the model this page was built with. Ctrl+Z brings the edits back.');
+  }
+  else if (cmd === 'dl-model') { download(modelJs(work), 'text/javascript', 'model.js'); say('Saved model.js. Rebuild the page from it with build-explorer.mjs, or download the page directly.'); }
+  else if (cmd === 'dl-page') {
+    var html = pageHtml(work);
+    if (!html) { say('This page does not have the MODEL markers, so it cannot write itself back; download model.js instead.', true); return; }
+    download(html, 'text/html', 'index.html'); say('Saved index.html: this page with the edited model in it.');
+  }
+  else if (cmd === 'dl-jsonld' || cmd === 'dl-rete') {
+    var rd = X().rdf; if (!rd) return;
+    say(cmd === 'dl-rete' ? 'Building the .rete graph…' : '');
+    Promise.resolve(rd.download(cmd === 'dl-rete' ? 'rete' : 'jsonld')).then(function () { var m2 = $('export-msg'); say(m2 ? m2.textContent : ''); });
+  }
+}
+
+/* ---------- the palette: drag a type onto the map, or click it ---------- */
+var pal = null;
+function palDown(ev) {
+  var b = ev.target.closest('[data-add]'); if (!b || ev.button > 0) return;
+  ev.preventDefault();
+  pal = { type: b.dataset.add, x: ev.clientX, y: ev.clientY, moved: false, ghost: null };
+  try { b.setPointerCapture(ev.pointerId); } catch (e) {}
+}
+function palMove(ev) {
+  if (!pal) return;
+  if (!pal.moved && Math.hypot(ev.clientX - pal.x, ev.clientY - pal.y) > 5) {
+    pal.moved = true;
+    pal.ghost = document.createElement('div'); pal.ghost.className = 'ed-ghost'; pal.ghost.textContent = '+ ' + label(pal.type);
+    document.body.appendChild(pal.ghost);
+  }
+  if (pal.ghost) {
+    pal.ghost.style.left = ev.clientX + 'px'; pal.ghost.style.top = ev.clientY + 'px';
+    var over = overMap(ev);
+    pal.ghost.classList.toggle('ok', !!over);
+    markOpen(over ? api().openBoxAt(ev.clientX, ev.clientY) : null);
+  }
+}
+function overMap(ev) { var m = $('map'), r = m && m.getBoundingClientRect(); return !!r && !$('v-map').hidden && ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom; }
+var marked = null;
+function markOpen(id) {
+  if (marked === id) return;
+  var old = marked && document.querySelector('#map .nd[data-id="' + marked + '"]'); if (old) old.classList.remove('drop-target');
+  marked = id;
+  var el = id && document.querySelector('#map .nd[data-id="' + id + '"]'); if (el) el.classList.add('drop-target');
+}
+function palUp(ev) {
+  if (!pal) return;
+  var p = pal; pal = null;
+  if (p.ghost) p.ghost.remove();
+  markOpen(null);
+  if (!p.moved) { var sel = api().selectedId ? api().selectedId() : null; addNode(p.type, TOP_TYPES.indexOf(p.type) >= 0 ? null : sel); return; }
+  if (!overMap(ev)) return;
+  addNode(p.type, api().openBoxAt(ev.clientX, ev.clientY), api().toWorld(ev.clientX, ev.clientY));
+}
+
+/* ---------- start ---------- */
+function init() {
+  var btn = $('btn-edit'), eb = $('editbar'), pnl = $('panel');
+  if (!btn || !eb || !pnl || !window.archEngine) return;
+  $('ed-palette').innerHTML = '<span class="ed-k">add</span>' + TYPES.filter(function (t) { return t[0] !== 'state'; }).map(function (t) {
+    return '<button type="button" class="ed-chip t-' + t[0] + '" data-add="' + t[0] + '" title="Drag onto the map, or click to add inside the selected box">' + esc(t[1]) + '</button>';
+  }).join('');
+  btn.addEventListener('click', function () { if (E.active) leave(); else enter(); });
+  eb.addEventListener('click', function (ev) { var b = ev.target.closest('[data-ed]'); if (b && !b.disabled) bar(b.dataset.ed); });
+  eb.addEventListener('pointerdown', palDown);
+  document.addEventListener('pointermove', palMove);
+  document.addEventListener('pointerup', palUp);
+  document.addEventListener('pointercancel', function () { if (pal) { if (pal.ghost) pal.ghost.remove(); pal = null; markOpen(null); } });
+  pnl.addEventListener('change', onPanelChange);
+  pnl.addEventListener('click', function (ev) { if (!E.active) return; var b = ev.target.closest('[data-ed]'); if (b && !b.disabled) { ev.stopPropagation(); act(b.dataset.ed); } }, true);
+  pnl.addEventListener('toggle', function (ev) { var d = ev.target; if (d.classList && d.classList.contains('ed-sc') && work && work.scenarios) { var s = work.scenarios[+d.dataset.sc]; if (s) openSc[s.id] = d.open; } }, true);
+  document.addEventListener('keydown', function (ev) {
+    if (!E.active || /INPUT|TEXTAREA|SELECT/.test(ev.target.tagName)) return;
+    var k = (ev.key || '').toLowerCase(), mod = ev.ctrlKey || ev.metaKey;
+    if (mod && k === 'z' && !ev.shiftKey) { ev.preventDefault(); undoStep(true); }
+    else if (mod && (k === 'y' || (k === 'z' && ev.shiftKey))) { ev.preventDefault(); undoStep(false); }
+    else if ((ev.key === 'Delete' || ev.key === 'Backspace') && api().selectedId && api().selectedId()) { ev.preventDefault(); deleteIds(api().selectedIds()); }
+    else if (ev.key === 'Escape' && connectFrom) { connectFrom = null; say(''); }
+  });
+  // edits kept from an earlier visit that are not in this file: offer them back
+  var saved = loadSaved();
+  if (saved && JSON.stringify(saved.model) !== window.ARCH_ORIGINAL) {
+    var r = $('ed-restore'), when = new Date(saved.at);
+    r.innerHTML = '<span>This page has edits from ' + esc(when.toLocaleString()) + ' that are not in its file (' + saved.model.nodes.length + ' boxes).</span>' +
+      '<button type="button" class="btn" data-r="restore">restore and edit</button><button type="button" class="btn" data-r="drop">discard them</button>';
+    r.hidden = false;
+    r.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-r]'); if (!b) return;
+      r.hidden = true;
+      if (b.dataset.r === 'drop') { dropSaved(); return; }
+      work = saved.model; enter(); redrawNow({ select: null });
+      say('Restored the edits from ' + when.toLocaleString() + '.');
+    });
+  } else if (saved) dropSaved();
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else setTimeout(init, 0);
+})();
+</script>
+
+<script id="engine">
+/* The engine draws the page from window.MODEL. It is a function so that the editor can run it again on an edited model:
+   ARCH_EXPLORER.teardown() lets go of everything it attached (listeners, timers, drawn elements), then archEngine(prev)
+   starts over; prev may carry the camera (cam), boxes to open (open) and a box to select (select). */
+window.archEngine = function (PREV) {
+'use strict';
+var AC = new AbortController();
+// every listener is attached through on(), so that teardown() removes them all at once
+function on(t, type, fn, opt) {
+  var o = opt && typeof opt === 'object' ? Object.assign({}, opt) : { capture: !!opt };
+  o.signal = AC.signal; t.addEventListener(type, fn, o);
+}
 var root = document.documentElement;
+// first run only: the page as shipped, before anything is drawn (the editor's "download page" writes it back with the edited
+// MODEL block), and the model as shipped (the editor's "discard edits")
+if (!window.ARCH_SOURCE) window.ARCH_SOURCE = '<!doctype html>\n' + root.outerHTML;
+if (!window.ARCH_ORIGINAL && window.MODEL) { try { window.ARCH_ORIGINAL = JSON.stringify(window.MODEL); } catch (e) {} }
+var oldFatal = document.getElementById('fatal'); if (oldFatal) oldFatal.remove();
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function fatal(title, list) {
   var d = document.createElement('div'); d.className = 'fatal'; d.id = 'fatal';
@@ -1829,6 +2510,20 @@ var NODES = C.NODES, EDGES = C.EDGES, SCEN = C.SCEN, byId = C.byId, MAXL = C.MAX
 var parentOf = C.parentOf, ancestors = C.ancestors, depthOf = C.depthOf, within = C.within, isOpen = C.isOpen, visible = C.visible, rep = C.rep;
 var sameKind = C.sameKind, joinLabels = C.joinLabels, openToLevel = C.openToLevel, expanded = C.expanded;
 var seqView = C.seqView, isSeq = C.isSeq, SEQ = C.SEQ;
+/* reader sizes, from the "size" menu: ui scales the toolbars and the panel (CSS zoom), space the gaps between boxes (boxes keep
+   their size), ink the arrow labels and arrow widths. 1 is the default everywhere; the default labels are 0.9 × 11px and the
+   default arrows 0.85 × the theme's --arrow-w. Remembered per browser; applied before the first layout. */
+var SIZE_KEY = 'architecture-explorer-size';
+var SIZE_STEPS = { ui: [0.8, 0.85, 0.9, 0.95, 1, 1.1, 1.2], space: [0.7, 0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75, 2], ink: [0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.4] };
+var size = { ui: 1, space: 1, ink: 1 };
+try { var savedSize = JSON.parse(localStorage.getItem(SIZE_KEY) || 'null'); if (savedSize) Object.keys(size).forEach(function (k) { if (SIZE_STEPS[k].indexOf(savedSize[k]) >= 0) size[k] = savedSize[k]; }); } catch (e) {}
+function applySizes() {
+  root.style.setProperty('--ui', String(size.ui));
+  root.style.setProperty('--ink-scale', (0.85 * size.ink).toFixed(3));
+  root.style.setProperty('--lbl-scale', (0.9 * size.ink).toFixed(3));
+  C.setSpacing(size.space); C.setLabelScale(0.9 * size.ink);
+}
+applySizes();
 function eachMode(fn) { ALLM.split('').forEach(function (c, i) { if (c) fn(c, i); }); }
 function kc(k) { return TONES.indexOf(k) >= 0 ? 'k-tone tone-' + k : 'k-' + k; }
 
@@ -1837,6 +2532,8 @@ function kc(k) { return TONES.indexOf(k) >= 0 ? 'k-tone tone-' + k : 'k-' + k; }
    ====================================================================== */
 var mode = 'all', selected = null, showLabels = true;
 var seqSel = null;         // { id, step }: the message picked in the sequence inside a box
+// edit mode belongs to the editor script (window.ARCH_EDIT); the engine only asks whether it is on
+function editing() { return !!(window.ARCH_EDIT && window.ARCH_EDIT.active); }
 var cam = { x: 0, y: 0, s: 1 };
 var cur = new Map(), target = new Map();
 var svg = document.getElementById('map'), vp = document.getElementById('vp');
@@ -1869,12 +2566,16 @@ if (NV) {
   document.getElementById('modes-label').textContent = VAR_LABEL;
   document.getElementById('modes').innerHTML = '<button type="button" data-mode="all" aria-pressed="true">all</button>' +
     VCH.map(function (c) { return '<button type="button" class="tone-' + VBY[c].tone + '" data-mode="' + c + '">' + esc(VBY[c].name) + '</button>'; }).join('');
-  var st = document.createElement('style');
+  var oldSt = document.getElementById('arch-modes-style'); if (oldSt) oldSt.remove();
+  var st = document.createElement('style'); st.id = 'arch-modes-style';
   st.textContent = VCH.map(function (c) { return '[data-mode="' + c + '"] .mx-' + c; }).join(', ') + ' { opacity: .14; }';
   document.head.appendChild(st);
 }
-if (!HAS_DYN) document.querySelector('#tabs [data-view="dynamic"]').hidden = true;
-else document.querySelector('.hint').textContent += ' · ⇅ in an open box shows its sequence';
+document.querySelector('#tabs [data-view="dynamic"]').hidden = !HAS_DYN;
+document.getElementById('grp-modes').hidden = !NV;
+var hintEl = document.querySelector('.hint');
+if (hintEl) { if (!hintEl.dataset.base) hintEl.dataset.base = hintEl.textContent; hintEl.textContent = hintEl.dataset.base + (HAS_DYN ? ' · ⇅ in an open box shows its sequence' : ''); }
+document.querySelectorAll('#defs marker').forEach(function (m) { m.remove(); });
 ['ink', 'accent'].concat(TONES).forEach(function (k) {
   var m = mk('marker', { id: 'a-' + k, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, document.getElementById('defs'));
   mk('path', { 'class': 'mk ' + kc(k), d: 'M0,0.5 L10,5 L0,9.5 z' }, m);
@@ -2104,8 +2805,8 @@ function drawEdges(geo) {
       mk('rect', { x: -LB.MW / 2, y: -LB.MH / 2, width: LB.MW, height: LB.MH, rx: LB.MH / 2 }, mark);
       [-5, 0, 5].forEach(function (cx) { mk('circle', { cx: cx, cy: 0, r: 1.4 }, mark); });
       [hitp, lab].forEach(function (el) {
-        el.addEventListener('pointerenter', function () { hoverLabel(key); });
-        el.addEventListener('pointerleave', function () { hoverLabel(null); });
+        on(el, 'pointerenter', function () { hoverLabel(key); });
+        on(el, 'pointerleave', function () { hoverLabel(null); });
       });
       o = { path: path, hit: hitp, lab: lab, mark: mark, text: null }; edgeEls.set(key, o);
     }
@@ -2230,7 +2931,7 @@ function mmView() {
   mmRect.setAttribute('x', x); mmRect.setAttribute('y', y); mmRect.setAttribute('width', z.W / cam.s * mmT.s); mmRect.setAttribute('height', z.H / cam.s * mmT.s);
   mmRect.setAttribute('stroke', 'var(--accent)');
 }
-document.getElementById('minimap').addEventListener('click', function (ev) {
+on(document.getElementById('minimap'), 'click', function (ev) {
   var r = ev.currentTarget.getBoundingClientRect(), mx = ev.clientX - r.left, my = ev.clientY - r.top;
   var wx = (mx - mmT.x) / mmT.s, wy = (my - mmT.y) / mmT.s;
   cam.x = svg.clientWidth / 2 - wx * cam.s; cam.y = svg.clientHeight / 2 - wy * cam.s; applyCam();
@@ -2421,6 +3122,7 @@ function sheetBtn() { return '<button type="button" class="btn sheet-toggle" dat
 function chip(c) { return '<span class="chip tone-' + VBY[c].tone + '">' + esc(VBY[c].name) + '</span>'; }
 function renderPanel() {
   writeHash();
+  if (editing()) { window.ARCH_EDIT.panel(panel, selected); return; }
   if (view === 'dynamic' && !selected) { renderStepPanel(); return; }
   if (view === 'map' && !selected && seqSel) { if (renderSeqPanel()) return; seqSel = null; }
   if (selList().length > 1 && view !== 'dynamic') { renderMultiPanel(selList()); return; }
@@ -2552,7 +3254,7 @@ function legend() {
     return '<svg class="' + r[0] + '" viewBox="0 0 28 18"><rect class="box" x="1" y="1" width="26" height="16" rx="4"/></svg><span>' + esc(r[1]) + '</span>';
   }).join('');
 }
-panel.addEventListener('click', function (ev) {
+on(panel, 'click', function (ev) {
   var go = ev.target.closest('[data-go]'), act = ev.target.closest('[data-act]');
   // several selected: centre one, take one out, pin all, show all, clear
   var fc = ev.target.closest('[data-focus]'), us = ev.target.closest('[data-unsel]');
@@ -2614,13 +3316,16 @@ function crumb() {
    input: pan, zoom, click, double-click, keys
    ====================================================================== */
 var ptrs = new Map(), drag = null, lastTap = { id: null, t: 0 };
-svg.addEventListener('pointerdown', function (ev) {
+on(svg, 'pointerdown', function (ev) {
   try { svg.setPointerCapture(ev.pointerId); } catch (e) {}
   ptrs.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
-  if (ptrs.size === 1) drag = { x: ev.clientX, y: ev.clientY, cx: cam.x, cy: cam.y, moved: false, target: ev.target };
-  else drag = null;
+  if (ptrs.size === 1) {
+    drag = { x: ev.clientX, y: ev.clientY, cx: cam.x, cy: cam.y, moved: false, target: ev.target };
+    var en = editing() ? editNodeAt(ev.target) : null;
+    if (en) { drag.node = en; drag.alt = ev.altKey; }
+  } else { if (drag && drag.node) editDragCancel(drag); drag = null; }
 });
-svg.addEventListener('pointermove', function (ev) {
+on(svg, 'pointermove', function (ev) {
   if (!ptrs.has(ev.pointerId)) return;
   var prev = ptrs.get(ev.pointerId);
   ptrs.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
@@ -2633,14 +3338,15 @@ svg.addEventListener('pointermove', function (ev) {
   }
   if (!drag) return;
   var dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
-  if (!drag.moved && Math.hypot(dx, dy) > 4) { drag.moved = true; svg.classList.add('panning'); }
+  if (!drag.moved && Math.hypot(dx, dy) > 4) { drag.moved = true; if (!drag.node) svg.classList.add('panning'); }
+  if (drag.node) { if (drag.moved) editDragMove(ev); return; }
   if (drag.moved) { cam.x = drag.cx + dx; cam.y = drag.cy + dy; applyCam(); }
 });
 function endPtr(ev) {
   ptrs.delete(ev.pointerId); svg.classList.remove('panning');
-  if (!drag || ev.type === 'pointercancel') { drag = null; return; }
+  if (!drag || ev.type === 'pointercancel') { if (drag && drag.node) editDragCancel(drag); drag = null; return; }
   var d = drag; drag = null;
-  if (d.moved) return;
+  if (d.moved) { if (d.node) editDragEnd(d, ev); return; }
   // an arrow or its label / marker: keep its label shown (touch has no hover); any other click lets it go
   var ek = d.target.closest && d.target.closest('[data-ekey]');
   if (ek) { pinLabel(ek.dataset.ekey); return; }
@@ -2661,25 +3367,81 @@ function endPtr(ev) {
   var g = d.target.closest && d.target.closest('.nd');
   if (!g) { if (selected) select(null); return; }
   var n = byId[g.dataset.id], now = performance.now();
+  if (editing() && window.ARCH_EDIT.onClick && window.ARCH_EDIT.onClick(n.id)) { lastTap = { id: null, t: 0 }; return; }   // e.g. picking where a connection goes
   if (ev.ctrlKey || ev.metaKey || ev.shiftKey) { lastTap = { id: null, t: 0 }; selectToggle(n); return; }   // add to / take out of the selection
   if (lastTap.id === n.id && now - lastTap.t < 320) { lastTap = { id: null, t: 0 }; toggle(n); return; }
   lastTap = { id: n.id, t: now };
   select(n);
 }
-svg.addEventListener('pointerup', endPtr);
-svg.addEventListener('pointercancel', endPtr);
-svg.addEventListener('wheel', function (ev) {
+on(svg, 'pointerup', endPtr);
+on(svg, 'pointercancel', endPtr);
+on(svg, 'wheel', function (ev) {
   ev.preventDefault();
   var r = svg.getBoundingClientRect();
   if (ev.ctrlKey || Math.abs(ev.deltaY) >= Math.abs(ev.deltaX)) zoomAt(Math.exp(-ev.deltaY * (ev.ctrlKey ? 0.01 : 0.0016)), ev.clientX - r.left, ev.clientY - r.top);
   else { cam.x -= ev.deltaX; applyCam(); }
 }, { passive: false });
-svg.addEventListener('keydown', function (ev) {
+on(svg, 'keydown', function (ev) {
   var g = ev.target.closest && ev.target.closest('.nd'); if (!g) return;
   var n = byId[g.dataset.id];
   if (ev.key === 'Enter') { ev.preventDefault(); if (ev.ctrlKey || ev.metaKey || ev.shiftKey) selectToggle(n); else select(n); }
   if (ev.key === ' ' && !(seqSel && seqSel.id === n.id)) { ev.preventDefault(); toggle(n); }   // with a message picked, space plays the sequence instead
 });
+/* edit mode on the map. Dragging a box moves it and everything drawn inside it; the deepest open box under the pointer is
+   marked as where it will land, and on release the editor (ARCH_EDIT.onDrop) decides the cell. With Alt the drag draws a
+   line instead, and releasing it on another box asks the editor to connect the two (ARCH_EDIT.onConnect). */
+var edLine = null, edOver = null;
+function editNodeAt(t) {
+  if (!t || !t.closest || t.closest('[data-toggle], [data-seqact], [data-seqstep], [data-seqpart], [data-ekey]')) return null;
+  var g = t.closest('#map .nd'); return g ? byId[g.dataset.id] : null;
+}
+function toWorld(cx, cy) { var r = svg.getBoundingClientRect(); return [(cx - r.left - cam.x) / cam.s, (cy - r.top - cam.y) / cam.s]; }
+function openBoxAt(w, n) {
+  var best = null;
+  cur.forEach(function (r, id) {
+    var b = byId[id];
+    if (!isOpen(b) || within(b, n)) return;
+    if (w[0] >= r.x && w[0] <= r.x + r.w && w[1] >= r.y && w[1] <= r.y + r.h && (!best || depthOf(b) > depthOf(best))) best = b;
+  });
+  return best;
+}
+function boxUnder(ev, n) { var t = document.elementFromPoint(ev.clientX, ev.clientY), g = t && t.closest && t.closest('#map .nd'), b = g && byId[g.dataset.id]; return b && b !== n ? b : null; }
+function setOver(b) {
+  if (edOver === b) return;
+  if (edOver && els.get(edOver.id)) els.get(edOver.id).classList.remove('drop-target');
+  edOver = b;
+  if (b && els.get(b.id)) els.get(b.id).classList.add('drop-target');
+}
+function editDragMove(ev) {
+  var d = drag, n = d.node, r0 = cur.get(n.id), w = toWorld(ev.clientX, ev.clientY);
+  if (!r0) return;
+  if (!d.started) {
+    d.started = true; d.w0 = toWorld(d.x, d.y);
+    d.group = d.alt ? [] : NODES.filter(function (x) { return within(x, n) && els.has(x.id); });
+    d.group.forEach(function (x) { els.get(x.id).classList.add('dragging'); });
+  }
+  if (d.alt) {
+    if (!edLine) edLine = mk('path', { 'class': 'ed-link', 'marker-end': 'url(#a-accent)' }, L.labels);
+    edLine.setAttribute('d', 'M' + (r0.x + r0.w / 2).toFixed(1) + ',' + (r0.y + r0.h / 2).toFixed(1) + ' L' + w[0].toFixed(1) + ',' + w[1].toFixed(1));
+    setOver(boxUnder(ev, n));
+  } else {
+    var dx = w[0] - d.w0[0], dy = w[1] - d.w0[1];
+    d.group.forEach(function (x) { var r = cur.get(x.id); if (r) els.get(x.id).setAttribute('transform', 'translate(' + (r.x + dx).toFixed(1) + ',' + (r.y + dy).toFixed(1) + ')'); });
+    setOver(openBoxAt(w, n));
+  }
+}
+function editDragCleanup(d) {
+  if (edLine) { edLine.remove(); edLine = null; }
+  setOver(null);
+  (d.group || []).forEach(function (x) { var el = els.get(x.id); if (el) el.classList.remove('dragging'); });
+}
+function editDragEnd(d, ev) {
+  var ED = window.ARCH_EDIT, w = toWorld(ev.clientX, ev.clientY), target = d.alt ? boxUnder(ev, d.node) : null, done = false;
+  editDragCleanup(d);
+  if (d.started && ED) done = d.alt ? (target ? ED.onConnect(d.node.id, target.id) : false) : ED.onDrop(d.node.id, w);
+  if (!done) redraw();   // nothing changed: put the boxes back
+}
+function editDragCancel(d) { editDragCleanup(d); redraw(); }
 function centerZoom(f) { zoomAt(f, svg.clientWidth / 2, svg.clientHeight / 2); }
 document.getElementById('z-in').onclick = function () { centerZoom(1.25); };
 document.getElementById('z-out').onclick = function () { centerZoom(0.8); };
@@ -2725,8 +3487,8 @@ if (themeBtn && themeMenu) {
       (VIEW.theme && t.id === THEME_DEFAULT ? ' · default' : '') + '<small>' + esc(t.note || '') + '</small></span></button>';
   }).join('');
   themeBtn.onclick = function (ev) { showThemeMenu(themeMenu.hidden, ev.detail === 0); };   // detail 0: opened from the keyboard, so focus moves into the menu
-  themeMenu.addEventListener('click', function (ev) { var b = ev.target.closest('[data-theme-pick]'); if (b) { pickTheme(b.dataset.themePick); showThemeMenu(false); themeBtn.focus(); } });
-  themeMenu.addEventListener('keydown', function (ev) {
+  on(themeMenu, 'click', function (ev) { var b = ev.target.closest('[data-theme-pick]'); if (b) { pickTheme(b.dataset.themePick); showThemeMenu(false); themeBtn.focus(); } });
+  on(themeMenu, 'keydown', function (ev) {
     var items = Array.from(themeMenu.querySelectorAll('button')), i = items.indexOf(document.activeElement);
     if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') items[(i + (ev.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus();
     else if (ev.key === 'Home' || ev.key === 'End') items[ev.key === 'Home' ? 0 : items.length - 1].focus();
@@ -2734,12 +3496,49 @@ if (themeBtn && themeMenu) {
     else return;
     ev.preventDefault(); ev.stopPropagation();   // keep these keys away from the page shortcuts
   });
-  themeMenu.addEventListener('focusout', function (ev) { if (!themeMenu.hidden && !(ev.relatedTarget && ev.relatedTarget.closest && ev.relatedTarget.closest('.themes'))) showThemeMenu(false); });
+  on(themeMenu, 'focusout', function (ev) { if (!themeMenu.hidden && !(ev.relatedTarget && ev.relatedTarget.closest && ev.relatedTarget.closest('.themes'))) showThemeMenu(false); });
   // pointerdown, not click: the map captures the pointer and redraws on selection, so a click there may never reach the document
-  document.addEventListener('pointerdown', function (ev) { if (!themeMenu.hidden && !(ev.target.closest && ev.target.closest('.themes'))) showThemeMenu(false); }, true);
-  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !themeMenu.hidden) showThemeMenu(false); });
+  on(document, 'pointerdown', function (ev) { if (!themeMenu.hidden && !(ev.target.closest && ev.target.closest('.themes'))) showThemeMenu(false); }, true);
+  on(document, 'keydown', function (ev) { if (ev.key === 'Escape' && !themeMenu.hidden) showThemeMenu(false); });
 }
 applyTheme();
+
+/* size menu: three rows of − / + over SIZE_STEPS (see "reader sizes" near the top). Spacing and labels re-lay out the map. */
+var sizeBtn = document.getElementById('btn-size'), sizeMenu = document.getElementById('size-menu');
+var SIZE_ROWS = [['ui', 'Interface'], ['space', 'Spacing between boxes'], ['ink', 'Labels and arrows']];
+function renderSizeMenu() {
+  sizeMenu.innerHTML = SIZE_ROWS.map(function (r) {
+    var L = SIZE_STEPS[r[0]], i = L.indexOf(size[r[0]]);
+    return '<div class="size-row"><span>' + r[1] + '</span><button type="button" data-size="' + r[0] + '" data-dir="-1" aria-label="' + r[1] + ': smaller"' + (i <= 0 ? ' disabled' : '') + '>−</button>' +
+      '<b>' + Math.round(size[r[0]] * 100) + '%</b><button type="button" data-size="' + r[0] + '" data-dir="1" aria-label="' + r[1] + ': larger"' + (i >= L.length - 1 ? ' disabled' : '') + '>+</button></div>';
+  }).join('') + '<button type="button" class="size-reset" data-size-reset="1">reset to 100%</button>';
+}
+function setSizes(next) {
+  var relay = next.space !== size.space || next.ink !== size.ink, inkChanged = next.ink !== size.ink;
+  size = next;
+  try { localStorage.setItem(SIZE_KEY, JSON.stringify(size)); } catch (e) {}
+  applySizes();
+  // label elements carry their marker size from when they were made: start them over at the new size
+  if (inkChanged) { edgeEls.forEach(function (o) { o.path.remove(); o.hit.remove(); o.lab.remove(); }); edgeEls.clear(); }
+  if (relay) relayout(null); else redraw();
+  if (view === 'pins') renderPins();
+  if (view === 'dynamic') renderDyn();
+  renderSizeMenu(); mmView();
+}
+function showSizeMenu(open) { sizeMenu.hidden = !open; sizeBtn.setAttribute('aria-expanded', String(open)); if (open) renderSizeMenu(); }
+if (sizeBtn && sizeMenu) {
+  sizeBtn.onclick = function () { showSizeMenu(sizeMenu.hidden); };
+  on(sizeMenu, 'click', function (ev) {
+    var b = ev.target.closest('[data-size]'), r = ev.target.closest('[data-size-reset]'), next = { ui: size.ui, space: size.space, ink: size.ink };
+    if (r) { setSizes({ ui: 1, space: 1, ink: 1 }); return; }
+    if (!b || b.disabled) return;
+    var L = SIZE_STEPS[b.dataset.size], i = L.indexOf(size[b.dataset.size]) + (+b.dataset.dir);
+    if (i < 0 || i >= L.length) return;
+    next[b.dataset.size] = L[i]; setSizes(next);
+  });
+  on(document, 'pointerdown', function (ev) { if (!sizeMenu.hidden && !(ev.target.closest && ev.target.closest('.sizes'))) showSizeMenu(false); }, true);
+  on(document, 'keydown', function (ev) { if (ev.key === 'Escape' && !sizeMenu.hidden) { showSizeMenu(false); sizeBtn.focus(); } });
+}
 
 /* search */
 var q = document.getElementById('q'), hits = document.getElementById('search-hits'), hitIdx = 0, hitList = [];
@@ -2753,16 +3552,16 @@ function runSearch() {
   }).join('') : '<p style="margin:8px;color:var(--muted);font-size:13px">No box matches “' + esc(q.value) + '”.</p>';
   hits.hidden = false;
 }
-q.addEventListener('input', runSearch);
-q.addEventListener('keydown', function (ev) {
+on(q, 'input', runSearch);
+on(q, 'keydown', function (ev) {
   if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') { ev.preventDefault(); hitIdx = (hitIdx + (ev.key === 'ArrowDown' ? 1 : hitList.length - 1)) % Math.max(hitList.length, 1); Array.from(hits.children).forEach(function (b, i) { b.classList.toggle('on', i === hitIdx); }); }
   if (ev.key === 'Enter' && hitList[hitIdx]) { reveal(hitList[hitIdx]); hits.hidden = true; q.blur(); }
   if (ev.key === 'Escape') { q.value = ''; hits.hidden = true; q.blur(); }
 });
-hits.addEventListener('click', function (ev) { var b = ev.target.closest('[data-hit]'); if (b) { reveal(byId[b.dataset.hit]); hits.hidden = true; } });
-document.addEventListener('click', function (ev) { if (!ev.target.closest('.search')) hits.hidden = true; });
+on(hits, 'click', function (ev) { var b = ev.target.closest('[data-hit]'); if (b) { reveal(byId[b.dataset.hit]); hits.hidden = true; } });
+on(document, 'click', function (ev) { if (!ev.target.closest('.search')) hits.hidden = true; });
 
-document.addEventListener('keydown', function (ev) {
+on(document, 'keydown', function (ev) {
   if (/INPUT|TEXTAREA|SELECT/.test(ev.target.tagName) || ev.ctrlKey || ev.metaKey || ev.altKey) return;
   if (ev.key === '/') { ev.preventDefault(); q.focus(); }
   else if (ev.key === 'f' || ev.key === 'F') document.getElementById('z-fit').click();
@@ -2788,7 +3587,7 @@ document.addEventListener('keydown', function (ev) {
   else if (view === 'map' && seqSel && ev.key === ' ') { ev.preventDefault(); toggleSeqPlay(byId[seqSel.id]); }
   else if (view === 'dynamic' && (ev.key === 's' || ev.key === 'S')) openScModal();
 });
-window.addEventListener('resize', function () { mmView(); });
+on(window, 'resize', function () { mmView(); });
 
 /* ======================================================================
    VIEWS: Map · Pinned board · Dynamic diagrams
@@ -2917,7 +3716,7 @@ function renderPins() {
   gn.querySelectorAll('.nd').forEach(function (el) { el.classList.toggle('nd-dim', !!selected && !lit.has(el.dataset.id)); });
   document.getElementById('pins-count').textContent = pins.length + ' pinned · ' + m.size + ' relationships';
 }
-document.getElementById('pins-wrap').addEventListener('click', function (ev) {
+on(document.getElementById('pins-wrap'), 'click', function (ev) {
   var b = ev.target.closest('[data-pact]');
   if (b) { var n = byId[b.dataset.id]; if (b.dataset.pact === 'up') pinUp(n); if (b.dataset.pact === 'down') pinDown(n); if (b.dataset.pact === 'unpin') { pins = pins.filter(function (x) { return x !== n.id; }); unselect(n); pinsChanged(); } return; }
   var g = ev.target.closest('.nd'), n = g && byId[g.dataset.id];
@@ -2925,7 +3724,7 @@ document.getElementById('pins-wrap').addEventListener('click', function (ev) {
   renderPins(); renderPanel();
 });
 // keyboard on the board: Enter selects the focused card, Ctrl / ⌘ / Shift + Enter adds it to the selection or takes it out
-document.getElementById('pins-wrap').addEventListener('keydown', function (ev) {
+on(document.getElementById('pins-wrap'), 'keydown', function (ev) {
   var g = ev.key === 'Enter' && ev.target.closest && ev.target.closest('.nd'); if (!g) return;
   ev.preventDefault();
   var n = byId[g.dataset.id], id = n.id;
@@ -3024,9 +3823,18 @@ function drawCollab(steps) {
 
 function drawSeq(steps) {
   var host = document.getElementById('dyn-seq'); host.innerHTML = '';
-  var parts = participants(steps), SW = 260, LW = 196, HEAD = 80, ROW = 40, PADB = 36;
-  var BW = Math.max(parts.length * LW, 400), BH = steps.length * ROW + PADB, x = {}, cs = steps[dyn.step];
-  parts.forEach(function (n, i) { x[n.id] = i * LW + LW / 2; });
+  var parts = participants(steps), SW = 260, HEAD = 80, ROW = 40, PADB = 36;
+  // Lanes fit the width the view has: stretched up to LMAX each, centred when even that leaves room. When LMIN
+  // lanes do not fit, the whole grid is zoomed out (CSS zoom keeps the sticky header and step list working)
+  // down to ZMIN; only beyond that does it scroll sideways. A hidden view (width 0) keeps the old 196px lanes.
+  var LMIN = 150, LMAX = 260, ZMIN = .7, ww = document.getElementById('dyn-wrap').clientWidth;
+  var z = ww && SW + parts.length * LMIN > ww ? Math.max(ZMIN, ww / (SW + parts.length * LMIN)) : 1;
+  host.style.zoom = z < 1 ? String(z) : '';
+  var avail = ww ? Math.floor(ww / z - SW) : parts.length * 196;
+  var LW = parts.length ? Math.max(LMIN, Math.min(LMAX, avail / parts.length)) : LMAX;
+  var BW = Math.max(parts.length * LW, 400, avail), OX = (BW - parts.length * LW) / 2, CW = Math.min(180, LW - 16);
+  var BH = steps.length * ROW + PADB, x = {}, cs = steps[dyn.step];
+  parts.forEach(function (n, i) { x[n.id] = OX + i * LW + LW / 2; });
   host.style.gridTemplateColumns = SW + 'px ' + BW + 'px';
   host.style.gridTemplateRows = HEAD + 'px ' + BH + 'px';
   // corner (sticky top + left)
@@ -3036,10 +3844,10 @@ function drawSeq(steps) {
   // header with participants (sticky top)
   var head = svgEl('svg', { 'class': 'seq-head', width: BW, height: HEAD, viewBox: '0 0 ' + BW + ' ' + HEAD }, host);
   parts.forEach(function (n) {
-    var cx = x[n.id], el = cardInto(head, n, cx - 90, 10, 180, 58, { name: dispName(n) });
+    var cx = x[n.id], el = cardInto(head, n, cx - CW / 2, 10, CW, 58, { name: dispName(n) });
     el.querySelectorAll('.t-sub, .modes').forEach(function (e) { e.remove(); });
     el.querySelector('.t-tag').setAttribute('y', 31); el.querySelector('.t-name').setAttribute('y', 50);
-    el.querySelector('.t-tag').textContent = trunc(n.tag, 150, 12.2); el.querySelector('.t-name').textContent = trunc(dispName(n), 160, n.t === 'code' ? 13.5 : 15);
+    el.querySelector('.t-tag').textContent = trunc(n.tag, CW - 30, 12.2); el.querySelector('.t-name').textContent = trunc(dispName(n), CW - 20, n.t === 'code' ? 13.5 : 15);
     if (cs && (cs.a === n || cs.b === n)) el.classList.add('sel');
     svgEl('line', { 'class': 'life', x1: cx, x2: cx, y1: 68, y2: HEAD }, head);
   });
@@ -3076,14 +3884,24 @@ function drawSeq(steps) {
     svgEl('text', { 'class': 'num-t', x: xa, y: y + 3.5, 'text-anchor': 'middle' }, g, String(s.n));
   });
   // keep the current step in view, below the sticky header and right of the sticky sidebar
+  // (diagram units times z = the wrap's scroll pixels)
   var wrap = document.getElementById('dyn-wrap');
   if (cs) {
-    var top = HEAD + dyn.step * ROW, viewTop = wrap.scrollTop + HEAD, viewBot = wrap.scrollTop + wrap.clientHeight;
-    if (top < viewTop + 8 || top + ROW > viewBot - 8) wrap.scrollTop = Math.max(0, top - HEAD - (wrap.clientHeight - HEAD) / 2);
-    var lo2 = SW + Math.min(x[cs.a.id], x[cs.b.id]) - 110, hi2 = SW + Math.max(x[cs.a.id], x[cs.b.id]) + 110;
-    if (lo2 < wrap.scrollLeft + SW || hi2 > wrap.scrollLeft + wrap.clientWidth) wrap.scrollLeft = Math.max(0, (lo2 + hi2) / 2 - SW - (wrap.clientWidth - SW) / 2);
+    var zH = HEAD * z, zS = SW * z;
+    var top = (HEAD + dyn.step * ROW) * z, viewTop = wrap.scrollTop + zH, viewBot = wrap.scrollTop + wrap.clientHeight;
+    if (top < viewTop + 8 || top + ROW * z > viewBot - 8) wrap.scrollTop = Math.max(0, top - zH - (wrap.clientHeight - zH) / 2);
+    var lo2 = (SW + Math.min(x[cs.a.id], x[cs.b.id]) - 110) * z, hi2 = (SW + Math.max(x[cs.a.id], x[cs.b.id]) + 110) * z;
+    if (lo2 < wrap.scrollLeft + zS || hi2 > wrap.scrollLeft + wrap.clientWidth) wrap.scrollLeft = Math.max(0, (lo2 + hi2) / 2 - zS - (wrap.clientWidth - zS) / 2);
   }
 }
+
+// redraw the sequence when its view changes width (window resize, panel, size menu); disconnected in teardown()
+var seqWidth = 0, seqRO = window.ResizeObserver ? new ResizeObserver(function (en) {
+  var w = Math.round(en[0].contentRect.width);
+  if (w === seqWidth) return; seqWidth = w;
+  if (w && view === 'dynamic' && dyn.style === 'seq') renderDyn();
+}) : null;
+if (seqRO) seqRO.observe(document.getElementById('dyn-wrap'));
 
 function drawList(steps) {
   var host = document.getElementById('dyn-list');
@@ -3142,12 +3960,12 @@ function openScModal() {
   scModal.showModal();
   var c = scModal.querySelector('.scm-item.cur'); if (c) c.focus();
 }
-scModal.addEventListener('click', function (ev) {
+on(scModal, 'click', function (ev) {
   var b = ev.target.closest('[data-sc]');
   if (b) { dyn.sc = +b.dataset.sc; dyn.step = 0; stopPlay(); syncDyn(); renderDyn(); renderPanel(); scModal.close(); return; }
   if (ev.target === scModal) scModal.close();   // a click on the backdrop
 });
-scModal.addEventListener('keydown', function (ev) { ev.stopPropagation(); });   // the page's shortcuts stay off while it is open; Esc still closes it
+on(scModal, 'keydown', function (ev) { ev.stopPropagation(); });   // the page's shortcuts stay off while it is open; Esc still closes it
 document.getElementById('dyn-pick').onclick = openScModal;
 function syncDyn() {
   document.querySelectorAll('#dyn-level button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.lv === dyn.level)); });
@@ -3162,7 +3980,7 @@ syncDyn();
 document.getElementById('dyn-prev').onclick = function () { stopPlay(); goStep(dyn.step - 1); };
 document.getElementById('dyn-next').onclick = function () { stopPlay(); goStep(dyn.step + 1); };
 document.getElementById('dyn-play').onclick = togglePlay;
-document.getElementById('dyn-wrap').addEventListener('click', function (ev) {
+on(document.getElementById('dyn-wrap'), 'click', function (ev) {
   var st = ev.target.closest('[data-step]');
   if (st && st.dataset.step !== '') { stopPlay(); goStep(+st.dataset.step); return; }
   var g = ev.target.closest('.nd');
@@ -3212,7 +4030,113 @@ function loadRete() {
   return reteLoading;
 }
 function buildRete() { return loadRete().then(function (r) { return r.build(rdf().toNTriples(), 'nt'); }); }
+/* export of the diagram on screen: SVG, PNG or a page of its own. The map goes out whole (every box drawn, not only what fits the
+   window), the Pinned board and the Dynamic diagrams as drawn. The page's own CSS goes with it, with the colour theme fixed
+   (auto resolved to light or dark) and the reader sizes, so the file looks like the screen. PNG is drawn without the web
+   font (a picture cannot load one), in the system font. */
+var FONT_HREF = (document.querySelector('link[href*="fonts.googleapis.com/css"]') || {}).href || '';
+function themeNow() { return theme !== 'auto' ? theme : (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); }
+function pageCss() {
+  var out = [];
+  Array.prototype.forEach.call(document.styleSheets, function (sh) { try { Array.prototype.forEach.call(sh.cssRules, function (r) { out.push(r.cssText); }); } catch (e) {} });
+  return out.join('\n');
+}
+function sizeVars() { return '--ui:' + size.ui + ';--ink-scale:' + (0.85 * size.ink).toFixed(3) + ';--lbl-scale:' + (0.9 * size.ink).toFixed(3); }
+function viewName() {
+  if (view === 'map') return 'map';
+  if (view === 'pins') return 'pinned';
+  return (SCEN[dyn.sc] ? SCEN[dyn.sc].id : 'scenario') + '-' + ({ collab: 'collaboration', seq: 'sequence', list: 'steps' })[dyn.style];
+}
+function viewTitle() {
+  if (view === 'map') return 'Architecture map';
+  if (view === 'pins') return 'Pinned elements';
+  return (SCEN[dyn.sc] ? SCEN[dyn.sc].name : 'Scenario') + ' · ' + ({ collab: 'collaboration diagram', seq: 'sequence diagram', list: 'steps' })[dyn.style];
+}
+// the diagram on screen as a standalone <svg> element with its size; null for the step table, which is HTML
+function viewSvg() {
+  var out, w, h;
+  if (view === 'map') {
+    var bb = vp.getBBox(), m = 40, vb = [bb.x - m, bb.y - m, bb.width + 2 * m, bb.height + 2 * m];
+    out = svg.cloneNode(true);
+    out.removeAttribute('id'); out.classList.remove('lowzoom', 'panning'); out.removeAttribute('aria-label');
+    out.querySelector('#vp').removeAttribute('transform');
+    out.querySelectorAll('.ehit, .pinmark, .hbtn').forEach(function (e) { e.remove(); });
+    var pat = out.querySelector('#dots'); if (pat) pat.removeAttribute('patternTransform');
+    var bg = out.querySelector('#bg'); if (bg) bg.remove();
+    var under = mk('g', {});
+    mk('rect', { x: vb[0], y: vb[1], width: vb[2], height: vb[3], style: 'fill: var(--bg)' }, under);
+    mk('rect', { x: vb[0], y: vb[1], width: vb[2], height: vb[3], fill: 'url(#dots)' }, under);
+    out.insertBefore(under, out.querySelector('#vp'));
+    out.setAttribute('viewBox', vb.map(function (v) { return v.toFixed(1); }).join(' '));
+    w = vb[2]; h = vb[3];
+  } else if (view === 'pins' || dyn.style === 'collab') {
+    var src = document.getElementById(view === 'pins' ? 'pins' : 'dyn-collab'), v = (src.getAttribute('viewBox') || '0 0 800 600').split(/[\s,]+/).map(Number);
+    out = src.cloneNode(true); out.removeAttribute('id'); out.removeAttribute('style'); out.classList.remove('fit');
+    w = v[2]; h = v[3];
+    var b0 = mk('g', {}); mk('rect', { x: v[0], y: v[1], width: v[2], height: v[3], style: 'fill: var(--bg)' }, b0); out.insertBefore(b0, out.firstChild);
+  } else if (dyn.style === 'seq') {
+    var host = document.getElementById('dyn-seq'), hd = host.querySelector('.seq-head'), sd = host.querySelector('.seq-side'), bd = host.querySelector('.seq-body');
+    if (!hd) return null;
+    var SW = +sd.getAttribute('width'), HH = +hd.getAttribute('height'), BW = +hd.getAttribute('width'), BH = +bd.getAttribute('height');
+    w = SW + BW; h = HH + BH;
+    out = mk('svg', { viewBox: '0 0 ' + w + ' ' + h });
+    mk('rect', { x: 0, y: 0, width: w, height: h, style: 'fill: var(--bg)' }, out);
+    mk('rect', { x: 0, y: 0, width: SW, height: h, style: 'fill: var(--surface)' }, out);
+    [[hd, SW, 0], [sd, 0, HH], [bd, SW, HH]].forEach(function (p) { var c = p[0].cloneNode(true); c.removeAttribute('class'); c.setAttribute('x', p[1]); c.setAttribute('y', p[2]); out.appendChild(c); });
+    mk('line', { x1: SW, y1: 0, x2: SW, y2: h, style: 'stroke: var(--line)' }, out);
+    mk('line', { x1: 0, y1: HH, x2: w, y2: HH, style: 'stroke: var(--line)' }, out);
+    var corner = host.querySelector('.seq-corner span');
+    mk('text', { x: 14, y: HH / 2 - 2, style: 'font: 700 15px var(--f-display); fill: var(--ink)' }, out).textContent = 'Steps';
+    mk('text', { x: 14, y: HH / 2 + 16, style: 'font: 11px var(--f-mono); fill: var(--muted)' }, out).textContent = corner ? corner.textContent : '';
+  } else return null;
+  out.setAttribute('xmlns', NS); out.setAttribute('width', Math.round(w)); out.setAttribute('height', Math.round(h));
+  out.setAttribute('data-theme', themeNow()); out.setAttribute('style', sizeVars());
+  return { el: out, w: w, h: h };
+}
+function svgText(v, withFont) {
+  var css = (withFont && FONT_HREF ? '@import url("' + FONT_HREF + '");\n' : '') + pageCss();
+  var str = new XMLSerializer().serializeToString(v.el);
+  var head = '<title>' + esc(PROJECT.name + ' · ' + viewTitle()) + '</title><style><![CDATA[\n' + css.replace(/\]\]>/g, ']] >') + '\n]]></style>';
+  return str.replace(/^(<svg[^>]*>)/, function (m0) { return m0 + head; });
+}
+function exportView(kind) {
+  var stem = rdf().fileStem.replace(/-architecture$/, '') + '-' + viewName(), v = viewSvg();
+  if (kind === 'html') {
+    var body = v ? svgText(v, false) : '<div class="list-export">' + document.getElementById('dyn-list').innerHTML + '</div>';
+    var html = '<!doctype html>\n<html lang="en" data-theme="' + themeNow() + '" style="' + sizeVars() + '">\n<head>\n<meta charset="utf-8">\n' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>' + esc(PROJECT.name + ' · ' + viewTitle()) + '</title>\n' +
+      (FONT_HREF ? '<link rel="stylesheet" href="' + esc(FONT_HREF) + '">\n' : '') +
+      '<style>\n' + pageCss().replace(/<\/style/gi, '<\\/style') + '\nhtml, body { height: auto; } body { overflow: auto; margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); }\n' +
+      '.fig-head { padding: 18px 24px 0; } .fig-head small { display: block; font: 11px var(--f-mono); color: var(--muted); letter-spacing: .06em; } .fig-head b { font: 700 20px var(--f-display); }\n' +
+      '.fig { padding: 16px 24px 32px; overflow: auto; } .fig > svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }\n</style>\n</head>\n<body>\n' +
+      '<header class="fig-head"><small>' + esc(PROJECT.subtitle || PROJECT.name) + '</small><b>' + esc(viewTitle()) + '</b></header>\n<main class="fig">' + body + '</main>\n</body>\n</html>\n';
+    saveFile(html, 'text/html', stem + '.html'); say('Saved ' + stem + '.html');
+    return Promise.resolve(true);
+  }
+  if (!v) { say('The step table is not a picture: export it as an HTML page, or switch to the sequence or collaboration diagram.', true); return Promise.resolve(false); }
+  if (kind === 'svg') {
+    saveFile('<?xml version="1.0" encoding="UTF-8"?>\n' + svgText(v, true), 'image/svg+xml', stem + '.svg');
+    say('Saved ' + stem + '.svg · ' + Math.round(v.w) + ' × ' + Math.round(v.h));
+    return Promise.resolve(true);
+  }
+  // PNG: the SVG drawn on a canvas at 2× (less for very large diagrams, so the canvas stays within browser limits)
+  var scale = Math.min(2, 16000 / Math.max(v.w, v.h), Math.sqrt(48e6 / (v.w * v.h)));
+  return new Promise(function (ok) {
+    var img = new Image();
+    img.onload = function () {
+      var cv = document.createElement('canvas'); cv.width = Math.round(v.w * scale); cv.height = Math.round(v.h * scale);
+      var cx = cv.getContext('2d'); cx.scale(scale, scale); cx.drawImage(img, 0, 0, v.w, v.h);
+      cv.toBlob(function (blob) {
+        if (!blob) { say('The browser could not make the PNG; export the SVG instead.', true); ok(false); return; }
+        saveFile(blob, 'image/png', stem + '.png'); say('Saved ' + stem + '.png · ' + cv.width + ' × ' + cv.height); ok(true);
+      }, 'image/png');
+    };
+    img.onerror = function () { say('The browser could not draw the diagram as a PNG; export the SVG instead.', true); ok(false); };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText(v, false));
+  });
+}
 function exportAs(kind) {
+  if (kind === 'svg' || kind === 'png' || kind === 'html') return exportView(kind);
   var g = rdf();
   if (kind === 'jsonld') {
     saveFile(JSON.stringify(g.toJsonLd(), null, 2), 'application/ld+json', g.fileStem + '.jsonld');
@@ -3230,8 +4154,8 @@ function exportAs(kind) {
   });
 }
 exportBtn.onclick = function () { exportMenu.hidden = !exportMenu.hidden; exportBtn.setAttribute('aria-expanded', String(!exportMenu.hidden)); if (!exportMenu.hidden) say(''); };
-exportMenu.addEventListener('click', function (ev) { var b = ev.target.closest('[data-export]'); if (b) exportAs(b.dataset.export); });
-document.addEventListener('click', function (ev) { if (!ev.target.closest('.export') && !exportMenu.hidden) { exportMenu.hidden = true; exportBtn.setAttribute('aria-expanded', 'false'); } });
+on(exportMenu, 'click', function (ev) { var b = ev.target.closest('[data-export]'); if (b) exportAs(b.dataset.export); });
+on(document, 'click', function (ev) { if (!ev.target.closest('.export') && !exportMenu.hidden) { exportMenu.hidden = true; exportBtn.setAttribute('aria-expanded', 'false'); } });
 
 /* ======================================================================
    URL state. The hash mirrors what is on screen, so any view can be linked, reloaded or screenshotted:
@@ -3300,10 +4224,17 @@ if (HAS_DYN) {
   if (+H.step > 0) dyn.step = Math.floor(+H.step) - 1;
   syncDyn();
 }
+// a restart (the editor) can ask for boxes to open and one to select, on top of what the URL says
+if (PREV) {
+  (PREV.open || []).forEach(function (id) { if (byId[id]) openWithAncestors(id); });
+  if (PREV.select && byId[PREV.select]) { setSel([byId[PREV.select]]); ancestors(byId[PREV.select]).forEach(function (a) { expanded.add(a.id); }); seqSel = null; }
+  else if (PREV.select === null) setSel([]);
+}
 layout(); aggregate(); cur = new Map(target);
 if (H.seqstep) { var ss = splitLast(H.seqstep), sn = byId[ss[0]]; if (sn && isSeq(sn) && +ss[1] > 0) { seqSel = { id: sn.id, step: Math.min(sn._seq.steps.length, Math.floor(+ss[1])) - 1 }; if (!H.sel) selected = null; } }
 renderPanel(); // before fitting: on narrow screens the panel takes height away from the canvas
-var zr = H.zoom && target.get(H.zoom), f0 = zr ? fitTo(zr, 40) : fitAll(); cam.x = f0.x; cam.y = f0.y; cam.s = f0.s;
+if (PREV && PREV.cam) { cam.x = PREV.cam.x; cam.y = PREV.cam.y; cam.s = PREV.cam.s; }   // a restart keeps the reader where they were
+else { var zr = H.zoom && target.get(H.zoom), f0 = zr ? fitTo(zr, 40) : fitAll(); cam.x = f0.x; cam.y = f0.y; cam.s = f0.s; }
 applyCam(); redraw(); crumb(); syncLevel();
 if (VIEWS.indexOf(H.view) > 0) setView(H.view);
 booted = true;
@@ -3314,12 +4245,35 @@ window.ARCH_EXPLORER = { ready: true, errors: [], warnings: CHECK.warnings,
   layout: function () { return C.analyse(target, agg); },
   rdf: { jsonld: function () { return JSON.stringify(rdf().toJsonLd(), null, 2); }, ntriples: function () { return rdf().toNTriples(); }, tripleCount: function () { return rdf().tripleCount(); },
     buildRete: buildRete, download: exportAs },
+  // the diagram on screen as an SVG string (what export → SVG saves), for tests and scripts
+  viewSvg: function () { var v = viewSvg(); return v ? svgText(v, true) : null; },
   api: { setView: setView, setLevel: setLevel, setMode: setMode, reveal: function (id) { reveal(byId[id]); }, toggle: function (id) { toggle(byId[id]); },
     setScenario: function (i) { scSel.value = String(i); scSel.onchange(); }, setDynStyle: function (s) { document.querySelector('#dyn-style [data-st="' + s + '"]').click(); },
     setDynLevel: function (l) { document.querySelector('#dyn-level [data-lv="' + l + '"]').click(); }, sourceUrl: function (id) { return repoUrl(byId[id]); },
     showSeq: function (id, scenarioId) { var j = -1; SCEN.forEach(function (s, i) { if (s.id === scenarioId) j = i; }); showSeq(byId[id], j >= 0 ? j : undefined); },
-    showBoxes: function (id) { showBoxes(byId[id]); }, pickSeqStep: function (id, i) { pickSeqStep(byId[id], i); } } };
-})();
+    showBoxes: function (id) { showBoxes(byId[id]); }, pickSeqStep: function (id, i) { pickSeqStep(byId[id], i); },
+    // for the editor (and tests): read what is drawn, convert screen points, select, redraw
+    cam: function () { return { x: cam.x, y: cam.y, s: cam.s }; }, geo: function () { return cur; }, core: function () { return C; },
+    toWorld: toWorld, openBoxAt: function (cx, cy) { var b = openBoxAt(toWorld(cx, cy), null); return b ? b.id : null; },
+    selectedIds: function () { return selList().map(function (n) { return n.id; }); }, isOpen: function (id) { return !!byId[id] && isOpen(byId[id]); },
+    select: function (id) { select(id && byId[id] ? byId[id] : null); }, selectedId: function () { return selected ? selected.id : null; },
+    view: function () { return view; }, redraw: function () { if (view === 'map') redraw(); }, refreshPanel: function () { renderPanel(); } },
+  // let go of everything this run attached, so that archEngine() can run again on another MODEL
+  teardown: teardown };
+function teardown() {
+  AC.abort();
+  stopPlay(); stopSeqPlay(); if (anim) cancelAnimationFrame(anim); clearTimeout(relayout._guard); clearTimeout(hoverT);
+  if (seqRO) seqRO.disconnect();
+  [L.bounds, L.edges, L.nodes, L.labels, document.getElementById('mm')].forEach(function (g) { while (g.firstChild) g.removeChild(g.firstChild); });
+  ['pins', 'dyn-collab', 'dyn-seq', 'dyn-list'].forEach(function (id) { document.getElementById(id).innerHTML = ''; });
+  panel.innerHTML = '';
+  svg.classList.remove('has-sel', 'panning', 'lowzoom'); svg.classList.add('labels'); svg.removeAttribute('data-mode');
+  if (scModal.open) scModal.close();
+  [exportMenu, themeMenu, sizeMenu, hits].forEach(function (m) { if (m) m.hidden = true; });
+  window.ARCH_EXPLORER = { ready: false, errors: [], warnings: [] };
+}
+};
+window.archEngine(null);
 </script>
 </body>
 </html>

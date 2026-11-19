@@ -97,3 +97,4 @@ Tell the user where the files are (`index.html`, `model.js`, `architecture.jsonl
 - Only the MODEL block changes. If the user asks for a behaviour or style change, see "Extending and switching off" in `features.md`, make the smallest edit, and mention it.
 - The page needs no network. Two things reach out, both optional: the web-font links in `<head>` (remove the three `<link>` lines for a network-silent page) and the `.rete` export, which fetches its builder only when the reader clicks it.
 - Updating an existing explorer: edit `model.js` and rebuild, so template improvements are picked up. If only `index.html` exists, edit its MODEL block in place.
+- Readers can edit the model in the page itself (`✎ edit`) and download it as `model.js` or as the whole page. If the user hands you such a file, it is the source: rebuild from it, then check its paths and lines against the code as usual, since the page cannot.

@@ -61,9 +61,38 @@ click a message for the code behind it, or select a part and show its own sequen
   them, one lane per level.
 - **Variants**: when parts of the architecture exist only in some configurations (cloud or on-premises, a feature
   flag), a filter fades what a variant does not use.
-- **Light and dark themes** (++t++), following the operating system by default.
+- **Colour themes** (++t++ or the `theme ▾` menu): light and dark following the operating system by default, plus
+  contrast, paper, blueprint and graphite.
+- **Sizes** (`size ▾`): make the toolbars and panel smaller, spread the boxes further apart without making them
+  bigger, or make the arrow labels and arrows smaller or larger. Remembered per browser.
 - **Links to any view**: the URL hash records what is open and selected, the scenario and step, and the theme, so
   any view can be shared, reloaded or screenshotted.
+
+### Export a diagram
+
+`export ▾` → **This view** saves the diagram on screen as an **SVG**, a **PNG** or an **HTML** page of its own: the
+whole map (not only the part in the window), the Pinned board, or the scenario's collaboration or sequence diagram,
+in the colours on screen. `export ▾` → **The model** downloads the architecture as an RDF graph (see
+[RDF export](rdf.md)).
+
+### Edit the model in the page
+
+`✎ edit` turns the page into an editor of its own model, with an edit bar under the toolbar and a form in the panel.
+
+- **Add** a box by dragging a type from the edit bar onto the map (into an open box or at the top level), or click a
+  type to add one inside the selected box.
+- **Move** a box by dragging it: onto a sibling to swap places, into a gap for a new row or column, or into another
+  open box to put it inside.
+- **Connect** two boxes with Alt+drag from one to the other, or `→ connect to…` and a click.
+- **Edit** anything in the panel: name, id (references follow), type, description, notes, technology, source path
+  and line, colour, the box it is inside, each connection's label and style; with nothing selected, the project,
+  source links, RDF base and vocabulary, the opening view and every scenario step. Each box also shows its RDF
+  triples.
+- **Delete** with the button or the Delete key; undo and redo with Ctrl+Z and Ctrl+Y.
+
+Every change is checked by the page's validator before it is made. The edits stay in the browser until you
+download them: `model.js` to rebuild from, the whole `page` with the new model inside, or the graph as JSON-LD or
+`.rete`. Try it on the [live example](example/explorer.md).
 
 ### Keyboard
 
@@ -78,6 +107,7 @@ click a message for the code behind it, or select a part and show its own sequen
 | ++l++, ++e++, ++t++ | Arrow labels, arrow style, colour theme |
 | ++esc++ | Clear the selection |
 | ++left++ ++right++ ++space++ | Previous step, next step, play |
+| ++del++, ++ctrl+z++, ++ctrl+y++ | In edit mode: delete the selected box, undo, redo |
 
 ## How the page is built
 
