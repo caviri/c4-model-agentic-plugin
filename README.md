@@ -15,7 +15,17 @@ Each output is a single HTML file. The reader needs no server and no build step.
 
 ## Install
 
-In Claude Code:
+Let your agent do it: paste this into Claude Code.
+
+```text
+Install the Claude Code plugin c4-model-agentic-plugin for me.
+Read https://raw.githubusercontent.com/caviri/c4-model-agentic-plugin/main/INSTALL.md
+and follow its "Steps for the agent" section exactly.
+```
+
+[INSTALL.md](INSTALL.md) has the agent's steps, team installs, updating and removing.
+
+Or install it yourself, in Claude Code:
 
 ```
 /plugin marketplace add caviri/c4-model-agentic-plugin

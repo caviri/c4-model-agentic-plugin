@@ -217,15 +217,24 @@
   </div>
 </section>
 
-<!-- ============================== principles ============================== -->
-<section class="band band-ink">
-  <div class="wrap principles">
-    <blockquote>“Do not add a cache, gateway or queue because systems like this usually have one.”<cite>from the exploration rules the plugin follows</cite></blockquote>
-    <div class="rules">
-      <div><h3>Evidence over plausibility</h3><p>Every container, arrow and flow step cites a file. What it had to infer is marked as inferred.</p></div>
-      <div><h3>Your vocabulary</h3><p>Things are named the way your code and your team name them, not the way a textbook would.</p></div>
-      <div><h3>Checked before it is done</h3><p>Schema, paths, line numbers and layout are checked by script; the pages are opened and looked at.</p></div>
+<!-- ============================== numbers: counted on the example ============================== -->
+<section class="band band-ink" id="numbers">
+  <div class="wrap numbers">
+    <div class="numbers-intro">
+      <p class="kicker">Measured, not claimed</p>
+      <h2>What one command produced for the example</h2>
+      <p class="sub">Every figure here is counted from the example on this page: a 36-file project with a web app, an API,
+        a background worker, PostgreSQL, Redis and MinIO, where people annotate images and every annotation is reviewed.</p>
+      <p class="numbers-links"><a href="example/brief/">Read the brief it wrote →</a><a href="example/explorer/">Open the map →</a></p>
     </div>
+    <ul class="stats">
+      <li><b>64</b><span class="stat-k">boxes on 4 levels</span><span>3 people, 4 containers, 3 data stores, 21 components, 27 functions and classes, 5 states</span></li>
+      <li><b>63</b><span class="stat-k">source paths checked</span><span>each box’s file and line, verified by script before the page was written</span></li>
+      <li><b>69</b><span class="stat-k">relationships, all labelled</span><span>every arrow says what it carries, from <code>PUT originals</code> to <code>FOR UPDATE SKIP LOCKED</code></span></li>
+      <li><b>93</b><span class="stat-k">scenario steps</span><span>four runtime flows, from batch upload to the COCO export, each step pointing at code</span></li>
+      <li><b>20</b><span class="stat-k">slides, 11 diagrams</span><span>the deck that explains it, written from the same brief as the map</span></li>
+      <li><b>1,847</b><span class="stat-k">RDF triples</span><span>the same model as JSON-LD, ready for SPARQL or a <code>.rete</code> file</span></li>
+    </ul>
   </div>
 </section>
 
@@ -268,7 +277,9 @@
       <p class="sub">Needs Claude Code. Python 3 builds the deck; Node.js 18+ and Chrome or Edge are optional, for building and checking the map.</p>
     </div>
     <div class="term">
-      <div class="term-row"><span class="c">In Claude Code</span><button type="button" class="copy" data-copy="/plugin marketplace add caviri/c4-model-agentic-plugin&#10;/plugin install c4-model-agentic-plugin@c4-model-agentic-plugin">copy</button></div>
+      <div class="term-row"><span class="c">Ask your agent: paste into Claude Code</span><button type="button" class="copy" data-copy="Install the Claude Code plugin c4-model-agentic-plugin for me.&#10;Read https://raw.githubusercontent.com/caviri/c4-model-agentic-plugin/main/INSTALL.md&#10;and follow its &quot;Steps for the agent&quot; section exactly. When you are done, tell me&#10;what you ran, what you checked, and how I start using the plugin.">copy</button></div>
+      <pre class="msg">Install the Claude Code plugin c4-model-agentic-plugin for me. Read https://raw.githubusercontent.com/caviri/c4-model-agentic-plugin/main/INSTALL.md and follow its "Steps for the agent" section exactly.</pre>
+      <div class="term-row"><span class="c">Or yourself, in Claude Code</span><button type="button" class="copy" data-copy="/plugin marketplace add caviri/c4-model-agentic-plugin&#10;/plugin install c4-model-agentic-plugin@c4-model-agentic-plugin">copy</button></div>
       <pre><span class="p">›</span> /plugin marketplace add caviri/c4-model-agentic-plugin
 <span class="p">›</span> /plugin install c4-model-agentic-plugin@c4-model-agentic-plugin</pre>
       <div class="term-row"><span class="c">Then, in the project to explain</span><button type="button" class="copy" data-copy="/c4-model-agentic-plugin:explain-project">copy</button></div>
