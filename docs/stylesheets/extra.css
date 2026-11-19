@@ -22,6 +22,10 @@
   --c4-accent: #8fb8de; --c4-accent-soft: #1b3045;
 }
 
+/* header and tabs in the landing page's ink, in both themes */
+.md-header, .md-tabs { background-color: #0b1320; }
+.md-header__button.md-logo img { height: 1.5rem; border-radius: .3rem; }
+
 .md-header__title, .md-typeset h1, .md-typeset h2, .md-typeset h3 { font-family: "Space Grotesk", var(--md-text-font-family); }
 .md-typeset h1 { font-weight: 700; letter-spacing: -0.01em; color: var(--md-default-fg-color); }
 .md-typeset h2 { font-weight: 700; }

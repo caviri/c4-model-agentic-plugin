@@ -15,12 +15,16 @@ hooks:
 exclude_docs: |
   hooks.py
   __pycache__/
+  landing/
   overrides/
   requirements.txt
 
 theme:
   name: material
   custom_dir: docs/overrides
+  # both copied from .claude-plugin/ by docs/hooks.py
+  logo: assets/icon.svg
+  favicon: assets/icon.png
   font:
     text: IBM Plex Sans
     code: IBM Plex Mono
