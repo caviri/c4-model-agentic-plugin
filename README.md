@@ -198,6 +198,22 @@ docs/img/                 screenshots
 | `project-deck` | deck structure, animated versus static, code slides, diagrams and images |
 | `architecture-explorer` | data model, features and layout, RDF graph |
 
+## Background: the C4 model
+
+The four levels the explorer draws (system context, containers, components and code) are the
+[C4 model](https://c4model.com/), created by [Simon Brown](https://simonbrown.je). It grew out of the
+software architecture workshops he ran from the mid-2000s, and the name "C4" first appeared in his
+QCon London workshop in March 2011. This plugin is an independent project, not affiliated with or
+endorsed by Simon Brown.
+
+- [c4model.com](https://c4model.com/): the official site, with the abstractions, diagram types,
+  notation, FAQ and history.
+- [Visualising software architecture with the C4 model](https://www.youtube.com/watch?v=x2-rSnhpw0g):
+  Simon Brown's talk at Agile on the Beach, July 2019.
+- [The C4 model](https://www.oreilly.com/library/view/the-c4-model/9798341660113/): Simon Brown's
+  book, on O'Reilly.
+- [simonbrown.je](https://simonbrown.je): his site, with talks, writing and C4 workshops.
+
 ## License
 
 [Apache-2.0](LICENSE).

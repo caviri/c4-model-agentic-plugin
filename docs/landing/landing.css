@@ -12,7 +12,9 @@
   --f-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
   --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
-  --wrap: 1180px;
+  --wrap: 1280px;
+  /* fixed chrome heights: the hero fills exactly the first screen below them */
+  --mq-h: 34px; --nav-h: 58px;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #0e151d; --surface: #16212d; --text: #e5ebf1; --muted: #9aa8b7; --line: #2a3847;
@@ -45,8 +47,26 @@ h3 { font-size: 20px; font-weight: 700; }
 .band .btn:not(.btn-ghost):hover { filter: brightness(1.12); }
 @media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:hover { transform: none; } }
 
+/* ---------- marquee: one line about the project, right to left ---------- */
+.marquee { height: var(--mq-h); overflow: hidden; background: linear-gradient(90deg, var(--teal), var(--sky)); color: var(--ink);
+  font: 500 13px/var(--mq-h) var(--f-mono); letter-spacing: .02em;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+.marquee-track { display: flex; width: max-content; animation: marquee 70s linear infinite; }
+.marquee:hover .marquee-track, .marquee:focus-within .marquee-track { animation-play-state: paused; }
+.marquee-msg { margin: 0; white-space: nowrap; display: flex; }
+.marquee-msg span { padding-right: 22px; }
+.marquee-msg span::after { content: "◆"; margin-left: 22px; font-size: 9px; vertical-align: 2px; opacity: .55; }
+.marquee b { font-weight: 600; }
+.marquee a { color: inherit; font-weight: 600; text-underline-offset: 3px; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; width: auto; }
+  .marquee-msg[aria-hidden="true"] { display: none; }
+  .marquee-msg { padding-left: 24px; overflow: hidden; text-overflow: ellipsis; }
+}
+
 /* ---------- nav ---------- */
-.nav { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 24px; padding: 12px max(24px, calc((100vw - var(--wrap)) / 2 + 24px));
+.nav { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 24px; height: var(--nav-h); padding: 0 max(24px, calc((100vw - var(--wrap)) / 2 + 24px));
   background: color-mix(in srgb, var(--ink) 86%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--ink-line); color: var(--on-ink); }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font: 700 16px var(--f-display); }
@@ -58,7 +78,14 @@ h3 { font-size: 20px; font-weight: 700; }
 @media (max-width: 420px) { .nav nav { display: none; } .brand { margin-right: auto; white-space: nowrap; } }
 
 /* ---------- hero ---------- */
-.hero { position: relative; background: var(--ink); color: var(--on-ink); padding: clamp(48px, 8vw, 96px) 24px clamp(56px, 7vw, 88px); overflow: hidden; isolation: isolate; }
+/* The hero fills the first screen below the marquee and the nav; the example window takes what the text leaves,
+   keeping 16:9, so it is never cut off at the bottom on load. Short screens get tighter spacing via vh units. */
+.hero { position: relative; background: var(--ink); color: var(--on-ink); overflow: hidden; isolation: isolate;
+  display: flex; flex-direction: column; min-height: calc(100vh - var(--mq-h) - var(--nav-h)); min-height: calc(100svh - var(--mq-h) - var(--nav-h));
+  padding: clamp(24px, 5vh, 72px) 24px clamp(20px, 4vh, 56px); }
+.hero-text { flex: none; }
+.hero-area { flex: 1 1 0; min-height: 300px; margin-top: clamp(18px, 3.6vh, 52px); container-type: size;
+  display: flex; justify-content: center; align-items: flex-start; }
 .hero::before { content: ""; position: absolute; inset: 0; z-index: -1;
   background-image: radial-gradient(circle at 1.3px 1.3px, rgba(143, 184, 222, .16) 1.3px, transparent 0); background-size: 28px 28px;
   mask-image: radial-gradient(ellipse 80% 70% at 50% 35%, #000 40%, transparent 100%); -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 35%, #000 40%, transparent 100%); }
@@ -66,12 +93,24 @@ h3 { font-size: 20px; font-weight: 700; }
   background: radial-gradient(closest-side, rgba(79, 195, 217, .16), transparent 70%); pointer-events: none; }
 .hero-text { max-width: 880px; margin: 0 auto; text-align: center; }
 .hero .kicker { color: var(--teal); }
-.hero h1 { font-size: clamp(44px, 8.4vw, 96px); line-height: .98; font-weight: 700; letter-spacing: -0.035em; }
+.hero h1 { font-size: clamp(40px, min(8.4vw, 9vh), 96px); line-height: .98; font-weight: 700; letter-spacing: -0.035em; }
+/* Landscape screens: the height is the limit, so text goes left and the example window right,
+   both centred in the first screen. Portrait screens and phones keep the stacked layout. */
+@media (min-width: 1000px) and (min-aspect-ratio: 5/4) {
+  .hero { flex-direction: row; align-items: center; gap: clamp(32px, 4vw, 64px);
+    padding-left: max(24px, calc((100vw - var(--wrap)) / 2 + 24px)); padding-right: max(24px, calc((100vw - var(--wrap)) / 2 + 24px)); }
+  .hero-text { width: clamp(420px, 40%, 600px); margin: 0; text-align: left; container-type: inline-size; }
+  /* "Read any codebase" is about 9.2em wide: size the headline to the column so it stays on two lines */
+  .hero h1 { font-size: min(10.6cqi, 9vh, 72px); }
+  .hero .lead { margin-left: 0; font-size: clamp(16px, min(1.35vw, 2.4vh), 19px); }
+  .hero .cta { justify-content: flex-start; }
+  .hero-area { align-self: stretch; min-width: 0; min-height: 0; margin-top: 0; align-items: center; }
+}
 .mark { position: relative; color: var(--sky); white-space: nowrap; }
 .mark::after { content: ""; position: absolute; left: -2%; right: -2%; bottom: .02em; height: .14em; border-radius: 99px;
   background: linear-gradient(90deg, var(--teal), var(--sky)); opacity: .55; z-index: -1; }
-.lead { font-size: clamp(17px, 2vw, 20px); color: var(--on-ink-muted); max-width: 62ch; margin: 26px auto 0; }
-.cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 32px; }
+.lead { font-size: clamp(17px, 2vw, 20px); color: var(--on-ink-muted); max-width: 62ch; margin: clamp(14px, 2.6vh, 26px) auto 0; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: clamp(18px, 3.2vh, 32px); }
 
 /* app windows */
 .window { margin: 0; border-radius: 14px; overflow: hidden; border: 1px solid var(--ink-line); background: var(--ink-2);
@@ -81,7 +120,13 @@ h3 { font-size: 20px; font-weight: 700; }
 .dots i { width: 11px; height: 11px; border-radius: 50%; background: #2c3c52; }
 .dots i:first-child { background: var(--orange); opacity: .8; } .dots i:nth-child(2) { background: #e3c06a; opacity: .7; } .dots i:last-child { background: var(--teal); opacity: .7; }
 .window-title { font: 12.5px var(--f-mono); color: var(--on-ink-muted); }
-.hero-window { max-width: 1120px; margin: clamp(40px, 6vw, 64px) auto 0; }
+/* width from the space left: 100cqh is the hero-area height, 56px the window bar */
+.hero-window { margin: 0; width: min(1120px, 100cqw, (100cqh - 56px) * 16 / 9); container-type: inline-size; }
+/* keep the window bar on one line when the window is narrow */
+@container (max-width: 900px) { .hero-window .window-title { display: none; } }
+@container (max-width: 640px) { .hero-window .seg button small { display: none; } }
+@container (max-width: 420px) { .hero-window .seg button { padding: 6px 8px; } }
+section[id] { scroll-margin-top: var(--nav-h); }
 .hero-window .window-bar .seg { margin-left: auto; }
 .seg { display: inline-flex; border: 1px solid var(--ink-line); border-radius: 9px; overflow: hidden; background: var(--ink-2); }
 .seg button { font: 500 12.5px var(--f-mono); color: var(--on-ink-muted); background: none; border: 0; border-right: 1px solid var(--ink-line); padding: 6px 11px; cursor: pointer; }
@@ -234,6 +279,20 @@ blockquote cite { display: block; margin-top: 18px; font: 13px var(--f-mono); le
 @media (max-width: 900px) { .install { grid-template-columns: minmax(0, 1fr); } }
 
 /* footer */
+/* background: the C4 model and its author */
+.origin { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: start; }
+.origin .sub a { color: var(--accent); text-underline-offset: 3px; }
+.refs { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.refs a { display: grid; gap: 4px; text-decoration: none; background: var(--surface); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent); border-radius: 12px; padding: 16px 20px; transition: border-color .2s, transform .2s; }
+.refs a:hover, .refs a:focus-visible { border-color: var(--accent); transform: translateX(3px); }
+.refs .ref-kind { font: 12px var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.refs b { font: 700 17px var(--f-display); }
+.refs b::after { content: " ↗"; color: var(--muted); font-weight: 400; }
+.refs span:last-child { color: var(--muted); font-size: 15px; }
+@media (max-width: 900px) { .origin { grid-template-columns: minmax(0, 1fr); gap: 32px; } }
+@media (prefers-reduced-motion: reduce) { .refs a { transition: none; } .refs a:hover { transform: none; } }
+
 .foot { border-top: 1px solid var(--line); padding: 32px 0 48px; color: var(--muted); font-size: 14px; }
 .foot-row { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; }
 .foot nav { display: flex; flex-wrap: wrap; gap: 8px 18px; }

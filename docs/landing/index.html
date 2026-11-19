@@ -17,6 +17,29 @@
 </head>
 <body>
 
+<div class="marquee" role="region" aria-label="About this project">
+  <div class="marquee-track">
+    <p class="marquee-msg">
+      <span><b>c4-model-agentic-plugin</b> is a <a href="https://github.com/caviri">github.com/caviri</a> project</span>
+      <span>A Claude Code plugin that explores any repository and writes two self-contained pages</span>
+      <span>An interactive C4 architecture map, from the system context down to the code</span>
+      <span>A slide deck that explains the project to the next developer</span>
+      <span>Every box points to a file</span>
+      <span>Built on Simon Brown’s C4 model</span>
+      <span>Open source, Apache-2.0</span>
+    </p>
+    <p class="marquee-msg" aria-hidden="true">
+      <span><b>c4-model-agentic-plugin</b> is a <a href="https://github.com/caviri" tabindex="-1">github.com/caviri</a> project</span>
+      <span>A Claude Code plugin that explores any repository and writes two self-contained pages</span>
+      <span>An interactive C4 architecture map, from the system context down to the code</span>
+      <span>A slide deck that explains the project to the next developer</span>
+      <span>Every box points to a file</span>
+      <span>Built on Simon Brown’s C4 model</span>
+      <span>Open source, Apache-2.0</span>
+    </p>
+  </div>
+</div>
+
 <header class="nav">
   <a class="brand" href="./"><img src="assets/icon.svg" alt="" width="30" height="30"><span>c4-model-agentic-plugin</span></a>
   <nav aria-label="Site">
@@ -42,6 +65,7 @@
     </div>
   </div>
 
+  <div class="hero-area">
   <figure class="window hero-window" aria-label="Animated example: zooming from the system context down to a sequence diagram inside the API container">
     <div class="window-bar">
       <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -59,6 +83,7 @@
       <figcaption class="zoom-cap" aria-live="polite"><b id="zoom-cap-title">L1 · System context</b><span id="zoom-cap-text">Who uses the system, and what it is.</span></figcaption>
     </div>
   </figure>
+  </div>
 </section>
 
 <!-- ============================== pipeline ============================== -->
@@ -204,6 +229,36 @@
   </div>
 </section>
 
+<!-- ============================== background ============================== -->
+<section class="band" id="background">
+  <div class="wrap origin">
+    <div>
+      <p class="kicker">Background</p>
+      <h2>Built on Simon Brown’s C4 model</h2>
+      <p class="sub">The four levels this plugin draws (system context, containers, components and code) are the
+        <a href="https://c4model.com/">C4 model</a>, created by <a href="https://simonbrown.je">Simon Brown</a>.
+        It grew out of the software architecture workshops he ran from the mid-2000s, when attendees could not make sense of
+        the diagrams they were drawing; the name “C4” first appeared in his QCon London workshop in March 2011.</p>
+      <p class="sub">This plugin is an independent project, not affiliated with or endorsed by Simon Brown.
+        It uses the C4 levels as its map. For the model itself, go to the source.</p>
+    </div>
+    <ul class="refs">
+      <li><a href="https://c4model.com/">
+        <span class="ref-kind">Website</span><b>c4model.com</b>
+        <span>The official site of the C4 model: the abstractions, the diagram types, notation, FAQ and history.</span></a></li>
+      <li><a href="https://www.youtube.com/watch?v=x2-rSnhpw0g">
+        <span class="ref-kind">Talk · video</span><b>Visualising software architecture with the C4 model</b>
+        <span>Simon Brown at Agile on the Beach, July 2019. The best single introduction.</span></a></li>
+      <li><a href="https://www.oreilly.com/library/view/the-c4-model/9798341660113/">
+        <span class="ref-kind">Book</span><b>The C4 model</b>
+        <span>Simon Brown’s book on the model, on O’Reilly.</span></a></li>
+      <li><a href="https://simonbrown.je">
+        <span class="ref-kind">Author</span><b>simonbrown.je</b>
+        <span>Simon Brown’s site, with his talks, writing and C4 workshops.</span></a></li>
+    </ul>
+  </div>
+</section>
+
 <!-- ============================== install ============================== -->
 <section class="band band-install" id="install">
   <div class="wrap install">
@@ -233,6 +288,7 @@
       <a href="deck/">Deck guide</a>
       <a href="example/">Example</a>
       <a href="reference/">Reference</a>
+      <a href="#background">About the C4 model</a>
       <a href="https://github.com/caviri/c4-model-agentic-plugin">GitHub</a>
     </nav>
     <span class="small">Apache-2.0 · the example on this page is the plugin’s own output</span>
