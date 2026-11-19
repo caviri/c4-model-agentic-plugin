@@ -9,7 +9,7 @@ Every explorer page can hand out its model as RDF, so the architecture can be qu
 | `build-explorer.mjs` | `architecture.jsonld` next to `index.html` | nothing |
 | `build-explorer.mjs` | `architecture.rete` next to `index.html` | the `rete` CLI on `PATH`, or the `rete-graph` npm package resolvable from the working directory, the output directory or the script; otherwise skipped with a one-line note |
 
-A `.rete` file holds a whole RDF graph in one immutable file that can be queried with SPARQL without a server (`rete query`, or `rete.open(bytes).query(sparql)` in JavaScript or Python).
+A `.rete` file holds a whole RDF graph in one immutable file that can be queried with SPARQL without a server (`rete sparql`, or `rete.open(bytes).query(sparql)` in JavaScript or Python).
 
 One piece of code does the mapping: the `<script id="rdf">` block of the template (`window.archRdf(MODEL)`). The page and the build script both run it, and JSON-LD and N-Triples are two serialisations of the same resource list, so they cannot drift apart.
 
@@ -140,7 +140,9 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX schema: <https://schema.org/>
 ```
 
-Run them with `rete query architecture.rete "<query>"`, or in JavaScript: `(await rete.open(bytes)).query(sparql)`.
+Run them with `rete sparql architecture.rete '<query>'`, or in JavaScript: `(await rete.open(bytes)).query(sparql)`. All six were run against the image-annotation example's graph built with `rete-graph` 0.7.4.
+
+Containers and data stores are separate classes (`arch:Container`, `arch:DataStore`); the first query lists containers only.
 
 `arch:uses` is written between the exact elements the model names, usually deep ones (a function uses a function). To ask about a container, walk containment with `dcterms:isPartOf*` on both ends, as the second query does.
 
