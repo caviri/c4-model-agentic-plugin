@@ -1,0 +1,2099 @@
+# Image Annotation Tool architecture · terms: https://caviri.github.io/c4-model-agentic-plugin/ontology/c4 , https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view
+@prefix c4: <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4#> .
+@prefix c4v: <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix schema: <https://schema.org/> .
+@prefix : <urn:architecture:image-annotation-tool:> .
+
+:model:image-annotation-tool a c4:Model ;
+    dcterms:title "Image Annotation Tool architecture" ;
+    rdfs:label "Image Annotation Tool" ;
+    dcterms:description "Humans draw labelled bounding boxes on images; every task is reviewed before it can be exported as COCO JSON. Start at the API service, then open \"Task lifecycle\" to see the statuses a task moves through. The Dynamic tab walks through upload, annotate, review and export." ;
+    dcterms:identifier "image-annotation-tool" ;
+    dcterms:conformsTo <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4>,
+        <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> ;
+    c4v:subtitle "examples/image-annotation-tool" ;
+    c4v:toolbarTitle "Architecture map" ;
+    c4v:startLevel 2 ;
+    c4v:defaultPins ( :annotator :reviewer :web :apply-action :next-status :queue :postgres :redis :worker :minio ) ;
+    dcterms:hasPart :admin, :annotator, :reviewer, :iat .
+
+:admin a c4:Element, c4:Person ;
+    rdfs:label "Admin" ;
+    dcterms:identifier "admin" ;
+    dcterms:description "Uploads batches of images and triggers exports of approved annotations. Role \"admin\" in the users table." ;
+    c4:summary "uploads batches · exports" ;
+    c4:level 1 ;
+    c4:path "README.md" ;
+    c4:line 14 ;
+    dcterms:isPartOf :model:image-annotation-tool ;
+    c4v:order 1 ;
+    c4v:column 2 ;
+    c4v:row 0 ;
+    c4:uses :admin-page .
+
+:annotator a c4:Element, c4:Person ;
+    rdfs:label "Annotator" ;
+    dcterms:identifier "annotator" ;
+    dcterms:description "Claims a task, draws and labels bounding boxes on the image, submits it for review, and fixes rejected tasks." ;
+    c4:summary "draws + labels boxes" ;
+    c4:level 1 ;
+    c4:path "README.md" ;
+    c4:line 15 ;
+    dcterms:isPartOf :model:image-annotation-tool ;
+    c4v:order 2 ;
+    c4v:column 0 ;
+    c4v:row 0 ;
+    c4:uses :annotate-page .
+
+:reviewer a c4:Element, c4:Person ;
+    rdfs:label "Reviewer" ;
+    dcterms:identifier "reviewer" ;
+    dcterms:description "Works through the review queue and approves each submitted task or rejects it with a mandatory comment." ;
+    c4:summary "approves or rejects" ;
+    c4:level 1 ;
+    c4:path "README.md" ;
+    c4:line 16 ;
+    dcterms:isPartOf :model:image-annotation-tool ;
+    c4v:order 3 ;
+    c4v:column 1 ;
+    c4v:row 0 ;
+    c4:uses :review-page .
+
+:iat a c4:Element, c4:SoftwareSystem ;
+    rdfs:label "Image Annotation Tool" ;
+    dcterms:identifier "iat" ;
+    dcterms:description "Bounding-box annotation with a review step. Each uploaded image gets exactly one task; only approved tasks are exported as COCO-style JSON." ;
+    c4:summary "annotate · review · export" ;
+    c4:level 1 ;
+    c4:note "Everything runs from one docker-compose.yml; there are no external systems. PostgreSQL, Redis and MinIO come from public images.",
+        "Theoretical example project: a documentation fixture that has never been executed." ;
+    c4v:noteList ( "Everything runs from one docker-compose.yml; there are no external systems. PostgreSQL, Redis and MinIO come from public images." "Theoretical example project: a documentation fixture that has never been executed." ) ;
+    c4:path "." ;
+    dcterms:isPartOf :model:image-annotation-tool ;
+    c4v:order 4 ;
+    c4v:column 0 ;
+    c4v:row 1 ;
+    dcterms:hasPart :web, :api, :worker, :postgres, :redis, :minio, :minio-init .
+
+:web a c4:Element, c4:Container ;
+    rdfs:label "Web app" ;
+    dcterms:identifier "web" ;
+    dcterms:description "React single-page app built with Vite and served by nginx. The same nginx proxies /api/ to the API container, so the browser only ever talks to one origin for API calls." ;
+    c4:summary "SPA · one page per role" ;
+    c4:tag "CONTAINER · REACT + NGINX" ;
+    c4:level 2 ;
+    c4:note "Published on host port 3000 (container port 80).",
+        "Images, thumbnails and export files are NOT proxied: the browser fetches them straight from MinIO through presigned URLs." ;
+    c4v:noteList ( "Published on host port 3000 (container port 80)." "Images, thumbnails and export files are NOT proxied: the browser fetches them straight from MinIO through presigned URLs." ) ;
+    c4:technology "TypeScript", "React 18", "react-router 6", "Vite", "nginx 1.27" ;
+    c4v:technologyList ( "TypeScript" "React 18" "react-router 6" "Vite" "nginx 1.27" ) ;
+    c4:path "web/" ;
+    dcterms:isPartOf :iat ;
+    c4v:order 5 ;
+    c4v:column 0 ;
+    c4v:row 0 ;
+    dcterms:hasPart :app, :annotate-page, :review-page, :admin-page, :canvas, :client, :nginx .
+
+:api a c4:Element, c4:Container ;
+    rdfs:label "API service" ;
+    dcterms:identifier "api" ;
+    dcterms:description "Owns all business rules: login, image upload, task claiming, annotations, review decisions and export requests. The only writer of task status." ;
+    c4:summary "REST · auth · task rules" ;
+    c4:tag "CONTAINER · FASTAPI" ;
+    c4:level 2 ;
+    c4:note "Entry point: api/app/main.py registers six routers and seeds one demo user per role on startup (lifespan).",
+        "Published on host port 8000; OpenAPI docs at /docs. GET /api/health is the only route without auth besides login.",
+        "Only enqueues background jobs, by dotted path, so it never imports worker code." ;
+    c4v:noteList ( "Entry point: api/app/main.py registers six routers and seeds one demo user per role on startup (lifespan)." "Published on host port 8000; OpenAPI docs at /docs. GET /api/health is the only route without auth besides login." "Only enqueues background jobs, by dotted path, so it never imports worker code." ) ;
+    c4:technology "Python 3.12", "FastAPI", "SQLAlchemy 2", "PyJWT", "boto3", "RQ" ;
+    c4v:technologyList ( "Python 3.12" "FastAPI" "SQLAlchemy 2" "PyJWT" "boto3" "RQ" ) ;
+    c4:path "api/" ;
+    dcterms:isPartOf :iat ;
+    c4v:order 6 ;
+    c4v:style "highlight" ;
+    c4v:column 1 ;
+    c4v:row 0 ;
+    dcterms:hasPart :auth, :images, :tasks, :annotations, :reviews, :export, :sm, :models, :storage, :queue,
+        :lifecycle .
+
+:worker a c4:Element, c4:Container ;
+    rdfs:label "Worker" ;
+    dcterms:identifier "worker" ;
+    dcterms:description "Background worker that consumes the \"thumbnails\" and \"exports\" queues from Redis and runs the matching job." ;
+    c4:summary "thumbnails · COCO export" ;
+    c4:tag "CONTAINER · RQ WORKER" ;
+    c4:level 2 ;
+    c4:note "Talks to PostgreSQL and MinIO directly through worker/clients.py; it never calls the API.",
+        "No retry or failure queue is configured in the code." ;
+    c4v:noteList ( "Talks to PostgreSQL and MinIO directly through worker/clients.py; it never calls the API." "No retry or failure queue is configured in the code." ) ;
+    c4:technology "Python 3.12", "RQ", "Pillow", "SQLAlchemy Core", "boto3" ;
+    c4v:technologyList ( "Python 3.12" "RQ" "Pillow" "SQLAlchemy Core" "boto3" ) ;
+    c4:path "worker/" ;
+    dcterms:isPartOf :iat ;
+    c4v:order 7 ;
+    c4v:column 1 ;
+    c4v:row 2 ;
+    dcterms:hasPart :wmain, :thumb, :coco .
+
+:postgres a c4:Element, c4:Container, c4:DataStore ;
+    rdfs:label "PostgreSQL" ;
+    dcterms:identifier "postgres" ;
+    dcterms:description "System of record: users, images, tasks, annotations, reviews and exports." ;
+    c4:summary "users · tasks · boxes · reviews" ;
+    c4:tag "DATA STORE · POSTGRES 16" ;
+    c4:level 2 ;
+    c4:note "Schema is created by mounting db/migrations into /docker-entrypoint-initdb.d; there is no migration tool.",
+        "CHECK constraints repeat the allowed task statuses, review decisions and export statuses.",
+        "tasks.image_id is UNIQUE: exactly one task per image." ;
+    c4v:noteList ( "Schema is created by mounting db/migrations into /docker-entrypoint-initdb.d; there is no migration tool." "CHECK constraints repeat the allowed task statuses, review decisions and export statuses." "tasks.image_id is UNIQUE: exactly one task per image." ) ;
+    c4:technology "PostgreSQL 16" ;
+    c4:path "db/migrations/001_init.sql" ;
+    dcterms:isPartOf :iat ;
+    c4v:order 8 ;
+    c4v:column 1 ;
+    c4v:row 1 .
+
+:redis a c4:Element, c4:Container, c4:DataStore ;
+    rdfs:label "Redis" ;
+    dcterms:identifier "redis" ;
+    dcterms:description "Job queue between the API (producer) and the worker (consumer). Two RQ queues: \"thumbnails\" and \"exports\"." ;
+    c4:summary "RQ queues: thumbnails · exports" ;
+    c4:tag "QUEUE · REDIS 7" ;
+    c4:level 2 ;
+    c4:technology "Redis 7", "RQ" ;
+    c4v:technologyList ( "Redis 7" "RQ" ) ;
+    c4:path "docker-compose.yml" ;
+    c4:line 46 ;
+    dcterms:isPartOf :iat ;
+    c4v:order 9 ;
+    c4v:column 2 ;
+    c4v:row 1 .
+
+:minio a c4:Element, c4:Container, c4:DataStore ;
+    rdfs:label "MinIO" ;
+    dcterms:identifier "minio" ;
+    dcterms:description "S3-compatible object storage with three buckets: original images, thumbnails and export files." ;
+    c4:summary "images · thumbnails · exports" ;
+    c4:tag "OBJECT STORE · S3 API" ;
+    c4:level 2 ;
+    c4:note "Internal endpoint S3_ENDPOINT (http://minio:9000) for uploads; S3_PUBLIC_ENDPOINT (http://localhost:9000) is what presigned URLs are signed against.",
+        "Console on host port 9001." ;
+    c4v:noteList ( "Internal endpoint S3_ENDPOINT (http://minio:9000) for uploads; S3_PUBLIC_ENDPOINT (http://localhost:9000) is what presigned URLs are signed against." "Console on host port 9001." ) ;
+    c4:technology "MinIO", "S3 API" ;
+    c4v:technologyList ( "MinIO" "S3 API" ) ;
+    c4:path "docker-compose.yml" ;
+    c4:line 51 ;
+    dcterms:isPartOf :iat ;
+    c4v:order 10 ;
+    c4v:column 0 ;
+    c4v:row 1 .
+
+:minio-init a c4:Element, c4:Container ;
+    rdfs:label "minio-init" ;
+    dcterms:identifier "minio-init" ;
+    dcterms:description "One-shot container that creates the three buckets and exits. The API and the worker wait for it to complete successfully before starting." ;
+    c4:summary "creates buckets · exits" ;
+    c4:tag "ONE-SHOT JOB · MC" ;
+    c4:level 2 ;
+    c4:technology "minio/mc" ;
+    c4:path "docker-compose.yml" ;
+    c4:line 62 ;
+    dcterms:isPartOf :iat ;
+    c4v:order 11 ;
+    c4v:style "plain" ;
+    c4v:dashed true ;
+    c4v:column 0 ;
+    c4v:row 2 ;
+    c4:uses :minio .
+
+:app a c4:Element, c4:Component ;
+    rdfs:label "App shell" ;
+    dcterms:identifier "app" ;
+    dcterms:description "Shows the login form until a role is known, then mounts exactly one route for that role and redirects everything else to it." ;
+    c4:summary "login · route by role" ;
+    c4:level 3 ;
+    c4:note "Role comes from localStorage, set at login; the API enforces roles independently.",
+        "Mounts AnnotatePage, ReviewQueuePage or AdminUploadPage at /annotate, /review or /admin. These render relationships are not drawn as arrows." ;
+    c4v:noteList ( "Role comes from localStorage, set at login; the API enforces roles independently." "Mounts AnnotatePage, ReviewQueuePage or AdminUploadPage at /annotate, /review or /admin. These render relationships are not drawn as arrows." ) ;
+    c4:path "web/src/App.tsx" ;
+    c4:line 16 ;
+    dcterms:isPartOf :web ;
+    c4v:order 12 ;
+    c4v:column 1 ;
+    c4v:row 2 ;
+    c4:uses :client .
+
+:annotate-page a c4:Element, c4:Component ;
+    rdfs:label "AnnotatePage" ;
+    dcterms:identifier "annotate-page" ;
+    dcterms:description "Annotator view: works on one task at a time and lists the annotator's rejected tasks with the reviewer comment and a Fix button." ;
+    c4:summary "one task · rejected list" ;
+    c4:level 3 ;
+    c4:note "Submit saves the boxes first, then submits, then claims the next task." ;
+    c4:path "web/src/pages/AnnotatePage.tsx" ;
+    c4:line 15 ;
+    dcterms:isPartOf :web ;
+    c4v:order 13 ;
+    c4v:column 0 ;
+    c4v:row 0 ;
+    c4:uses :canvas, :client .
+
+:review-page a c4:Element, c4:Component ;
+    rdfs:label "ReviewQueuePage" ;
+    dcterms:identifier "review-page" ;
+    dcterms:description "Reviewer view: submitted tasks with thumbnails, the selected task read-only, and approve / reject buttons." ;
+    c4:summary "queue · approve / reject" ;
+    c4:level 3 ;
+    c4:note "Reject is disabled until a comment is typed; the API enforces the same rule.",
+        "Thumbnails in the queue list are loaded by the browser straight from MinIO through presigned URLs (not drawn as an arrow)." ;
+    c4v:noteList ( "Reject is disabled until a comment is typed; the API enforces the same rule." "Thumbnails in the queue list are loaded by the browser straight from MinIO through presigned URLs (not drawn as an arrow)." ) ;
+    c4:path "web/src/pages/ReviewQueuePage.tsx" ;
+    c4:line 7 ;
+    dcterms:isPartOf :web ;
+    c4v:order 14 ;
+    c4v:column 1 ;
+    c4v:row 0 ;
+    c4:uses :canvas, :client .
+
+:admin-page a c4:Element, c4:Component ;
+    rdfs:label "AdminUploadPage" ;
+    dcterms:identifier "admin-page" ;
+    dcterms:description "Admin view: uploads a named batch of JPEG/PNG files and starts a COCO export, polling until the worker has finished." ;
+    c4:summary "upload batch · export" ;
+    c4:level 3 ;
+    c4:note "Polls GET /exports/{id} every 2000 ms until status is done or failed.",
+        "The download link is a presigned MinIO URL, so the file is fetched from MinIO directly (not drawn as an arrow)." ;
+    c4v:noteList ( "Polls GET /exports/{id} every 2000 ms until status is done or failed." "The download link is a presigned MinIO URL, so the file is fetched from MinIO directly (not drawn as an arrow)." ) ;
+    c4:path "web/src/pages/AdminUploadPage.tsx" ;
+    c4:line 8 ;
+    dcterms:isPartOf :web ;
+    c4v:order 15 ;
+    c4v:column 2 ;
+    c4v:row 0 ;
+    c4:uses :client .
+
+:canvas a c4:Element, c4:Component ;
+    rdfs:label "BoundingBoxCanvas" ;
+    dcterms:identifier "canvas" ;
+    dcterms:description "Shows an image with its boxes. In edit mode dragging draws a new box and double-click removes one; without onChange it is read-only (review)." ;
+    c4:summary "draw boxes on image" ;
+    c4:level 3 ;
+    c4:note "Boxes are stored in original-image pixels; screen coordinates are divided by the display scale.",
+        "Boxes smaller than 2 px in either direction are discarded." ;
+    c4v:noteList ( "Boxes are stored in original-image pixels; screen coordinates are divided by the display scale." "Boxes smaller than 2 px in either direction are discarded." ) ;
+    c4:path "web/src/components/BoundingBoxCanvas.tsx" ;
+    c4:line 15 ;
+    dcterms:isPartOf :web ;
+    c4v:order 16 ;
+    c4v:column 0 ;
+    c4v:row 1 ;
+    c4:uses :minio .
+
+:client a c4:Element, c4:Component ;
+    rdfs:label "API client" ;
+    dcterms:identifier "client" ;
+    dcterms:description "Thin typed wrapper around fetch for every API call. Keeps the JWT and the role in localStorage and adds the Authorization header." ;
+    c4:summary "fetch /api · bearer token" ;
+    c4:level 3 ;
+    c4:note "All calls go to the relative path /api, which nginx proxies to the API container.",
+        "claimNextTask() turns any failure (including 404 \"no pending tasks\") into null." ;
+    c4v:noteList ( "All calls go to the relative path /api, which nginx proxies to the API container." "claimNextTask() turns any failure (including 404 \"no pending tasks\") into null." ) ;
+    c4:path "web/src/api/client.ts" ;
+    dcterms:isPartOf :web ;
+    c4v:order 17 ;
+    c4v:column 1 ;
+    c4v:row 1 ;
+    c4:uses :login, :upload-batch, :claim-next, :list-tasks, :submit-task, :reopen-task, :annotations,
+        :review-queue, :review-task, :request-export, :get-export .
+
+:nginx a c4:Element, c4:Component ;
+    rdfs:label "nginx" ;
+    dcterms:identifier "nginx" ;
+    dcterms:description "Serves the built SPA with an index.html fallback for client-side routes and proxies /api/ to http://api:8000." ;
+    c4:summary "static files · /api proxy" ;
+    c4:tag "COMPONENT · NGINX" ;
+    c4:level 3 ;
+    c4:note "client_max_body_size 200m, because image batches are uploaded through the API." ;
+    c4:path "web/nginx.conf" ;
+    dcterms:isPartOf :web ;
+    c4v:order 18 ;
+    c4v:column 2 ;
+    c4v:row 2 ;
+    c4:uses :api .
+
+:auth a c4:Element, c4:Component ;
+    rdfs:label "Auth" ;
+    dcterms:identifier "auth" ;
+    dcterms:description "Password login, HS256 bearer tokens and the role-check dependencies used by every router." ;
+    c4:summary "login · JWT · role checks" ;
+    c4:level 3 ;
+    c4:note "Every router depends on it: Depends(require_role(...)) for role-restricted routes, Depends(get_current_user) for the rest. These cross-cutting dependencies are not drawn as arrows.",
+        "JWT_SECRET defaults to \"change-me\"; JWT_TTL_MINUTES defaults to 480.",
+        "Roles: admin, annotator, reviewer." ;
+    c4v:noteList ( "Every router depends on it: Depends(require_role(...)) for role-restricted routes, Depends(get_current_user) for the rest. These cross-cutting dependencies are not drawn as arrows." "JWT_SECRET defaults to \"change-me\"; JWT_TTL_MINUTES defaults to 480." "Roles: admin, annotator, reviewer." ) ;
+    c4:path "api/app/auth.py" ;
+    dcterms:isPartOf :api ;
+    c4v:order 19 ;
+    c4v:column 2 ;
+    c4v:row 3 ;
+    dcterms:hasPart :login, :get-current-user, :require-role, :seed .
+
+:images a c4:Element, c4:Component ;
+    rdfs:label "Images routes" ;
+    dcterms:identifier "images" ;
+    dcterms:description "Batch upload for admins, plus the image serialiser that adds presigned URLs." ;
+    c4:summary "batch upload" ;
+    c4:tag "COMPONENT · /api/images" ;
+    c4:level 3 ;
+    c4:note "Accepts image/jpeg and image/png only (415 otherwise)." ;
+    c4:path "api/app/routes/images.py" ;
+    dcterms:isPartOf :api ;
+    c4v:order 20 ;
+    c4v:column 2 ;
+    c4v:row 1 ;
+    dcterms:hasPart :upload-batch, :image-to-dict .
+
+:tasks a c4:Element, c4:Component ;
+    rdfs:label "Tasks routes" ;
+    dcterms:identifier "tasks" ;
+    dcterms:description "Listing, claiming, submitting and reopening annotation tasks. Also holds the helpers the annotation and review routers reuse." ;
+    c4:summary "claim · submit · reopen" ;
+    c4:tag "COMPONENT · /api/tasks" ;
+    c4:level 3 ;
+    c4:note "require_assignee() (line 48): only the assigned annotator may change, submit or reopen a task (403).",
+        "get_task_or_404() (line 31) is shared with the annotations and reviews routers." ;
+    c4v:noteList ( "require_assignee() (line 48): only the assigned annotator may change, submit or reopen a task (403)." "get_task_or_404() (line 31) is shared with the annotations and reviews routers." ) ;
+    c4:path "api/app/routes/tasks.py" ;
+    dcterms:isPartOf :api ;
+    c4v:order 21 ;
+    c4v:style "highlight" ;
+    c4v:column 1 ;
+    c4v:row 1 ;
+    dcterms:hasPart :claim-next, :submit-task, :reopen-task, :list-tasks, :apply-action, :task-to-dict .
+
+:annotations a c4:Element, c4:Component ;
+    rdfs:label "Annotations routes" ;
+    dcterms:identifier "annotations" ;
+    dcterms:description "replace_annotations() swaps all boxes of a task in one PUT; list_annotations() reads them." ;
+    c4:summary "replace boxes of a task" ;
+    c4:tag "COMPONENT · …/annotations" ;
+    c4:level 3 ;
+    c4:note "Boxes are writable only while the task is in_progress (409 otherwise) and only by the assignee.",
+        "Validation: label non-empty, x and y >= 0, width and height > 0.",
+        "Reuses get_task_or_404(), require_assignee() and task_to_dict() from the tasks router." ;
+    c4v:noteList ( "Boxes are writable only while the task is in_progress (409 otherwise) and only by the assignee." "Validation: label non-empty, x and y >= 0, width and height > 0." "Reuses get_task_or_404(), require_assignee() and task_to_dict() from the tasks router." ) ;
+    c4:path "api/app/routes/annotations.py" ;
+    c4:line 33 ;
+    dcterms:isPartOf :api ;
+    c4v:order 22 ;
+    c4v:column 0 ;
+    c4v:row 2 ;
+    c4:uses :models .
+
+:reviews a c4:Element, c4:Component ;
+    rdfs:label "Reviews routes" ;
+    dcterms:identifier "reviews" ;
+    dcterms:description "The review queue and the endpoint that records a decision and moves the task to approved or rejected." ;
+    c4:summary "queue · decisions" ;
+    c4:tag "COMPONENT · /api/reviews" ;
+    c4:level 3 ;
+    c4:path "api/app/routes/reviews.py" ;
+    dcterms:isPartOf :api ;
+    c4v:order 23 ;
+    c4v:column 0 ;
+    c4v:row 1 ;
+    dcterms:hasPart :review-queue, :review-task .
+
+:export a c4:Element, c4:Component ;
+    rdfs:label "Export routes" ;
+    dcterms:identifier "export" ;
+    dcterms:description "Lets an admin request a COCO export and poll its status. The file itself is built by the worker." ;
+    c4:summary "request · poll export" ;
+    c4:tag "COMPONENT · /api/exports" ;
+    c4:level 3 ;
+    c4:path "api/app/routes/export.py" ;
+    dcterms:isPartOf :api ;
+    c4v:order 24 ;
+    c4v:column 3 ;
+    c4v:row 1 ;
+    dcterms:hasPart :request-export, :get-export, :export-to-dict .
+
+:sm a c4:Element, c4:Component ;
+    rdfs:label "Task state machine" ;
+    dcterms:identifier "sm" ;
+    dcterms:description "The annotation task lifecycle: which action moves a task from which status to which, and which role may perform it. The statuses themselves are drawn in the Task lifecycle box beside it." ;
+    c4:summary "status lifecycle · pure logic" ;
+    c4:level 3 ;
+    c4:note "Pure logic with no database or framework imports; unit-tested in api/tests/test_state_machine.py.",
+        "approved is the only terminal status (TERMINAL_STATUSES)." ;
+    c4v:noteList ( "Pure logic with no database or framework imports; unit-tested in api/tests/test_state_machine.py." "approved is the only terminal status (TERMINAL_STATUSES)." ) ;
+    c4:path "api/app/state_machine.py" ;
+    dcterms:isPartOf :api ;
+    c4v:order 25 ;
+    c4v:style "highlight" ;
+    c4v:column 1 ;
+    c4v:row 0 ;
+    dcterms:hasPart :next-status, :transitions, :allowed-actions .
+
+:models a c4:Element, c4:Component ;
+    rdfs:label "ORM models + session" ;
+    dcterms:identifier "models" ;
+    dcterms:description "SQLAlchemy models User, Image, Task, Annotation, Review and Export, with the engine and the per-request session from api/app/db.py." ;
+    c4:summary "SQLAlchemy · 6 tables" ;
+    c4:level 3 ;
+    c4:note "The schema itself is owned by db/migrations/001_init.sql; the models only map it.",
+        "get_db() (api/app/db.py line 20) yields one session per request.",
+        "Route handlers use the Session directly; there is no repository layer." ;
+    c4v:noteList ( "The schema itself is owned by db/migrations/001_init.sql; the models only map it." "get_db() (api/app/db.py line 20) yields one session per request." "Route handlers use the Session directly; there is no repository layer." ) ;
+    c4:path "api/app/models.py" ;
+    dcterms:isPartOf :api ;
+    c4v:order 26 ;
+    c4v:column 1 ;
+    c4v:row 2 ;
+    c4:uses :postgres .
+
+:storage a c4:Element, c4:Component ;
+    rdfs:label "Object storage client" ;
+    dcterms:identifier "storage" ;
+    dcterms:description "boto3 wrapper for MinIO. Uses two clients: an internal one for uploads and a public one for signing URLs the browser will fetch." ;
+    c4:summary "upload · presign" ;
+    c4:level 3 ;
+    c4:path "api/app/storage.py" ;
+    dcterms:isPartOf :api ;
+    c4v:order 27 ;
+    c4v:column 2 ;
+    c4v:row 2 ;
+    dcterms:hasPart :upload-image, :presigned-url .
+
+:queue a c4:Element, c4:Component ;
+    rdfs:label "Job queue client" ;
+    dcterms:identifier "queue" ;
+    dcterms:description "RQ producer. Jobs are referenced by dotted path so the API does not import worker code." ;
+    c4:summary "enqueue only" ;
+    c4:level 3 ;
+    c4:path "api/app/queue.py" ;
+    dcterms:isPartOf :api ;
+    c4v:order 28 ;
+    c4v:column 3 ;
+    c4v:row 2 ;
+    dcterms:hasPart :enqueue-thumbnail, :enqueue-export .
+
+:wmain a c4:Element, c4:Component ;
+    rdfs:label "Worker entrypoint" ;
+    dcterms:identifier "wmain" ;
+    dcterms:description "Connects to Redis and runs an RQ Worker on the queues \"thumbnails\" and \"exports\"." ;
+    c4:summary "RQ Worker loop" ;
+    c4:level 3 ;
+    c4:path "worker/main.py" ;
+    c4:line 16 ;
+    dcterms:isPartOf :worker ;
+    c4v:order 29 ;
+    c4:uses :redis, :thumb, :export-approved .
+
+:thumb a c4:Element, c4:Component ;
+    rdfs:label "Thumbnail job" ;
+    dcterms:identifier "thumb" ;
+    dcterms:description "Reads the original image, records its width and height, and stores a JPEG thumbnail of at most 320 x 320." ;
+    c4:summary "generate_thumbnail(image_id)" ;
+    c4:tag "COMPONENT · RQ JOB" ;
+    c4:level 3 ;
+    c4:note "Thumbnail key is \"<image_id>.jpg\" in the thumbnails bucket, JPEG quality 85.",
+        "Until this job has run, images.width, height and thumbnail_key are NULL." ;
+    c4v:noteList ( "Thumbnail key is \"<image_id>.jpg\" in the thumbnails bucket, JPEG quality 85." "Until this job has run, images.width, height and thumbnail_key are NULL." ) ;
+    c4:path "worker/jobs/thumbnail.py" ;
+    c4:line 14 ;
+    dcterms:isPartOf :worker ;
+    c4v:order 30 ;
+    c4:uses :postgres, :minio .
+
+:coco a c4:Element, c4:Component ;
+    rdfs:label "COCO export job" ;
+    dcterms:identifier "coco" ;
+    dcterms:description "Exports the annotations of all approved tasks as one COCO-style JSON file and tracks the run in the exports table." ;
+    c4:summary "approved tasks → COCO JSON" ;
+    c4:tag "COMPONENT · RQ JOB" ;
+    c4:level 3 ;
+    c4:path "worker/jobs/export_coco.py" ;
+    dcterms:isPartOf :worker ;
+    c4v:order 31 ;
+    dcterms:hasPart :export-approved, :build-coco, :approved-boxes .
+
+:login a c4:Element, c4:CodeElement ;
+    rdfs:label "login()" ;
+    dcterms:identifier "login" ;
+    dcterms:description "Verifies email and password and returns an HS256 token carrying the user id and role, plus the role." ;
+    c4:summary "bcrypt verify → JWT" ;
+    c4:tag "POST /api/auth/login" ;
+    c4:level 4 ;
+    c4:path "api/app/auth.py" ;
+    c4:line 36 ;
+    dcterms:isPartOf :auth ;
+    c4v:order 32 ;
+    c4:uses :models .
+
+:get-current-user a c4:Element, c4:CodeElement ;
+    rdfs:label "get_current_user()" ;
+    dcterms:identifier "get-current-user" ;
+    dcterms:description "Decodes the bearer token and loads the user; 401 when the token is invalid or the user is unknown." ;
+    c4:summary "decode token → User" ;
+    c4:tag "DEPENDENCY" ;
+    c4:level 4 ;
+    c4:path "api/app/auth.py" ;
+    c4:line 45 ;
+    dcterms:isPartOf :auth ;
+    c4v:order 33 ;
+    c4:uses :models .
+
+:require-role a c4:Element, c4:CodeElement ;
+    rdfs:label "require_role()" ;
+    dcterms:identifier "require-role" ;
+    dcterms:description "Builds a FastAPI dependency that returns the current user only if their role is one of the given roles." ;
+    c4:summary "403 unless role matches" ;
+    c4:tag "DEPENDENCY FACTORY" ;
+    c4:level 4 ;
+    c4:path "api/app/auth.py" ;
+    c4:line 59 ;
+    dcterms:isPartOf :auth ;
+    c4v:order 34 ;
+    c4:uses :get-current-user .
+
+:seed a c4:Element, c4:CodeElement ;
+    rdfs:label "seed_demo_users()" ;
+    dcterms:identifier "seed" ;
+    dcterms:description "Creates admin@, annotator@ and reviewer@example.com with password \"demo\" when the users table is empty. Called from the API lifespan hook." ;
+    c4:summary "one user per role" ;
+    c4:tag "FUNCTION" ;
+    c4:level 4 ;
+    c4:path "api/app/auth.py" ;
+    c4:line 70 ;
+    dcterms:isPartOf :auth ;
+    c4v:order 35 ;
+    c4:uses :models .
+
+:upload-batch a c4:Element, c4:CodeElement ;
+    rdfs:label "upload_batch()" ;
+    dcterms:identifier "upload-batch" ;
+    dcterms:description "For each file: stores it in MinIO, inserts the Image row and its pending Task. After the commit, queues one thumbnail job per image." ;
+    c4:summary "store · create task · enqueue" ;
+    c4:tag "POST /api/images" ;
+    c4:level 4 ;
+    c4:note "Storage key: \"<batch_name>/<uuid hex>-<filename>\".",
+        "Objects are uploaded before the commit, so a failure mid-batch can leave objects without rows." ;
+    c4v:noteList ( "Storage key: \"<batch_name>/<uuid hex>-<filename>\"." "Objects are uploaded before the commit, so a failure mid-batch can leave objects without rows." ) ;
+    c4:path "api/app/routes/images.py" ;
+    c4:line 30 ;
+    dcterms:isPartOf :images ;
+    c4v:order 36 ;
+    c4:uses :models, :upload-image, :enqueue-thumbnail .
+
+:image-to-dict a c4:Element, c4:CodeElement ;
+    rdfs:label "image_to_dict()" ;
+    dcterms:identifier "image-to-dict" ;
+    dcterms:description "Serialises an Image and adds presigned URLs for the original and, when it exists, the thumbnail." ;
+    c4:summary "adds presigned URLs" ;
+    c4:tag "FUNCTION" ;
+    c4:level 4 ;
+    c4:path "api/app/routes/images.py" ;
+    c4:line 17 ;
+    dcterms:isPartOf :images ;
+    c4v:order 37 ;
+    c4:uses :presigned-url .
+
+:claim-next a c4:Element, c4:CodeElement ;
+    rdfs:label "claim_next_task()" ;
+    dcterms:identifier "claim-next" ;
+    dcterms:description "Returns the annotator's in_progress task if there is one; otherwise claims the oldest pending task and assigns it." ;
+    c4:summary "resume or claim oldest" ;
+    c4:tag "POST /api/tasks/next" ;
+    c4:level 4 ;
+    c4:note "Uses SELECT ... FOR UPDATE SKIP LOCKED so two annotators never get the same task.",
+        "404 when no task is pending." ;
+    c4v:noteList ( "Uses SELECT ... FOR UPDATE SKIP LOCKED so two annotators never get the same task." "404 when no task is pending." ) ;
+    c4:path "api/app/routes/tasks.py" ;
+    c4:line 69 ;
+    dcterms:isPartOf :tasks ;
+    c4v:order 38 ;
+    c4:uses :apply-action, :models .
+
+:submit-task a c4:Element, c4:CodeElement ;
+    rdfs:label "submit_task()" ;
+    dcterms:identifier "submit-task" ;
+    dcterms:description "Moves the assignee's task to submitted. 422 when the task has no annotations." ;
+    c4:summary "needs ≥ 1 box" ;
+    c4:tag "POST /api/tasks/{id}/submit" ;
+    c4:level 4 ;
+    c4:path "api/app/routes/tasks.py" ;
+    c4:line 103 ;
+    dcterms:isPartOf :tasks ;
+    c4v:order 39 ;
+    c4:uses :apply-action, :models .
+
+:reopen-task a c4:Element, c4:CodeElement ;
+    rdfs:label "reopen_task()" ;
+    dcterms:identifier "reopen-task" ;
+    dcterms:description "Takes a rejected task back into work for its assignee." ;
+    c4:summary "rejected → in_progress" ;
+    c4:tag "POST /api/tasks/{id}/reopen" ;
+    c4:level 4 ;
+    c4:path "api/app/routes/tasks.py" ;
+    c4:line 118 ;
+    dcterms:isPartOf :tasks ;
+    c4v:order 40 ;
+    c4:uses :apply-action, :models .
+
+:list-tasks a c4:Element, c4:CodeElement ;
+    rdfs:label "list_tasks()" ;
+    dcterms:identifier "list-tasks" ;
+    dcterms:description "Lists tasks, optionally filtered by status and by \"assigned to me\". Any authenticated role may call it." ;
+    c4:summary "filter: status · mine" ;
+    c4:tag "GET /api/tasks" ;
+    c4:level 4 ;
+    c4:path "api/app/routes/tasks.py" ;
+    c4:line 54 ;
+    dcterms:isPartOf :tasks ;
+    c4v:order 41 ;
+    c4:uses :models .
+
+:apply-action a c4:Element, c4:CodeElement ;
+    rdfs:label "apply_action()" ;
+    dcterms:identifier "apply-action" ;
+    dcterms:description "The single place where task.status is changed. Asks the state machine for the next status and maps InvalidTransition to 409 and RoleNotAllowed to 403." ;
+    c4:summary "state machine → HTTP errors" ;
+    c4:tag "FUNCTION" ;
+    c4:level 4 ;
+    c4:path "api/app/routes/tasks.py" ;
+    c4:line 38 ;
+    dcterms:isPartOf :tasks ;
+    c4v:order 42 ;
+    c4v:style "highlight" ;
+    c4:uses :next-status .
+
+:task-to-dict a c4:Element, c4:CodeElement ;
+    rdfs:label "task_to_dict()" ;
+    dcterms:identifier "task-to-dict" ;
+    dcterms:description "Serialises a task with its image, its annotations and the most recent review decision and comment." ;
+    c4:summary "task + image + boxes + review" ;
+    c4:tag "FUNCTION" ;
+    c4:level 4 ;
+    c4:path "api/app/routes/tasks.py" ;
+    c4:line 15 ;
+    dcterms:isPartOf :tasks ;
+    c4v:order 43 ;
+    c4:uses :image-to-dict .
+
+:review-queue a c4:Element, c4:CodeElement ;
+    rdfs:label "review_queue()" ;
+    dcterms:identifier "review-queue" ;
+    dcterms:description "Submitted tasks waiting for a decision, ordered by updated_at." ;
+    c4:summary "submitted, oldest first" ;
+    c4:tag "GET /api/reviews/queue" ;
+    c4:level 4 ;
+    c4:path "api/app/routes/reviews.py" ;
+    c4:line 24 ;
+    dcterms:isPartOf :reviews ;
+    c4v:order 44 ;
+    c4:uses :models .
+
+:review-task a c4:Element, c4:CodeElement ;
+    rdfs:label "review_task()" ;
+    dcterms:identifier "review-task" ;
+    dcterms:description "Applies APPROVE or REJECT to the task and inserts a Review row. 422 when rejecting without a comment." ;
+    c4:summary "decide · record review" ;
+    c4:tag "POST /api/tasks/{id}/reviews" ;
+    c4:level 4 ;
+    c4:path "api/app/routes/reviews.py" ;
+    c4:line 34 ;
+    dcterms:isPartOf :reviews ;
+    c4v:order 45 ;
+    c4:uses :apply-action, :models .
+
+:request-export a c4:Element, c4:CodeElement ;
+    rdfs:label "request_export()" ;
+    dcterms:identifier "request-export" ;
+    dcterms:description "Inserts an Export row with status queued, enqueues the export job and returns 202." ;
+    c4:summary "202 · queued" ;
+    c4:tag "POST /api/exports" ;
+    c4:level 4 ;
+    c4:path "api/app/routes/export.py" ;
+    c4:line 25 ;
+    dcterms:isPartOf :export ;
+    c4v:order 46 ;
+    c4:uses :models, :enqueue-export .
+
+:get-export a c4:Element, c4:CodeElement ;
+    rdfs:label "get_export()" ;
+    dcterms:identifier "get-export" ;
+    dcterms:description "Returns the export status; download_url is set once the worker has stored the file." ;
+    c4:summary "poll status" ;
+    c4:tag "GET /api/exports/{id}" ;
+    c4:level 4 ;
+    c4:path "api/app/routes/export.py" ;
+    c4:line 37 ;
+    dcterms:isPartOf :export ;
+    c4v:order 47 ;
+    c4:uses :models .
+
+:export-to-dict a c4:Element, c4:CodeElement ;
+    rdfs:label "export_to_dict()" ;
+    dcterms:identifier "export-to-dict" ;
+    dcterms:description "Serialises an Export and presigns a download URL when storage_key is set." ;
+    c4:summary "adds download_url" ;
+    c4:tag "FUNCTION" ;
+    c4:level 4 ;
+    c4:path "api/app/routes/export.py" ;
+    c4:line 13 ;
+    dcterms:isPartOf :export ;
+    c4v:order 48 ;
+    c4:uses :presigned-url .
+
+:next-status a c4:Element, c4:CodeElement ;
+    rdfs:label "next_status()" ;
+    dcterms:identifier "next-status" ;
+    dcterms:description "Returns the status a task moves to, or raises InvalidTransition (no such move) or RoleNotAllowed (wrong role)." ;
+    c4:summary "(status, action, role) → status" ;
+    c4:tag "FUNCTION" ;
+    c4:level 4 ;
+    c4:path "api/app/state_machine.py" ;
+    c4:line 49 ;
+    dcterms:isPartOf :sm ;
+    c4v:order 49 ;
+    c4v:style "highlight" ;
+    c4v:column 0 ;
+    c4v:row 2 ;
+    c4:uses :transitions, :lifecycle .
+
+:transitions a c4:Element, c4:CodeElement ;
+    rdfs:label "TRANSITIONS" ;
+    dcterms:identifier "transitions" ;
+    dcterms:description "Table mapping (current status, action) to (next status, role allowed to perform it). The five transitions drawn between the status boxes are exactly its entries." ;
+    c4:summary "5 allowed moves" ;
+    c4:tag "CONSTANT" ;
+    c4:level 4 ;
+    c4:path "api/app/state_machine.py" ;
+    c4:line 38 ;
+    dcterms:isPartOf :sm ;
+    c4v:order 50 ;
+    c4v:column 1 ;
+    c4v:row 2 .
+
+:allowed-actions a c4:Element, c4:CodeElement ;
+    rdfs:label "allowed_actions()" ;
+    dcterms:identifier "allowed-actions" ;
+    dcterms:description "Lists the actions a role may perform on a task in a given status. Only used by the tests." ;
+    c4:summary "actions for status + role" ;
+    c4:tag "FUNCTION" ;
+    c4:level 4 ;
+    c4:path "api/app/state_machine.py" ;
+    c4:line 60 ;
+    dcterms:isPartOf :sm ;
+    c4v:order 51 ;
+    c4v:column 2 ;
+    c4v:row 2 ;
+    c4:uses :transitions .
+
+:lifecycle a c4:Element, c4:Component ;
+    rdfs:label "Task lifecycle" ;
+    dcterms:identifier "lifecycle" ;
+    dcterms:description "The statuses a task moves through, from pending to approved, with rejected tasks going back to in_progress. Each arrow is labelled with the action and the role allowed to take it." ;
+    c4:summary "five statuses · five moves" ;
+    c4:level 3 ;
+    c4:path "api/app/state_machine.py" ;
+    c4:line 14 ;
+    dcterms:isPartOf :api ;
+    c4v:order 52 ;
+    c4v:column 2 ;
+    c4v:row 0 ;
+    dcterms:hasPart :st-pending, :st-in-progress, :st-submitted, :st-approved, :st-rejected .
+
+:st-pending a c4:Element, c4:State ;
+    rdfs:label "pending" ;
+    dcterms:identifier "st-pending" ;
+    dcterms:description "Initial status of every task, created together with its image at upload." ;
+    c4:summary "new · unassigned" ;
+    c4:level 4 ;
+    c4:path "api/app/state_machine.py" ;
+    c4:line 14 ;
+    c4:initial true ;
+    dcterms:isPartOf :lifecycle ;
+    c4v:order 53 ;
+    c4:transitionsTo :st-in-progress .
+
+:st-in-progress a c4:Element, c4:State ;
+    rdfs:label "in_progress" ;
+    dcterms:identifier "st-in-progress" ;
+    dcterms:description "An annotator has claimed the task. The only status in which annotations can be changed." ;
+    c4:summary "claimed · boxes editable" ;
+    c4:level 4 ;
+    c4:path "api/app/state_machine.py" ;
+    c4:line 15 ;
+    dcterms:isPartOf :lifecycle ;
+    c4v:order 54 ;
+    c4:transitionsTo :st-submitted .
+
+:st-submitted a c4:Element, c4:State ;
+    rdfs:label "submitted" ;
+    dcterms:identifier "st-submitted" ;
+    dcterms:description "Waiting for a reviewer. Annotations are read-only." ;
+    c4:summary "in the review queue" ;
+    c4:level 4 ;
+    c4:path "api/app/state_machine.py" ;
+    c4:line 16 ;
+    dcterms:isPartOf :lifecycle ;
+    c4v:order 55 ;
+    c4:transitionsTo :st-approved, :st-rejected .
+
+:st-approved a c4:Element, c4:State ;
+    rdfs:label "approved" ;
+    dcterms:identifier "st-approved" ;
+    dcterms:description "Final status. Only approved tasks are included in COCO exports." ;
+    c4:summary "final · exported" ;
+    c4:level 4 ;
+    c4:path "api/app/state_machine.py" ;
+    c4:line 17 ;
+    c4:final true ;
+    dcterms:isPartOf :lifecycle ;
+    c4v:order 56 .
+
+:st-rejected a c4:Element, c4:State ;
+    rdfs:label "rejected" ;
+    dcterms:identifier "st-rejected" ;
+    dcterms:description "A reviewer rejected the task with a comment. The assignee can reopen it." ;
+    c4:summary "needs rework" ;
+    c4:level 4 ;
+    c4:path "api/app/state_machine.py" ;
+    c4:line 18 ;
+    dcterms:isPartOf :lifecycle ;
+    c4v:order 57 ;
+    c4:transitionsTo :st-in-progress .
+
+:upload-image a c4:Element, c4:CodeElement ;
+    rdfs:label "upload_image()" ;
+    dcterms:identifier "upload-image" ;
+    dcterms:description "Stores the original image bytes in the images bucket through the internal endpoint." ;
+    c4:summary "PUT to images bucket" ;
+    c4:tag "FUNCTION" ;
+    c4:level 4 ;
+    c4:path "api/app/storage.py" ;
+    c4:line 32 ;
+    dcterms:isPartOf :storage ;
+    c4v:order 58 ;
+    c4:uses :minio .
+
+:presigned-url a c4:Element, c4:CodeElement ;
+    rdfs:label "presigned_url()" ;
+    dcterms:identifier "presigned-url" ;
+    dcterms:description "Signs a GET URL against the public endpoint, valid for 3600 s by default. Returns None when the key is None." ;
+    c4:summary "signed GET · 1 h" ;
+    c4:tag "FUNCTION" ;
+    c4:level 4 ;
+    c4:note "Signing is local computation; no request is sent to MinIO." ;
+    c4:path "api/app/storage.py" ;
+    c4:line 36 ;
+    dcterms:isPartOf :storage ;
+    c4v:order 59 .
+
+:enqueue-thumbnail a c4:Element, c4:CodeElement ;
+    rdfs:label "enqueue_thumbnail()" ;
+    dcterms:identifier "enqueue-thumbnail" ;
+    dcterms:description "Enqueues jobs.thumbnail.generate_thumbnail(image_id)." ;
+    c4:summary "queue \"thumbnails\"" ;
+    c4:tag "FUNCTION" ;
+    c4:level 4 ;
+    c4:path "api/app/queue.py" ;
+    c4:line 17 ;
+    dcterms:isPartOf :queue ;
+    c4v:order 60 ;
+    c4:uses :redis .
+
+:enqueue-export a c4:Element, c4:CodeElement ;
+    rdfs:label "enqueue_export()" ;
+    dcterms:identifier "enqueue-export" ;
+    dcterms:description "Enqueues jobs.export_coco.export_approved(export_id) with a job timeout of 600 s." ;
+    c4:summary "queue \"exports\" · 600 s" ;
+    c4:tag "FUNCTION" ;
+    c4:level 4 ;
+    c4:path "api/app/queue.py" ;
+    c4:line 22 ;
+    dcterms:isPartOf :queue ;
+    c4v:order 61 ;
+    c4:uses :redis .
+
+:export-approved a c4:Element, c4:CodeElement ;
+    rdfs:label "export_approved()" ;
+    dcterms:identifier "export-approved" ;
+    dcterms:description "Marks the export running, builds the COCO document, stores it as \"export-<id>.coco.json\" and marks the export done; on any exception marks it failed and re-raises." ;
+    c4:summary "running → done / failed" ;
+    c4:tag "RQ JOB" ;
+    c4:level 4 ;
+    c4:note "task_count is the number of images in the export." ;
+    c4:path "worker/jobs/export_coco.py" ;
+    c4:line 51 ;
+    dcterms:isPartOf :coco ;
+    c4v:order 62 ;
+    c4:uses :approved-boxes, :build-coco, :postgres, :minio .
+
+:build-coco a c4:Element, c4:CodeElement ;
+    rdfs:label "build_coco()" ;
+    dcterms:identifier "build-coco" ;
+    dcterms:description "Turns the query rows into COCO images, annotations (bbox, area) and categories. Category ids are assigned in order of first appearance of each label." ;
+    c4:summary "rows → images · boxes · categories" ;
+    c4:tag "FUNCTION" ;
+    c4:level 4 ;
+    c4:path "worker/jobs/export_coco.py" ;
+    c4:line 24 ;
+    dcterms:isPartOf :coco ;
+    c4v:order 63 .
+
+:approved-boxes a c4:Element, c4:CodeElement ;
+    rdfs:label "APPROVED_BOXES" ;
+    dcterms:identifier "approved-boxes" ;
+    dcterms:description "Joins tasks, images and annotations and keeps only tasks whose status is approved." ;
+    c4:summary "WHERE status = 'approved'" ;
+    c4:tag "SQL QUERY" ;
+    c4:level 4 ;
+    c4:path "worker/jobs/export_coco.py" ;
+    c4:line 11 ;
+    dcterms:isPartOf :coco ;
+    c4v:order 64 .
+
+:rel:1 a c4:Relationship ;
+    c4:source :admin ;
+    c4:target :admin-page ;
+    rdfs:label "uploads batches, exports" ;
+    c4v:order 1 ;
+    c4v:style "accent" .
+
+:rel:2 a c4:Relationship ;
+    c4:source :annotator ;
+    c4:target :annotate-page ;
+    rdfs:label "draws + submits boxes" ;
+    c4v:order 2 ;
+    c4v:style "accent" .
+
+:rel:3 a c4:Relationship ;
+    c4:source :reviewer ;
+    c4:target :review-page ;
+    rdfs:label "approves / rejects" ;
+    c4v:order 3 ;
+    c4v:style "accent" .
+
+:rel:4 a c4:Relationship ;
+    c4:source :app ;
+    c4:target :client ;
+    rdfs:label "login() · getRole()" ;
+    c4v:order 4 .
+
+:rel:5 a c4:Relationship ;
+    c4:source :annotate-page ;
+    c4:target :canvas ;
+    rdfs:label "edit boxes" ;
+    c4v:order 5 .
+
+:rel:6 a c4:Relationship ;
+    c4:source :review-page ;
+    c4:target :canvas ;
+    rdfs:label "show boxes read-only" ;
+    c4v:order 6 .
+
+:rel:7 a c4:Relationship ;
+    c4:source :annotate-page ;
+    c4:target :client ;
+    rdfs:label "claim · save · submit · reopen" ;
+    c4v:order 7 .
+
+:rel:8 a c4:Relationship ;
+    c4:source :review-page ;
+    c4:target :client ;
+    rdfs:label "getReviewQueue · reviewTask" ;
+    c4v:order 8 .
+
+:rel:9 a c4:Relationship ;
+    c4:source :admin-page ;
+    c4:target :client ;
+    rdfs:label "uploadBatch · requestExport" ;
+    c4v:order 9 .
+
+:rel:10 a c4:Relationship ;
+    c4:source :nginx ;
+    c4:target :api ;
+    rdfs:label "proxies /api/" ;
+    c4v:order 10 .
+
+:rel:11 a c4:Relationship ;
+    c4:source :client ;
+    c4:target :login ;
+    rdfs:label "POST /api/auth/login" ;
+    c4v:order 11 .
+
+:rel:12 a c4:Relationship ;
+    c4:source :client ;
+    c4:target :upload-batch ;
+    rdfs:label "POST /api/images" ;
+    c4v:order 12 .
+
+:rel:13 a c4:Relationship ;
+    c4:source :client ;
+    c4:target :claim-next ;
+    rdfs:label "POST /api/tasks/next" ;
+    c4v:order 13 .
+
+:rel:14 a c4:Relationship ;
+    c4:source :client ;
+    c4:target :list-tasks ;
+    rdfs:label "GET rejected tasks" ;
+    c4v:order 14 .
+
+:rel:15 a c4:Relationship ;
+    c4:source :client ;
+    c4:target :submit-task ;
+    rdfs:label "POST /tasks/{id}/submit" ;
+    c4v:order 15 .
+
+:rel:16 a c4:Relationship ;
+    c4:source :client ;
+    c4:target :reopen-task ;
+    rdfs:label "POST /tasks/{id}/reopen" ;
+    c4v:order 16 .
+
+:rel:17 a c4:Relationship ;
+    c4:source :client ;
+    c4:target :annotations ;
+    rdfs:label "PUT annotations" ;
+    c4v:order 17 .
+
+:rel:18 a c4:Relationship ;
+    c4:source :client ;
+    c4:target :review-queue ;
+    rdfs:label "GET /api/reviews/queue" ;
+    c4v:order 18 .
+
+:rel:19 a c4:Relationship ;
+    c4:source :client ;
+    c4:target :review-task ;
+    rdfs:label "POST /tasks/{id}/reviews" ;
+    c4v:order 19 .
+
+:rel:20 a c4:Relationship ;
+    c4:source :client ;
+    c4:target :request-export ;
+    rdfs:label "POST /api/exports" ;
+    c4v:order 20 .
+
+:rel:21 a c4:Relationship ;
+    c4:source :client ;
+    c4:target :get-export ;
+    rdfs:label "GET /api/exports/{id}" ;
+    c4v:order 21 .
+
+:rel:22 a c4:Relationship ;
+    c4:source :canvas ;
+    c4:target :minio ;
+    rdfs:label "GET presigned URLs" ;
+    c4v:order 22 ;
+    c4v:dashed true .
+
+:rel:23 a c4:Relationship ;
+    c4:source :require-role ;
+    c4:target :get-current-user ;
+    rdfs:label "resolves the user" ;
+    c4v:order 23 .
+
+:rel:24 a c4:Relationship ;
+    c4:source :get-current-user ;
+    c4:target :models ;
+    rdfs:label "loads User by token sub" ;
+    c4v:order 24 .
+
+:rel:25 a c4:Relationship ;
+    c4:source :login ;
+    c4:target :models ;
+    rdfs:label "SELECT user by email" ;
+    c4v:order 25 .
+
+:rel:26 a c4:Relationship ;
+    c4:source :seed ;
+    c4:target :models ;
+    rdfs:label "inserts demo users" ;
+    c4v:order 26 .
+
+:rel:27 a c4:Relationship ;
+    c4:source :claim-next ;
+    c4:target :apply-action ;
+    rdfs:label "CLAIM" ;
+    c4v:order 27 .
+
+:rel:28 a c4:Relationship ;
+    c4:source :submit-task ;
+    c4:target :apply-action ;
+    rdfs:label "SUBMIT" ;
+    c4v:order 28 .
+
+:rel:29 a c4:Relationship ;
+    c4:source :reopen-task ;
+    c4:target :apply-action ;
+    rdfs:label "REOPEN" ;
+    c4v:order 29 .
+
+:rel:30 a c4:Relationship ;
+    c4:source :review-task ;
+    c4:target :apply-action ;
+    rdfs:label "APPROVE / REJECT" ;
+    c4v:order 30 .
+
+:rel:31 a c4:Relationship ;
+    c4:source :apply-action ;
+    c4:target :next-status ;
+    rdfs:label "next_status(status, action, role)" ;
+    c4v:order 31 .
+
+:rel:32 a c4:Relationship ;
+    c4:source :next-status ;
+    c4:target :transitions ;
+    rdfs:label "looks up (status, action)" ;
+    c4v:order 32 .
+
+:rel:33 a c4:Relationship ;
+    c4:source :allowed-actions ;
+    c4:target :transitions ;
+    rdfs:label "filters by status + role" ;
+    c4v:order 33 .
+
+:rel:34 a c4:Relationship ;
+    c4:source :next-status ;
+    c4:target :lifecycle ;
+    rdfs:label "moves a task" ;
+    c4v:order 34 .
+
+:rel:35 a c4:Relationship, c4:Transition ;
+    c4:source :st-pending ;
+    c4:target :st-in-progress ;
+    rdfs:label "claim · annotator" ;
+    c4v:order 35 .
+
+:rel:36 a c4:Relationship, c4:Transition ;
+    c4:source :st-in-progress ;
+    c4:target :st-submitted ;
+    rdfs:label "submit · annotator" ;
+    c4v:order 36 .
+
+:rel:37 a c4:Relationship, c4:Transition ;
+    c4:source :st-submitted ;
+    c4:target :st-approved ;
+    rdfs:label "approve · reviewer" ;
+    c4v:order 37 .
+
+:rel:38 a c4:Relationship, c4:Transition ;
+    c4:source :st-submitted ;
+    c4:target :st-rejected ;
+    rdfs:label "reject · reviewer" ;
+    c4v:order 38 .
+
+:rel:39 a c4:Relationship, c4:Transition ;
+    c4:source :st-rejected ;
+    c4:target :st-in-progress ;
+    rdfs:label "reopen · annotator" ;
+    c4v:order 39 .
+
+:rel:40 a c4:Relationship ;
+    c4:source :upload-batch ;
+    c4:target :models ;
+    rdfs:label "INSERT Image + pending Task" ;
+    c4v:order 40 .
+
+:rel:41 a c4:Relationship ;
+    c4:source :claim-next ;
+    c4:target :models ;
+    rdfs:label "FOR UPDATE SKIP LOCKED" ;
+    c4v:order 41 .
+
+:rel:42 a c4:Relationship ;
+    c4:source :list-tasks ;
+    c4:target :models ;
+    rdfs:label "SELECT tasks" ;
+    c4v:order 42 .
+
+:rel:43 a c4:Relationship ;
+    c4:source :submit-task ;
+    c4:target :models ;
+    rdfs:label "commit status" ;
+    c4v:order 43 .
+
+:rel:44 a c4:Relationship ;
+    c4:source :reopen-task ;
+    c4:target :models ;
+    rdfs:label "commit status" ;
+    c4v:order 44 .
+
+:rel:45 a c4:Relationship ;
+    c4:source :annotations ;
+    c4:target :models ;
+    rdfs:label "replaces Annotation rows" ;
+    c4v:order 45 .
+
+:rel:46 a c4:Relationship ;
+    c4:source :review-queue ;
+    c4:target :models ;
+    rdfs:label "SELECT submitted tasks" ;
+    c4v:order 46 .
+
+:rel:47 a c4:Relationship ;
+    c4:source :review-task ;
+    c4:target :models ;
+    rdfs:label "INSERT Review" ;
+    c4v:order 47 .
+
+:rel:48 a c4:Relationship ;
+    c4:source :request-export ;
+    c4:target :models ;
+    rdfs:label "INSERT Export (queued)" ;
+    c4v:order 48 .
+
+:rel:49 a c4:Relationship ;
+    c4:source :get-export ;
+    c4:target :models ;
+    rdfs:label "loads Export" ;
+    c4v:order 49 .
+
+:rel:50 a c4:Relationship ;
+    c4:source :models ;
+    c4:target :postgres ;
+    rdfs:label "SQL (SQLAlchemy)" ;
+    c4v:order 50 .
+
+:rel:51 a c4:Relationship ;
+    c4:source :task-to-dict ;
+    c4:target :image-to-dict ;
+    rdfs:label "embeds image" ;
+    c4v:order 51 .
+
+:rel:52 a c4:Relationship ;
+    c4:source :image-to-dict ;
+    c4:target :presigned-url ;
+    rdfs:label "image + thumbnail URLs" ;
+    c4v:order 52 .
+
+:rel:53 a c4:Relationship ;
+    c4:source :export-to-dict ;
+    c4:target :presigned-url ;
+    rdfs:label "download_url" ;
+    c4v:order 53 .
+
+:rel:54 a c4:Relationship ;
+    c4:source :upload-batch ;
+    c4:target :upload-image ;
+    rdfs:label "stores each original" ;
+    c4v:order 54 .
+
+:rel:55 a c4:Relationship ;
+    c4:source :upload-image ;
+    c4:target :minio ;
+    rdfs:label "PUT originals" ;
+    c4v:order 55 .
+
+:rel:56 a c4:Relationship ;
+    c4:source :upload-batch ;
+    c4:target :enqueue-thumbnail ;
+    rdfs:label "per image, after commit" ;
+    c4v:order 56 .
+
+:rel:57 a c4:Relationship ;
+    c4:source :request-export ;
+    c4:target :enqueue-export ;
+    rdfs:label "enqueue export" ;
+    c4v:order 57 .
+
+:rel:58 a c4:Relationship ;
+    c4:source :enqueue-thumbnail ;
+    c4:target :redis ;
+    rdfs:label "enqueue \"thumbnails\"" ;
+    c4v:order 58 ;
+    c4v:dashed true .
+
+:rel:59 a c4:Relationship ;
+    c4:source :enqueue-export ;
+    c4:target :redis ;
+    rdfs:label "enqueue \"exports\"" ;
+    c4v:order 59 ;
+    c4v:dashed true .
+
+:rel:60 a c4:Relationship ;
+    c4:source :wmain ;
+    c4:target :redis ;
+    rdfs:label "consumes jobs" ;
+    c4v:order 60 ;
+    c4v:dashed true .
+
+:rel:61 a c4:Relationship ;
+    c4:source :wmain ;
+    c4:target :thumb ;
+    rdfs:label "runs generate_thumbnail" ;
+    c4v:order 61 .
+
+:rel:62 a c4:Relationship ;
+    c4:source :wmain ;
+    c4:target :export-approved ;
+    rdfs:label "runs export_approved" ;
+    c4v:order 62 .
+
+:rel:63 a c4:Relationship ;
+    c4:source :thumb ;
+    c4:target :postgres ;
+    rdfs:label "thumb key + size" ;
+    c4v:order 63 .
+
+:rel:64 a c4:Relationship ;
+    c4:source :thumb ;
+    c4:target :minio ;
+    rdfs:label "GET original · PUT thumb" ;
+    c4v:order 64 .
+
+:rel:65 a c4:Relationship ;
+    c4:source :export-approved ;
+    c4:target :approved-boxes ;
+    rdfs:label "executes" ;
+    c4v:order 65 .
+
+:rel:66 a c4:Relationship ;
+    c4:source :export-approved ;
+    c4:target :build-coco ;
+    rdfs:label "rows → COCO dict" ;
+    c4v:order 66 .
+
+:rel:67 a c4:Relationship ;
+    c4:source :export-approved ;
+    c4:target :postgres ;
+    rdfs:label "reads approved · updates exports" ;
+    c4v:order 67 .
+
+:rel:68 a c4:Relationship ;
+    c4:source :export-approved ;
+    c4:target :minio ;
+    rdfs:label "PUT COCO file" ;
+    c4v:order 68 .
+
+:rel:69 a c4:Relationship ;
+    c4:source :minio-init ;
+    c4:target :minio ;
+    rdfs:label "creates buckets" ;
+    c4v:order 69 ;
+    c4v:dashed true .
+
+:scenario:upload a c4:Scenario ;
+    rdfs:label "Upload a batch + thumbnails" ;
+    dcterms:identifier "upload" ;
+    dcterms:description "An admin uploads images. The API stores them and creates one pending task per image; thumbnails are produced afterwards by the worker. All /api calls pass through the nginx proxy." ;
+    dcterms:isPartOf :model:image-annotation-tool ;
+    c4v:order 1 ;
+    c4:hasStep :step:upload:1, :step:upload:2, :step:upload:3, :step:upload:4, :step:upload:5, :step:upload:6,
+        :step:upload:7, :step:upload:8, :step:upload:9, :step:upload:10, :step:upload:11,
+        :step:upload:12, :step:upload:13, :step:upload:14, :step:upload:15, :step:upload:16,
+        :step:upload:17 .
+
+:step:upload:1 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 1 ;
+    c4:source :admin ;
+    c4:target :admin-page ;
+    rdfs:label "batch name + files, Upload" .
+
+:step:upload:2 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 2 ;
+    c4:source :admin-page ;
+    c4:target :client ;
+    rdfs:label "uploadBatch(batchName, files)" .
+
+:step:upload:3 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 3 ;
+    c4:source :client ;
+    c4:target :upload-batch ;
+    rdfs:label "POST /api/images (multipart)" .
+
+:step:upload:4 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 4 ;
+    c4:source :upload-batch ;
+    c4:target :require-role ;
+    rdfs:label "require_role(\"admin\")" .
+
+:step:upload:5 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 5 ;
+    c4:source :upload-batch ;
+    c4:target :upload-image ;
+    rdfs:label "per file: upload_image(key, bytes)" .
+
+:step:upload:6 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 6 ;
+    c4:source :upload-image ;
+    c4:target :minio ;
+    rdfs:label "PUT images/<batch>/<uuid>-<name>" .
+
+:step:upload:7 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 7 ;
+    c4:source :upload-batch ;
+    c4:target :models ;
+    rdfs:label "add Image, flush, add Task(pending)" .
+
+:step:upload:8 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 8 ;
+    c4:source :models ;
+    c4:target :postgres ;
+    rdfs:label "INSERT images, tasks · COMMIT" .
+
+:step:upload:9 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 9 ;
+    c4:source :upload-batch ;
+    c4:target :enqueue-thumbnail ;
+    rdfs:label "per image: enqueue_thumbnail(id)" .
+
+:step:upload:10 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 10 ;
+    c4:source :enqueue-thumbnail ;
+    c4:target :redis ;
+    rdfs:label "enqueue generate_thumbnail" .
+
+:step:upload:11 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 11 ;
+    c4:source :upload-batch ;
+    c4:target :client ;
+    rdfs:label "201 · image_ids" ;
+    c4:isReply true .
+
+:step:upload:12 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 12 ;
+    c4:source :redis ;
+    c4:target :wmain ;
+    rdfs:label "job from queue \"thumbnails\"" .
+
+:step:upload:13 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 13 ;
+    c4:source :wmain ;
+    c4:target :thumb ;
+    rdfs:label "generate_thumbnail(image_id)" .
+
+:step:upload:14 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 14 ;
+    c4:source :thumb ;
+    c4:target :postgres ;
+    rdfs:label "SELECT storage_key" .
+
+:step:upload:15 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 15 ;
+    c4:source :thumb ;
+    c4:target :minio ;
+    rdfs:label "GET original from images" .
+
+:step:upload:16 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 16 ;
+    c4:source :thumb ;
+    c4:target :minio ;
+    rdfs:label "PUT thumbnails/<id>.jpg (≤ 320 px)" .
+
+:step:upload:17 a c4:Step ;
+    c4:inScenario :scenario:upload ;
+    schema:position 17 ;
+    c4:source :thumb ;
+    c4:target :postgres ;
+    rdfs:label "UPDATE images: thumbnail_key, w, h" .
+
+:scenario:annotate a c4:Scenario ;
+    rdfs:label "Annotate + submit" ;
+    dcterms:identifier "annotate" ;
+    dcterms:description "An annotator claims the oldest pending task, draws boxes and submits it. Status: pending → in_progress → submitted." ;
+    dcterms:isPartOf :model:image-annotation-tool ;
+    c4:primaryActor :annotator ;
+    c4:goal "Get the next image annotated with labelled boxes and handed over for review." ;
+    c4:trigger "The annotator opens /annotate, which asks the API for the next task." ;
+    c4:precondition "Signed in with the annotator role: POST /api/tasks/next and POST /api/tasks/{id}/submit require it.",
+        "A task is pending, or the annotator already has one in progress; otherwise the API answers 404 \"no pending tasks\"." ;
+    c4v:preconditionList ( "Signed in with the annotator role: POST /api/tasks/next and POST /api/tasks/{id}/submit require it." "A task is pending, or the annotator already has one in progress; otherwise the API answers 404 \"no pending tasks\"." ) ;
+    c4:outcome "The task is submitted with at least one box (an empty submit is refused with 422) and appears in the review queue." ;
+    c4v:order 2 ;
+    c4:hasStep :step:annotate:1, :step:annotate:2, :step:annotate:3, :step:annotate:4, :step:annotate:5,
+        :step:annotate:6, :step:annotate:7, :step:annotate:8, :step:annotate:9, :step:annotate:10,
+        :step:annotate:11, :step:annotate:12, :step:annotate:13, :step:annotate:14, :step:annotate:15,
+        :step:annotate:16, :step:annotate:17, :step:annotate:18, :step:annotate:19, :step:annotate:20,
+        :step:annotate:21, :step:annotate:22, :step:annotate:23, :step:annotate:24 .
+
+:step:annotate:1 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 1 ;
+    c4:source :annotator ;
+    c4:target :annotate-page ;
+    rdfs:label "opens /annotate" .
+
+:step:annotate:2 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 2 ;
+    c4:source :annotate-page ;
+    c4:target :client ;
+    rdfs:label "claimNextTask()" .
+
+:step:annotate:3 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 3 ;
+    c4:source :client ;
+    c4:target :claim-next ;
+    rdfs:label "POST /api/tasks/next" .
+
+:step:annotate:4 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 4 ;
+    c4:source :claim-next ;
+    c4:target :models ;
+    rdfs:label "no open task → oldest pending, SKIP LOCKED" .
+
+:step:annotate:5 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 5 ;
+    c4:source :claim-next ;
+    c4:target :apply-action ;
+    rdfs:label "apply_action(task, CLAIM, annotator)" .
+
+:step:annotate:6 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 6 ;
+    c4:source :apply-action ;
+    c4:target :next-status ;
+    rdfs:label "pending + claim → in_progress" .
+
+:step:annotate:7 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 7 ;
+    c4:source :claim-next ;
+    c4:target :models ;
+    rdfs:label "set assignee_id · commit" .
+
+:step:annotate:8 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 8 ;
+    c4:source :claim-next ;
+    c4:target :task-to-dict ;
+    rdfs:label "task_to_dict(task)" .
+
+:step:annotate:9 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 9 ;
+    c4:source :task-to-dict ;
+    c4:target :image-to-dict ;
+    rdfs:label "image_to_dict(task.image)" .
+
+:step:annotate:10 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 10 ;
+    c4:source :image-to-dict ;
+    c4:target :presigned-url ;
+    rdfs:label "sign image + thumbnail URLs" .
+
+:step:annotate:11 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 11 ;
+    c4:source :claim-next ;
+    c4:target :client ;
+    rdfs:label "200 · task with image.url" ;
+    c4:isReply true .
+
+:step:annotate:12 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 12 ;
+    c4:source :annotate-page ;
+    c4:target :canvas ;
+    rdfs:label "render image + boxes" .
+
+:step:annotate:13 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 13 ;
+    c4:source :canvas ;
+    c4:target :minio ;
+    rdfs:label "GET image (presigned URL)" .
+
+:step:annotate:14 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 14 ;
+    c4:source :annotator ;
+    c4:target :canvas ;
+    rdfs:label "drags to draw labelled boxes" .
+
+:step:annotate:15 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 15 ;
+    c4:source :annotator ;
+    c4:target :annotate-page ;
+    rdfs:label "Submit for review" .
+
+:step:annotate:16 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 16 ;
+    c4:source :annotate-page ;
+    c4:target :client ;
+    rdfs:label "saveAnnotations(task.id, boxes)" .
+
+:step:annotate:17 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 17 ;
+    c4:source :client ;
+    c4:target :annotations ;
+    rdfs:label "PUT /api/tasks/{id}/annotations" .
+
+:step:annotate:18 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 18 ;
+    c4:source :annotations ;
+    c4:target :models ;
+    rdfs:label "in_progress? replace Annotation rows" .
+
+:step:annotate:19 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 19 ;
+    c4:source :annotate-page ;
+    c4:target :client ;
+    rdfs:label "submitTask(task.id)" .
+
+:step:annotate:20 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 20 ;
+    c4:source :client ;
+    c4:target :submit-task ;
+    rdfs:label "POST /api/tasks/{id}/submit" .
+
+:step:annotate:21 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 21 ;
+    c4:source :submit-task ;
+    c4:target :apply-action ;
+    rdfs:label "apply_action(task, SUBMIT, annotator)" .
+
+:step:annotate:22 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 22 ;
+    c4:source :apply-action ;
+    c4:target :next-status ;
+    rdfs:label "in_progress + submit → submitted" .
+
+:step:annotate:23 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 23 ;
+    c4:source :submit-task ;
+    c4:target :models ;
+    rdfs:label "commit" .
+
+:step:annotate:24 a c4:Step ;
+    c4:inScenario :scenario:annotate ;
+    schema:position 24 ;
+    c4:source :models ;
+    c4:target :postgres ;
+    rdfs:label "UPDATE tasks SET status = 'submitted'" .
+
+:scenario:review a c4:Scenario ;
+    rdfs:label "Review: reject, rework, approve" ;
+    dcterms:identifier "review" ;
+    dcterms:description "A reviewer rejects a submitted task with a comment, the annotator reopens and resubmits it, and the reviewer approves. Status: submitted → rejected → in_progress → submitted → approved." ;
+    dcterms:isPartOf :model:image-annotation-tool ;
+    c4v:order 3 ;
+    c4:hasStep :step:review:1, :step:review:2, :step:review:3, :step:review:4, :step:review:5, :step:review:6,
+        :step:review:7, :step:review:8, :step:review:9, :step:review:10, :step:review:11,
+        :step:review:12, :step:review:13, :step:review:14, :step:review:15, :step:review:16,
+        :step:review:17, :step:review:18, :step:review:19, :step:review:20, :step:review:21,
+        :step:review:22, :step:review:23, :step:review:24, :step:review:25, :step:review:26,
+        :step:review:27, :step:review:28, :step:review:29, :step:review:30 .
+
+:step:review:1 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 1 ;
+    c4:source :reviewer ;
+    c4:target :review-page ;
+    rdfs:label "opens /review" .
+
+:step:review:2 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 2 ;
+    c4:source :review-page ;
+    c4:target :client ;
+    rdfs:label "getReviewQueue()" .
+
+:step:review:3 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 3 ;
+    c4:source :client ;
+    c4:target :review-queue ;
+    rdfs:label "GET /api/reviews/queue" .
+
+:step:review:4 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 4 ;
+    c4:source :review-queue ;
+    c4:target :models ;
+    rdfs:label "SELECT submitted ORDER BY updated_at" .
+
+:step:review:5 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 5 ;
+    c4:source :review-page ;
+    c4:target :minio ;
+    rdfs:label "GET thumbnails (presigned URLs)" .
+
+:step:review:6 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 6 ;
+    c4:source :review-page ;
+    c4:target :canvas ;
+    rdfs:label "selected task, read-only" .
+
+:step:review:7 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 7 ;
+    c4:source :reviewer ;
+    c4:target :review-page ;
+    rdfs:label "types comment, Reject" .
+
+:step:review:8 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 8 ;
+    c4:source :review-page ;
+    c4:target :client ;
+    rdfs:label "reviewTask(id, \"rejected\", comment)" .
+
+:step:review:9 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 9 ;
+    c4:source :client ;
+    c4:target :review-task ;
+    rdfs:label "POST /api/tasks/{id}/reviews" .
+
+:step:review:10 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 10 ;
+    c4:source :review-task ;
+    c4:target :apply-action ;
+    rdfs:label "apply_action(task, REJECT, reviewer)" .
+
+:step:review:11 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 11 ;
+    c4:source :apply-action ;
+    c4:target :next-status ;
+    rdfs:label "submitted + reject → rejected" .
+
+:step:review:12 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 12 ;
+    c4:source :review-task ;
+    c4:target :models ;
+    rdfs:label "add Review(rejected, comment) · commit" .
+
+:step:review:13 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 13 ;
+    c4:source :annotate-page ;
+    c4:target :client ;
+    rdfs:label "listMyRejectedTasks()" .
+
+:step:review:14 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 14 ;
+    c4:source :client ;
+    c4:target :list-tasks ;
+    rdfs:label "GET /api/tasks?status=rejected&mine=true" .
+
+:step:review:15 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 15 ;
+    c4:source :list-tasks ;
+    c4:target :client ;
+    rdfs:label "tasks with last_review.comment" ;
+    c4:isReply true .
+
+:step:review:16 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 16 ;
+    c4:source :annotator ;
+    c4:target :annotate-page ;
+    rdfs:label "reads comment, Fix" .
+
+:step:review:17 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 17 ;
+    c4:source :annotate-page ;
+    c4:target :client ;
+    rdfs:label "reopenTask(id)" .
+
+:step:review:18 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 18 ;
+    c4:source :client ;
+    c4:target :reopen-task ;
+    rdfs:label "POST /api/tasks/{id}/reopen" .
+
+:step:review:19 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 19 ;
+    c4:source :reopen-task ;
+    c4:target :apply-action ;
+    rdfs:label "apply_action(task, REOPEN, annotator)" .
+
+:step:review:20 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 20 ;
+    c4:source :apply-action ;
+    c4:target :next-status ;
+    rdfs:label "rejected + reopen → in_progress" .
+
+:step:review:21 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 21 ;
+    c4:source :annotator ;
+    c4:target :canvas ;
+    rdfs:label "corrects the boxes" .
+
+:step:review:22 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 22 ;
+    c4:source :annotate-page ;
+    c4:target :client ;
+    rdfs:label "saveAnnotations() then submitTask()" .
+
+:step:review:23 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 23 ;
+    c4:source :client ;
+    c4:target :submit-task ;
+    rdfs:label "POST /api/tasks/{id}/submit" .
+
+:step:review:24 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 24 ;
+    c4:source :submit-task ;
+    c4:target :apply-action ;
+    rdfs:label "in_progress + submit → submitted" .
+
+:step:review:25 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 25 ;
+    c4:source :reviewer ;
+    c4:target :review-page ;
+    rdfs:label "Approve" .
+
+:step:review:26 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 26 ;
+    c4:source :review-page ;
+    c4:target :client ;
+    rdfs:label "reviewTask(id, \"approved\", \"\")" .
+
+:step:review:27 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 27 ;
+    c4:source :client ;
+    c4:target :review-task ;
+    rdfs:label "POST /api/tasks/{id}/reviews" .
+
+:step:review:28 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 28 ;
+    c4:source :review-task ;
+    c4:target :apply-action ;
+    rdfs:label "apply_action(task, APPROVE, reviewer)" .
+
+:step:review:29 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 29 ;
+    c4:source :apply-action ;
+    c4:target :next-status ;
+    rdfs:label "submitted + approve → approved (final)" .
+
+:step:review:30 a c4:Step ;
+    c4:inScenario :scenario:review ;
+    schema:position 30 ;
+    c4:source :review-task ;
+    c4:target :models ;
+    rdfs:label "add Review(approved) · commit" .
+
+:scenario:export a c4:Scenario ;
+    rdfs:label "Export approved tasks (COCO)" ;
+    dcterms:identifier "export" ;
+    dcterms:description "An admin requests an export. The API only queues it; the worker builds the file and the page polls until a download URL appears." ;
+    dcterms:isPartOf :model:image-annotation-tool ;
+    c4:primaryActor :admin ;
+    c4:goal "Download every approved annotation as one COCO-style JSON file." ;
+    c4:trigger "The admin clicks \"Export approved annotations\" on the admin page." ;
+    c4:precondition "Signed in with the admin role: POST /api/exports and GET /api/exports/{id} require it." ;
+    c4:outcome "The worker writes exports/export-<id>.coco.json to MinIO and marks the export done with its task count; the page shows a presigned download URL." ;
+    c4v:order 4 ;
+    c4:hasStep :step:export:1, :step:export:2, :step:export:3, :step:export:4, :step:export:5, :step:export:6,
+        :step:export:7, :step:export:8, :step:export:9, :step:export:10, :step:export:11,
+        :step:export:12, :step:export:13, :step:export:14, :step:export:15, :step:export:16,
+        :step:export:17, :step:export:18, :step:export:19, :step:export:20, :step:export:21,
+        :step:export:22 .
+
+:step:export:1 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 1 ;
+    c4:source :admin ;
+    c4:target :admin-page ;
+    rdfs:label "Export approved annotations" .
+
+:step:export:2 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 2 ;
+    c4:source :admin-page ;
+    c4:target :client ;
+    rdfs:label "requestExport()" .
+
+:step:export:3 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 3 ;
+    c4:source :client ;
+    c4:target :request-export ;
+    rdfs:label "POST /api/exports" .
+
+:step:export:4 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 4 ;
+    c4:source :request-export ;
+    c4:target :models ;
+    rdfs:label "add Export(status=queued) · commit" .
+
+:step:export:5 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 5 ;
+    c4:source :request-export ;
+    c4:target :enqueue-export ;
+    rdfs:label "enqueue_export(export.id)" .
+
+:step:export:6 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 6 ;
+    c4:source :enqueue-export ;
+    c4:target :redis ;
+    rdfs:label "enqueue export_approved (600 s)" .
+
+:step:export:7 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 7 ;
+    c4:source :request-export ;
+    c4:target :client ;
+    rdfs:label "202 · status queued" ;
+    c4:isReply true .
+
+:step:export:8 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 8 ;
+    c4:source :redis ;
+    c4:target :wmain ;
+    rdfs:label "job from queue \"exports\"" .
+
+:step:export:9 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 9 ;
+    c4:source :wmain ;
+    c4:target :export-approved ;
+    rdfs:label "export_approved(export_id)" .
+
+:step:export:10 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 10 ;
+    c4:source :export-approved ;
+    c4:target :postgres ;
+    rdfs:label "UPDATE exports SET status = 'running'" .
+
+:step:export:11 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 11 ;
+    c4:source :export-approved ;
+    c4:target :approved-boxes ;
+    rdfs:label "execute APPROVED_BOXES" .
+
+:step:export:12 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 12 ;
+    c4:source :export-approved ;
+    c4:target :postgres ;
+    rdfs:label "SELECT boxes WHERE status = 'approved'" .
+
+:step:export:13 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 13 ;
+    c4:source :export-approved ;
+    c4:target :build-coco ;
+    rdfs:label "build_coco(rows)" .
+
+:step:export:14 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 14 ;
+    c4:source :export-approved ;
+    c4:target :minio ;
+    rdfs:label "PUT exports/export-<id>.coco.json" .
+
+:step:export:15 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 15 ;
+    c4:source :export-approved ;
+    c4:target :postgres ;
+    rdfs:label "UPDATE exports: done, key, task_count" .
+
+:step:export:16 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 16 ;
+    c4:source :admin-page ;
+    c4:target :client ;
+    rdfs:label "getExport(id) every 2 s" .
+
+:step:export:17 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 17 ;
+    c4:source :client ;
+    c4:target :get-export ;
+    rdfs:label "GET /api/exports/{id}" .
+
+:step:export:18 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 18 ;
+    c4:source :get-export ;
+    c4:target :export-to-dict ;
+    rdfs:label "export_to_dict(export)" .
+
+:step:export:19 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 19 ;
+    c4:source :export-to-dict ;
+    c4:target :presigned-url ;
+    rdfs:label "sign exports/<storage_key>" .
+
+:step:export:20 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 20 ;
+    c4:source :get-export ;
+    c4:target :client ;
+    rdfs:label "200 · done + download_url" ;
+    c4:isReply true .
+
+:step:export:21 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 21 ;
+    c4:source :admin ;
+    c4:target :admin-page ;
+    rdfs:label "clicks Download COCO JSON" .
+
+:step:export:22 a c4:Step ;
+    c4:inScenario :scenario:export ;
+    schema:position 22 ;
+    c4:source :admin-page ;
+    c4:target :minio ;
+    rdfs:label "GET export file (presigned URL)" .

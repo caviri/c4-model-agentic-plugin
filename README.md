@@ -172,6 +172,22 @@ rete build architecture.jsonld -o architecture.rete --card --title "My project a
 The vocabulary, the mapping from the model and example SPARQL queries are in
 [`skills/architecture-explorer/references/rdf-graph.md`](skills/architecture-explorer/references/rdf-graph.md).
 
+## Ontology
+
+The graph's terms are the plugin's own **C4 architecture ontology** (OWL 2), in [`ontology/`](ontology/) and
+published at [caviri.github.io/c4-model-agentic-plugin/ontology](https://caviri.github.io/c4-model-agentic-plugin/ontology/):
+
+- [`c4.ttl`](ontology/c4.ttl), namespace `c4:`: the architecture (people, software systems, containers, data
+  stores, components, code, relationships, scenarios and steps, states, use cases);
+- [`c4-view.ttl`](ontology/c4-view.ttl), namespace `c4v:`: how the explorer draws it, so a page can be recreated
+  from its graph alone;
+- [`c4-shapes.ttl`](ontology/c4-shapes.ttl): SHACL shapes every exported graph meets;
+- [`EXTENDING.md`](ontology/EXTENDING.md): how to add terms of your own, with a worked example.
+
+The explorer also downloads the graph as **Turtle** (`architecture.ttl`, written by every build too), and
+`build-explorer.mjs` rebuilds a page from a graph file. [`ontology/README.md`](ontology/README.md) explains the
+ontology; the C4 model itself is Simon Brown's, and this is an independent formalisation of it.
+
 ## Example
 
 [`examples/image-annotation-tool/`](examples/image-annotation-tool/) is a small theoretical

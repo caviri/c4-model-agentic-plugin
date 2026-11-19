@@ -180,13 +180,15 @@ At 100 % the gaps are a little wider than box size would suggest, the arrow labe
 - **Delete**: the `delete` button, or Delete / Backspace on the map. What is inside goes too, with its connections and the scenario steps through it (a scenario left without steps goes as well).
 - **Undo and redo**: the edit bar, Ctrl+Z, Ctrl+Y (or Ctrl+Shift+Z), 200 steps.
 - Every change is checked with the page's own validator first; a change it rejects is not made, and the message says why.
-- **Keep the result**: `download` → `model.js` (the source to rebuild from with `build-explorer.mjs`), `page` (this page as `index.html` with the edited MODEL block, ready to use as is), `JSON-LD` or `.rete` (the edited graph). Until then the edits are kept in this browser: reopening the page offers to restore them. `discard edits` goes back to the model the page was built with, and can itself be undone. `✓ done` leaves edit mode and keeps the edits on the page.
+- **Keep the result**: `download` → `model.js` (the source to rebuild from with `build-explorer.mjs`), `page` (this page as `index.html` with the edited MODEL block, ready to use as is), `JSON-LD`, `.ttl` or `.rete` (the edited graph). Until then the edits are kept in this browser: reopening the page offers to restore them. `discard edits` goes back to the model the page was built with, and can itself be undone. `✓ done` leaves edit mode and keeps the edits on the page.
 
 Things edit mode leaves to `model.js`: variants, level names and the legend.
 
 ### Export as an RDF graph
 
-`export ▾` → **The model** downloads the model as JSON-LD (generated locally) or as a `.rete` file (built in the browser; the builder is fetched from a CDN only when that entry is clicked, and a message explains what to do if it cannot be loaded). Vocabulary, mapping and example SPARQL queries: `rdf-graph.md`.
+`export ▾` → **The model** downloads the model as JSON-LD or Turtle (both generated locally) or as a `.rete` file (built in the browser; the builder is fetched from a CDN only when that entry is clicked, and a message explains what to do if it cannot be loaded). The terms are the plugin's ontology (`${CLAUDE_PLUGIN_ROOT}/ontology/`). Mapping, recreating a page from a graph, and example SPARQL queries: `rdf-graph.md`.
+
+The **Dynamic** panel lists a scenario's use-case fields (primary actor, goal, trigger, preconditions, outcome) under its description when the model has them; so does the panel of a sequence drawn inside a box.
 
 ### Model errors
 
@@ -201,7 +203,9 @@ For automated checks the page sets `data-explorer="ready"` or `"error"` on `<htm
 | `check-model.mjs index.html` | Syntax of every script, the validator, and a LAYOUT report: for each group of boxes (that box open, the rest closed) the arrows that bend around a box (`bend`), the arrows that could not be routed and still run behind a box (`BEHIND`, a warning), crossings (`cross`), and the number of label collisions: labels that could not be placed clear of other labels, boxes and open-box headers and are drawn as markers (information, not a warning; `--verbose` lists each as `label "…" on A → B  would overlap …`). The report is for the model's arrow style (`view.edges`, default orthogonal); with orthogonal arrows `bend` lines are replaced by `OVERLAP` (two unrelated arrows left on the same line because a gutter is full). `--edges straight` or `--edges orthogonal` reports on the other style, `--verbose` lists everything, `--no-layout` skips it. |
 | `check-model.mjs index.html --root <repo>` | Also checks that every `path` exists in the repository, that directories end in `/`, and that each `line` is inside its file. |
 | `screenshot.mjs index.html [outDir] [state …]` | PNGs of the page in the given URL states with headless Chrome or Edge, after confirming the page booted. Finds the browser itself; `--browser <path>` or `CHROME_PATH` overrides. |
-| `build-explorer.mjs model.js index.html` | Template + model → page, runs the check, writes `architecture.jsonld` and, when `rete` is available, `architecture.rete`. |
+| `build-explorer.mjs model.js index.html` | Template + model → page, runs the check, writes `architecture.jsonld`, `architecture.ttl` and, when `rete` is available, `architecture.rete`. Given a graph (`.ttl`, `.jsonld`, `.nt`, `.rete`) instead of `model.js`, it recreates the model from it first. |
+| `model-from-rdf.mjs graph.ttl model.js` | An RDF graph back to an editable `model.js`. |
+| `check-roundtrip.mjs model.js` | Proves that the model's graph recreates the page: model → N-Triples, Turtle, JSON-LD → model, page rebuilt from the graph alone, screenshots compared. |
 
 ## How layout is decided
 

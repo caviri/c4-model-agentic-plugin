@@ -1,0 +1,39 @@
+# SHACL shapes that ship with the example extension deployment.ttl. Run them together with ../c4-shapes.ttl:
+#   pyshacl -s c4-shapes.ttl -s examples/deployment-shapes.ttl -df turtle architecture.ttl     (or concatenate the files)
+# SHACL Core only, no sh:or / sh:not, like the core shapes.
+
+@prefix deps:    <https://example.org/ontology/deployment-shapes#> .
+@prefix dep:     <https://example.org/ontology/deployment#> .
+@prefix c4:      <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+# In a model that uses this extension, every container and data store says which unit deploys it.
+deps:DeployedContainerShape a sh:NodeShape ;
+    sh:targetClass c4:Container ;
+    sh:property [ sh:path dep:serviceName ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "Every container names the deployable unit that runs it (dep:serviceName)." ] ;
+    sh:property [ sh:path dep:hostPort ; sh:datatype xsd:integer ; sh:minInclusive 1 ; sh:maxInclusive 65535 ] ;
+    sh:property [ sh:path dep:startsAfter ; sh:class c4:Container ] .
+
+# the domains of deployment.ttl, checked rather than inferred
+deps:OnlyContainersShape a sh:NodeShape ;
+    sh:targetSubjectsOf dep:serviceName , dep:hostPort , dep:startsAfter ;
+    sh:class c4:Container ;
+    sh:message "Deployment facts belong on containers and data stores." .
+
+deps:ClassifiedStoreShape a sh:NodeShape ;
+    sh:targetSubjectsOf dep:classification ;
+    sh:class c4:DataStore ;
+    sh:property [ sh:path dep:classification ; sh:maxCount 1 ; sh:in ( dep:Public dep:Internal dep:Confidential ) ;
+                  sh:message "A data store has one classification: dep:Public, dep:Internal or dep:Confidential." ] .
+
+deps:ObjectStoreShape a sh:NodeShape ;
+    sh:targetClass dep:ObjectStore ;
+    sh:class c4:DataStore ;
+    sh:message "An object store is a data store (type: 'store' in the model)." .
+
+deps:ProtocolShape a sh:NodeShape ;
+    sh:targetSubjectsOf dep:protocol ;
+    sh:class c4:Relationship ;
+    sh:property [ sh:path dep:protocol ; sh:maxCount 1 ; sh:datatype xsd:string ] .

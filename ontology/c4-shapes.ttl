@@ -1,0 +1,244 @@
+# SHACL shapes for graphs in the terms of the C4 architecture ontology (c4.ttl) and its view module (c4-view.ttl).
+#
+# A graph exported by the architecture explorer conforms to these shapes. Run them with any SHACL Core engine:
+#   rete:     (await rete.open(bytes)).shacl(shapesTurtle)          (rete-graph, JavaScript)
+#   pyshacl:  pyshacl -s c4-shapes.ttl -df turtle architecture.ttl
+#
+# Only SHACL Core, and no logical constraints (sh:or, sh:and, sh:not, sh:xone): some engines, rete-graph
+# 0.7.4 among them, skip those silently, and every engine should give the same report for these shapes.
+# The shapes do not need the ontology: the exported data names the superclasses itself (a data store is
+# also typed c4:Element and c4:Container), so sh:targetClass and sh:class find them in the data graph.
+#
+# Sections: core architecture · use cases · states and transitions · view module (c4v:).
+
+@prefix c4s:     <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-shapes.ttl#> .
+@prefix c4:      <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4#> .
+@prefix c4v:     <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix schema:  <https://schema.org/> .
+
+<https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-shapes.ttl>
+    a owl:Ontology ;
+    dcterms:title "SHACL shapes for the C4 architecture ontology"@en ;
+    dcterms:description "Constraints that every graph exported by the architecture explorer meets: the core architecture, use cases, states and transitions, and the view module."@en ;
+    dcterms:creator "caviri" ;
+    dcterms:license <https://www.apache.org/licenses/LICENSE-2.0> ;
+    owl:versionInfo "0.1.0" ;
+    rdfs:seeAlso <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> , <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+#################################################################
+#  Core architecture
+#################################################################
+
+c4s:ModelShape a sh:NodeShape ;
+    sh:targetClass c4:Model ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:message "A model has exactly one name (rdfs:label)." ] ;
+    sh:property [ sh:path dcterms:title ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dcterms:description ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dcterms:identifier ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dcterms:conformsTo ; sh:hasValue <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> ;
+                  sh:message "An exported model says which ontology it uses: dcterms:conformsTo <…/ontology/c4>." ] ;
+    sh:property [ sh:path dcterms:source ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path c4:branch ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4:variantDimension ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dcterms:hasPart ; sh:minCount 1 ; sh:class c4:Element ; sh:message "A model has at least one top-level element." ] .
+
+c4s:ElementShape a sh:NodeShape ;
+    sh:targetClass c4:Element ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:message "An element has exactly one name (rdfs:label)." ] ;
+    sh:property [ sh:path dcterms:identifier ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:message "An element has exactly one id (dcterms:identifier)." ] ;
+    sh:property [ sh:path c4:level ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ; sh:maxInclusive 4 ;
+                  sh:message "An element has exactly one c4:level, an integer from 1 to 4." ] ;
+    sh:property [ sh:path dcterms:isPartOf ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:message "An element is part of exactly one thing: its parent element, or the model for a top-level box." ] ;
+    sh:property [ sh:path dcterms:description ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4:summary ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4:tag ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4:note ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4:technology ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4:path ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4:line ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ] ;
+    sh:property [ sh:path c4:link ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path rdfs:seeAlso ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path c4:uses ; sh:class c4:Element ] ;
+    sh:property [ sh:path c4:inVariant ; sh:class c4:Variant ] .
+
+# the line needs the file it is in
+c4s:LineNeedsPathShape a sh:NodeShape ;
+    sh:targetSubjectsOf c4:line ;
+    sh:property [ sh:path c4:path ; sh:minCount 1 ; sh:message "c4:line is only meaningful with a c4:path." ] .
+
+c4s:ContainerShape a sh:NodeShape ;
+    sh:targetClass c4:Container ;
+    sh:property [ sh:path dcterms:isPartOf ; sh:class c4:SoftwareSystem ;
+                  sh:message "In C4 a container (or data store) is part of a software system." ] .
+
+c4s:ComponentShape a sh:NodeShape ;
+    sh:targetClass c4:Component ;
+    sh:property [ sh:path dcterms:isPartOf ; sh:class c4:Container ;
+                  sh:message "In C4 a component is part of a container (or data store)." ] .
+
+c4s:RelationshipShape a sh:NodeShape ;
+    sh:targetClass c4:Relationship ;
+    sh:property [ sh:path c4:source ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4:Element ; sh:message "A relationship has exactly one source element." ] ;
+    sh:property [ sh:path c4:target ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4:Element ; sh:message "A relationship has exactly one target element." ] ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:message "A relationship says what happens along it (one rdfs:label)." ] ;
+    sh:property [ sh:path c4:summaryLabel ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4:inVariant ; sh:class c4:Variant ] .
+
+c4s:VariantShape a sh:NodeShape ;
+    sh:targetClass c4:Variant ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dcterms:identifier ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dcterms:isPartOf ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4:Model ] .
+
+#################################################################
+#  Dynamic diagrams and use cases
+#################################################################
+
+c4s:ScenarioShape a sh:NodeShape ;
+    sh:targetClass c4:Scenario ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dcterms:identifier ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dcterms:description ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dcterms:isPartOf ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4:Model ] ;
+    sh:property [ sh:path c4:hasStep ; sh:minCount 1 ; sh:class c4:Step ; sh:message "A scenario has at least one step." ] ;
+    # use-case metadata: all optional, at most one each, preconditions as many as needed
+    sh:property [ sh:path c4:primaryActor ; sh:maxCount 1 ; sh:class c4:Person ; sh:message "The primary actor of a use case is one person (c4:Person)." ] ;
+    sh:property [ sh:path c4:goal ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path c4:trigger ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path c4:outcome ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path c4:precondition ; sh:datatype xsd:string ; sh:minLength 1 ] .
+
+c4s:StepShape a sh:NodeShape ;
+    sh:targetClass c4:Step ;
+    sh:property [ sh:path schema:position ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ;
+                  sh:message "A step has exactly one position (schema:position), an integer from 1." ] ;
+    sh:property [ sh:path c4:source ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4:Element ; sh:message "A step has exactly one source element." ] ;
+    sh:property [ sh:path c4:target ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4:Element ; sh:message "A step has exactly one target element." ] ;
+    sh:property [ sh:path c4:inScenario ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4:Scenario ; sh:message "A step belongs to exactly one scenario." ] ;
+    sh:property [ sh:path [ sh:inversePath c4:hasStep ] ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "Exactly one scenario lists the step with c4:hasStep." ] ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4:isReply ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path c4:inVariant ; sh:class c4:Variant ] .
+
+#################################################################
+#  States and transitions
+#################################################################
+
+c4s:StateShape a sh:NodeShape ;
+    sh:targetClass c4:State ;
+    sh:property [ sh:path dcterms:isPartOf ; sh:class c4:Element ; sh:message "A state is part of the element that owns its lifecycle." ] ;
+    sh:property [ sh:path c4:initial ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path c4:final ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path c4:transitionsTo ; sh:class c4:State ] .
+
+c4s:TransitionShape a sh:NodeShape ;
+    sh:targetClass c4:Transition ;
+    sh:property [ sh:path c4:source ; sh:class c4:State ; sh:message "A transition starts at a state." ] ;
+    sh:property [ sh:path c4:target ; sh:class c4:State ; sh:message "A transition ends at a state." ] .
+
+c4s:TransitionsFromStateShape a sh:NodeShape ;
+    sh:targetSubjectsOf c4:transitionsTo ;
+    sh:class c4:State ;
+    sh:message "Only a state transitions to another state." .
+
+c4s:InitialFinalShape a sh:NodeShape ;
+    sh:targetSubjectsOf c4:initial , c4:final ;
+    sh:class c4:State ;
+    sh:message "Only a state is initial or final." .
+
+#################################################################
+#  View module (c4v:): what the explorer needs to redraw the diagrams
+#################################################################
+
+c4s:ModelViewShape a sh:NodeShape ;
+    sh:targetClass c4:Model ;
+    sh:property [ sh:path c4v:subtitle ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4v:toolbarTitle ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4v:placeholder ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path c4v:startLevel ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ; sh:maxInclusive 4 ] ;
+    sh:property [ sh:path c4v:edgeStyle ; sh:maxCount 1 ; sh:in ( "orthogonal" "straight" ) ] ;
+    sh:property [ sh:path c4v:theme ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4v:openElements ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ( c4v:openElements [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class c4:Element ] ;
+    sh:property [ sh:path c4v:defaultPins ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ( c4v:defaultPins [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class c4:Element ] ;
+    sh:property [ sh:path c4v:levelNames ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ( c4v:levelNames [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4v:legendEntry ; sh:class c4v:LegendEntry ] ;
+    sh:property [ sh:path c4v:sourceHost ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4v:fileTemplate ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4v:dirTemplate ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4v:lineTemplate ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4v:linkLabel ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4v:base ; sh:maxCount 1 ; sh:datatype xsd:anyURI ] ;
+    sh:property [ sh:path c4v:vocabulary ; sh:maxCount 1 ; sh:datatype xsd:anyURI ] ;
+    # extension prefixes, declared with SHACL's own vocabulary
+    sh:property [ sh:path sh:declare ; sh:class sh:PrefixDeclaration ] .
+
+c4s:PrefixDeclarationShape a sh:NodeShape ;
+    sh:targetClass sh:PrefixDeclaration ;
+    sh:property [ sh:path sh:prefix ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path sh:namespace ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:anyURI ] .
+
+c4s:LegendEntryShape a sh:NodeShape ;
+    sh:targetClass c4v:LegendEntry ;
+    sh:property [ sh:path c4v:legendKey ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path [ sh:inversePath c4v:legendEntry ] ; sh:minCount 1 ; sh:class c4:Model ] .
+
+# order: every element, relationship, scenario and variant has its place in the model's lists
+c4s:ElementViewShape a sh:NodeShape ;
+    sh:targetClass c4:Element ;
+    sh:property [ sh:path c4v:order ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ;
+                  sh:message "An element has its position in the model (one c4v:order), so the diagrams can be redrawn." ] ;
+    sh:property [ sh:path c4v:style ; sh:maxCount 1 ;
+                  sh:in ( "person" "system" "container" "store" "code" "ext" "sibling" "state" "highlight" "plain" "teal" "orange" "green" "violet" "rose" ) ] ;
+    sh:property [ sh:path c4v:dashed ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path c4v:column ; sh:maxCount 1 ; sh:nodeKind sh:Literal ] ;
+    sh:property [ sh:path c4v:row ; sh:maxCount 1 ; sh:nodeKind sh:Literal ] ;
+    sh:property [ sh:path c4v:noteList ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ( c4v:noteList [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4v:technologyList ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ( c4v:technologyList [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4v:variantList ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ( c4v:variantList [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class c4:Variant ] .
+
+c4s:ColumnNeedsRowShape a sh:NodeShape ;
+    sh:targetSubjectsOf c4v:column ;
+    sh:property [ sh:path c4v:row ; sh:minCount 1 ; sh:message "A grid position has both c4v:column and c4v:row." ] .
+
+c4s:RowNeedsColumnShape a sh:NodeShape ;
+    sh:targetSubjectsOf c4v:row ;
+    sh:property [ sh:path c4v:column ; sh:minCount 1 ; sh:message "A grid position has both c4v:column and c4v:row." ] .
+
+c4s:RelationshipViewShape a sh:NodeShape ;
+    sh:targetClass c4:Relationship ;
+    sh:property [ sh:path c4v:order ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ] ;
+    sh:property [ sh:path c4v:style ; sh:maxCount 1 ; sh:in ( "ink" "accent" "teal" "orange" "green" "violet" "rose" ) ] ;
+    sh:property [ sh:path c4v:dashed ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path c4v:variantList ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ( c4v:variantList [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class c4:Variant ] .
+
+c4s:ScenarioViewShape a sh:NodeShape ;
+    sh:targetClass c4:Scenario ;
+    sh:property [ sh:path c4v:order ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ] ;
+    sh:property [ sh:path c4v:preconditionList ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ( c4v:preconditionList [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:datatype xsd:string ] .
+
+c4s:StepViewShape a sh:NodeShape ;
+    sh:targetClass c4:Step ;
+    sh:property [ sh:path c4v:variantList ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ( c4v:variantList [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class c4:Variant ] .
+
+c4s:VariantViewShape a sh:NodeShape ;
+    sh:targetClass c4:Variant ;
+    sh:property [ sh:path c4v:order ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ] ;
+    sh:property [ sh:path c4v:shortName ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4v:tone ; sh:maxCount 1 ; sh:in ( "teal" "orange" "green" "violet" "rose" ) ] .

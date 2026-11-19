@@ -13,6 +13,7 @@ skills/
   explore-project/        how to explore, what to ask, the brief template
   project-deck/           deck template, build and diagram scripts, guides
   architecture-explorer/  explorer template, build and check scripts, references
+ontology/                 the C4 ontology (c4.ttl, c4-view.ttl), SHACL shapes, alignments, guides, example extension
 examples/
   image-annotation-tool/  test fixture and its generated output
 docs/                     this site (MkDocs Material); docs/img holds the screenshots used here and in the README
@@ -44,6 +45,19 @@ node skills/architecture-explorer/scripts/screenshot.mjs \
 `check-model.mjs` can also check the template on its own (`node skills/architecture-explorer/scripts/check-model.mjs
 skills/architecture-explorer/templates/explorer.html`): it should report only the placeholder-model warning.
 
+After a change to the RDF mapping (`<script id="rdf">`) or to the ontology, check that the graph still recreates the
+pages, for the example and the placeholder model (Turtle and JSON-LD need the `rete-graph` npm package; screenshots
+need Chrome or Edge):
+
+```sh
+node skills/architecture-explorer/scripts/check-roundtrip.mjs \
+  examples/image-annotation-tool/communications/architecture-explorer/model.js \
+  skills/architecture-explorer/templates/explorer.html
+```
+
+and that the exported graph still passes the shapes:
+`pyshacl -s ontology/c4-shapes.ttl -df turtle examples/image-annotation-tool/communications/architecture-explorer/architecture.ttl`.
+
 ## Build these docs
 
 The site is [MkDocs](https://www.mkdocs.org/) with the [Material](https://squidfunk.github.io/mkdocs-material/)
@@ -54,6 +68,9 @@ theme. Two things keep it from duplicating the repository:
 - **`docs/hooks.py` copies the example's generated explorer and deck** into the built site under `demo/`. The
   pages under [Example](example/index.md) show them in a frame, under an example bar
   (`docs/overrides/example.html`).
+- **The ontology is published from `ontology/`**: the hook adds every `ontology/**/*.ttl` to the site as is
+  (`/ontology/c4.ttl`), and generates the term pages ([core](ontology/c4.md), [view](ontology/c4-view.md)) from the
+  Turtle files with rdflib, so the namespace IRIs land on a section per term.
 
 Preview locally, from the repository root:
 

@@ -56,7 +56,8 @@ unedited.
   lifelines. Press **▶ play**, or click a message to see the code behind it.
 - Open **Task lifecycle** inside the API service to see the statuses a task moves through, drawn as a state machine.
 - Press ++d++ for the Dynamic tab, then **☰ all scenarios** to pick one of the four flows with a description of each.
-- Use **export** to download the architecture as JSON-LD or as a `.rete` graph.
+- Use **export** to download the architecture as JSON-LD, Turtle or a `.rete` graph, in the terms of the
+  [ontology](../ontology/index.md).
 
 ## Regenerate it
 

@@ -1,2 +1,4 @@
 mkdocs==1.6.1
 mkdocs-material==9.8.1
+# docs/hooks.py generates the ontology term pages from ontology/*.ttl
+rdflib==7.6.0

@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 // Builds an explorer page: template + a MODEL file → one self-contained HTML file, then validates it.
-// Also writes the model as an RDF graph next to it:
+// Also writes the model as an RDF graph next to it (terms: the plugin's ontology, ontology/c4.ttl and c4-view.ttl):
 //   architecture.jsonld   always (same mapping code as the page's export menu: the "rdf" script inside the template)
+//   architecture.ttl      always, the same graph as Turtle
 //   architecture.rete     when the `rete` CLI is on PATH, or the `rete-graph` npm package can be resolved; skipped otherwise
-// Usage: node build-explorer.mjs <model.js> <out.html> [--template path/to/explorer.html] [--root path/to/repo] [--strict] [--no-rdf]
+// Usage: node build-explorer.mjs <model.js | graph.nt|ttl|jsonld|rete> <out.html> [--template path/to/explorer.html] [--root path/to/repo] [--strict] [--no-rdf] [--from-rdf]
 //   <model.js> contains exactly what goes between the MODEL markers:  window.MODEL = { ... };
+//   a graph instead (recognised by its extension, or forced with --from-rdf) recreates the MODEL from the RDF first,
+//              with model-from-rdf.mjs: the graph holds everything the page draws
 //   --root     passed on to check-model.mjs: verifies every `path` / `line` against the repository
 // Exit code: 0 = written and valid, 1 = written but the model has errors, 2 = nothing written.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
@@ -21,10 +24,19 @@ const template = flag('--template') || resolve(here, '../templates/explorer.html
 const root = flag('--root');
 const strict = args.includes('--strict'), noRdf = args.includes('--no-rdf');
 const [modelFile, outFile] = args.filter((a) => !a.startsWith('--'));
-if (!modelFile || !outFile) { console.error('Usage: node build-explorer.mjs <model.js> <out.html> [--template explorer.html] [--root repo] [--strict] [--no-rdf]'); process.exit(2); }
+if (!modelFile || !outFile) { console.error('Usage: node build-explorer.mjs <model.js | graph.nt|ttl|jsonld|rete> <out.html> [--template explorer.html] [--root repo] [--strict] [--no-rdf] [--from-rdf]'); process.exit(2); }
+const fromRdf = args.includes('--from-rdf') || /\.(nt|nq|ttl|jsonld|rete)$/i.test(modelFile);
 
 let html, model;
-try { html = readFileSync(template, 'utf8'); model = readFileSync(modelFile, 'utf8').trim(); }
+try {
+  html = readFileSync(template, 'utf8');
+  if (fromRdf) {
+    const { modelFromRdf, modelJs } = await import('./model-from-rdf.mjs');
+    const r = await modelFromRdf(modelFile, { template });
+    model = modelJs(r.model).trim();
+    console.log('MODEL    recreated from ' + modelFile + '  (' + r.triples + ' triples, ' + r.via + ')');
+  } else model = readFileSync(modelFile, 'utf8').trim();
+}
 catch (e) { console.error('Cannot read input: ' + e.message); process.exit(2); }
 
 const block = /\/\* BEGIN MODEL \*\/[\s\S]*?\/\* END MODEL \*\//;
@@ -48,9 +60,11 @@ if (!noRdf && check.status === 0) {
     const sb = { window: {}, encodeURIComponent }; vm.createContext(sb);
     vm.runInContext(model, sb, { filename: 'model.js' }); vm.runInContext(rdfCode, sb, { filename: 'rdf.js' });
     const g = sb.window.archRdf(sb.window.MODEL);
-    const jsonld = join(outDir, 'architecture.jsonld'), reteOut = join(outDir, 'architecture.rete');
+    const jsonld = join(outDir, 'architecture.jsonld'), ttl = join(outDir, 'architecture.ttl'), reteOut = join(outDir, 'architecture.rete');
     writeFileSync(jsonld, JSON.stringify(g.toJsonLd(), null, 2) + '\n');
     console.log('WROTE    ' + jsonld + '  (' + g.tripleCount() + ' triples, base ' + g.base + ')');
+    writeFileSync(ttl, g.toTurtle());
+    console.log('WROTE    ' + ttl + '  (the same graph as Turtle' + (g.ontology ? '; terms ' + g.ontology : '; vocabulary overridden: ' + g.vocab) + ')');
     const note = await buildRete(g, jsonld, reteOut);
     console.log(note);
   } catch (e) { console.log('RDF      skipped: ' + e.message); }

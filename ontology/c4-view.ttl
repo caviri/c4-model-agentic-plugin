@@ -1,0 +1,244 @@
+# The C4 view ontology (presentation module) of c4-model-agentic-plugin.
+#
+# How the architecture explorer draws a model: the order of every list, grid positions, colours and dashes,
+# the view the page opens with, the pinned board, the legend, level names, toolbar texts and source-link
+# templates. With the core module (c4.ttl) an exported graph holds everything needed to redraw every diagram:
+# the map at every level, the lifecycles, and every scenario as a collaboration or sequence diagram.
+#
+# Kept apart from c4.ttl in the spirit of BPMN DI (Diagram Interchange): the core says what the architecture
+# is, this module says how one tool shows it. A consumer that only cares about the architecture ignores every
+# c4v: triple and loses nothing of its meaning.
+#
+# Every c4v: property is an owl:AnnotationProperty on purpose: none of them changes what the architecture
+# means, so an OWL reasoner draws no conclusions from them. Their rdfs:range is documentation only; the
+# SHACL shapes (c4-shapes.ttl, "view module") check the values.
+#
+# Ordered lists are rdf:Lists (Turtle: ( "a" "b" )). Where the core has one triple per value (c4:note,
+# c4:technology, c4:inVariant, c4:precondition) and order matters to the page, the list sits next to it,
+# for two values or more.
+
+@prefix c4v:     <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view#> .
+@prefix c4:      <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+<https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view>
+    a owl:Ontology ;
+    owl:imports <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> ;
+    dcterms:title "C4 view ontology"@en ;
+    dcterms:description """Presentation module of the C4 architecture ontology: what the architecture explorer of c4-model-agentic-plugin needs, beyond the architecture itself, to redraw every diagram exactly (order, layout, colours, view defaults, pinned board, legend, level names)."""@en ;
+    dcterms:creator "caviri" ;
+    dcterms:license <https://www.apache.org/licenses/LICENSE-2.0> ;
+    dcterms:created "2026-11-19"^^xsd:date ;
+    dcterms:modified "2026-11-19"^^xsd:date ;
+    owl:versionInfo "0.1.0" ;
+    vann:preferredNamespacePrefix "c4v" ;
+    vann:preferredNamespaceUri "https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view#" ;
+    rdfs:seeAlso <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view/> , <https://www.omg.org/spec/BPMN/2.0.2/> .
+
+dcterms:title       a owl:AnnotationProperty .
+dcterms:description a owl:AnnotationProperty .
+dcterms:creator     a owl:AnnotationProperty .
+dcterms:license     a owl:AnnotationProperty .
+dcterms:created     a owl:AnnotationProperty .
+dcterms:modified    a owl:AnnotationProperty .
+skos:definition     a owl:AnnotationProperty .
+skos:example        a owl:AnnotationProperty .
+vann:preferredNamespacePrefix a owl:AnnotationProperty .
+vann:preferredNamespaceUri    a owl:AnnotationProperty .
+
+#################################################################
+#  Class
+#################################################################
+
+c4v:LegendEntry a owl:Class ;
+    rdfs:label "Legend entry"@en ;
+    skos:definition "What one colour or line style means in this model's legend: a key (a colour kind such as teal, or dashed) and its label."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+#################################################################
+#  Order and layout
+#################################################################
+
+c4v:order a owl:AnnotationProperty ;
+    rdfs:label "order"@en ;
+    skos:definition "The position, from 1, of an element, a relationship, a scenario or a variant in the model's list of them. The explorer's automatic layout, merged arrow labels, the scenario picker and the default variant colours follow this order."@en ;
+    rdfs:range xsd:positiveInteger ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:column a owl:AnnotationProperty ;
+    rdfs:label "column"@en ;
+    skos:definition "Grid column of an element inside its parent (the first number of `at`). Columns are sorted ordinals, not pixels."@en ;
+    # no range: a number, an integer in practice (xsd:integer, or xsd:double for 0.5)
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:row a owl:AnnotationProperty ;
+    rdfs:label "row"@en ;
+    skos:definition "Grid row of an element inside its parent (the second number of `at`). Always given together with c4v:column."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:noteList a owl:AnnotationProperty ;
+    rdfs:label "notes in order"@en ;
+    skos:definition "The element's notes (c4:note) as an rdf:List, in the order the panel shows them. Written for two notes or more."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:technologyList a owl:AnnotationProperty ;
+    rdfs:label "technologies in order"@en ;
+    skos:definition "The element's technologies (c4:technology) as an rdf:List, in the order of their chips. Written for two or more."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:variantList a owl:AnnotationProperty ;
+    rdfs:label "variants in order"@en ;
+    skos:definition "The variants of an element, relationship or step (c4:inVariant) as an rdf:List in the model's order; the first one gives a variant-only arrow its colour. Written for two or more."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:preconditionList a owl:AnnotationProperty ;
+    rdfs:label "preconditions in order"@en ;
+    skos:definition "The scenario's preconditions (c4:precondition) as an rdf:List, in the order the panel shows them. Written for two or more."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+#################################################################
+#  Look of boxes and arrows, variants
+#################################################################
+
+c4v:style a owl:AnnotationProperty ;
+    rdfs:label "colour style"@en ;
+    skos:definition "The colour of a box or an arrow when it is not the default of its type: highlight (an element a reader must not miss), plain, the look of another type (person, system, container, store, code, ext, sibling, state), or a tone (teal, orange, green, violet, rose). Arrows: ink, accent or a tone. The model field `kind`."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:dashed a owl:AnnotationProperty ;
+    rdfs:label "dashed"@en ;
+    skos:definition "True for a dashed border or arrow: optional, planned, conditional, asynchronous or indirect. Written only when true."@en ;
+    rdfs:range xsd:boolean ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:shortName a owl:AnnotationProperty ;
+    rdfs:label "short name"@en ;
+    skos:definition "A shorter name of a variant, for the margin of sequence diagrams."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:tone a owl:AnnotationProperty ;
+    rdfs:label "tone"@en ;
+    skos:definition "The colour of a variant: teal, orange, green, violet or rose. Defaults by c4v:order in that sequence."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+#################################################################
+#  The page: titles, opening view, pinned board, legend, level names
+#################################################################
+
+c4v:subtitle a owl:AnnotationProperty ;
+    rdfs:label "subtitle"@en ;
+    skos:definition "The small line above the page title, typically org/repo."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:toolbarTitle a owl:AnnotationProperty ;
+    rdfs:label "toolbar title"@en ;
+    skos:definition "The big title in the toolbar; Architecture map when absent."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:placeholder a owl:AnnotationProperty ;
+    rdfs:label "placeholder"@en ;
+    skos:definition "True only for the sample model shipped with the explorer template."@en ;
+    rdfs:range xsd:boolean ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:startLevel a owl:AnnotationProperty ;
+    rdfs:label "start level"@en ;
+    skos:definition "The level, 1 to 4, the map opens at; 2 when absent."@en ;
+    rdfs:range xsd:positiveInteger ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:openElements a owl:AnnotationProperty ;
+    rdfs:label "open elements"@en ;
+    skos:definition "An rdf:List of the elements the map opens with, instead of a start level."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:edgeStyle a owl:AnnotationProperty ;
+    rdfs:label "arrow style"@en ;
+    skos:definition "How the map draws arrows: orthogonal (the default) or straight."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:theme a owl:AnnotationProperty ;
+    rdfs:label "theme"@en ;
+    skos:definition "The default colour theme of the page (auto when absent)."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:defaultPins a owl:AnnotationProperty ;
+    rdfs:label "default pins"@en ;
+    skos:definition "An rdf:List of the elements on the Pinned board when a reader first opens the page."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:levelNames a owl:AnnotationProperty ;
+    rdfs:label "level names"@en ;
+    skos:definition "An rdf:List of four strings that rename the levels System context, Containers, Components and Code."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:legendEntry a owl:AnnotationProperty ;
+    rdfs:label "legend entry"@en ;
+    skos:definition "A c4v:LegendEntry of the model."@en ;
+    rdfs:range c4v:LegendEntry ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:legendKey a owl:AnnotationProperty ;
+    rdfs:label "legend key"@en ;
+    skos:definition "The colour kind or line style a legend entry explains: a tone, a type's look, highlight, plain, or dashed. Its rdfs:label is the explanation."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+#################################################################
+#  Source links and the RDF settings of the model
+#################################################################
+
+c4v:sourceHost a owl:AnnotationProperty ;
+    rdfs:label "source host"@en ;
+    skos:definition "Which code host builds the source links: github, gitlab or bitbucket. Detected from the repository URL when absent."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:fileTemplate a owl:AnnotationProperty ;
+    rdfs:label "file link template"@en ;
+    skos:definition "URL template for a link to a file, with {repo}, {branch} and {path}."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:dirTemplate a owl:AnnotationProperty ;
+    rdfs:label "directory link template"@en ;
+    skos:definition "URL template for a link to a directory, with {repo}, {branch} and {path}."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:lineTemplate a owl:AnnotationProperty ;
+    rdfs:label "line link template"@en ;
+    skos:definition "What is appended to a file link for a line, with {line}."@en ;
+    skos:example "#L{line}" ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:linkLabel a owl:AnnotationProperty ;
+    rdfs:label "link label"@en ;
+    skos:definition "The text of source links, such as Open on GitHub."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:base a owl:AnnotationProperty ;
+    rdfs:label "base IRI"@en ;
+    skos:definition "The base IRI of the model's resources, when the model sets one (MODEL.rdf.base)."@en ;
+    rdfs:range xsd:anyURI ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
+
+c4v:vocabulary a owl:AnnotationProperty ;
+    rdfs:label "vocabulary override"@en ;
+    skos:definition "The namespace used instead of c4: when a model overrides it (MODEL.rdf.vocab). A graph that carries it no longer uses the published core ontology, and the SHACL shapes, which target c4: classes, do not apply to it."@en ;
+    rdfs:range xsd:anyURI ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .

@@ -30,7 +30,9 @@ The page validates the model at boot. Errors replace the page with a list of wha
 | `defaultPins` | no | Initial contents of the Pinned board and its "default pins" button |
 | `levelNames` | no | Rename the four levels |
 | `legend` | no | Override legend labels, name hand-picked colours |
-| `rdf` | no | Base IRI for the RDF export (see rdf-graph.md) |
+| `rdf` | no | Base IRI, vocabulary and extension prefixes of the RDF export (see rdf-graph.md) |
+
+Everything in the model goes into the page's RDF graph (Turtle, JSON-LD, `.rete`), in the terms of the plugin's ontology (`${CLAUDE_PLUGIN_ROOT}/ontology/c4.ttl` and `c4-view.ttl`), and a page can be recreated from that graph alone. Fields not listed in this guide are not exported.
 
 ## `project`
 
@@ -65,6 +67,7 @@ One entry per box. The hierarchy comes from `parent`; the level comes from `type
 | `dashed` | no | `true` gives a dashed border: optional, planned, or conditional elements. |
 | `variants` | no | Array of variant ids this element exists in. Omit for "all". |
 | `at` | no | `[column, row]` inside its parent, see Layout. |
+| `rdf` | no | Extension terms for the RDF graph: an object of property name → value, in a namespace declared in `rdf.prefixes`. See "Extension terms" below. |
 
 ### Types
 
@@ -120,6 +123,7 @@ Always declare an edge between the most specific elements you know (code to code
 | `kind` | no | `ink` (grey, default), `accent` (entry points, user-facing), or a tone. An edge limited to some variants takes the first variant's tone automatically. |
 | `dashed` | no | `true` for asynchronous, optional or indirect relationships. Edges limited to some variants are dashed automatically. |
 | `variants` | no | Array of variant ids in which the relationship exists. Omit for "all". |
+| `rdf` | no | Extension terms for the RDF graph, as on nodes. |
 
 An edge between a box and its own ancestor or descendant is never drawn (warning). The one exception is a state pointing at itself, drawn as a loop.
 
@@ -165,7 +169,13 @@ Each scenario is an ordered list of interactions between nodes of the static mod
 | `id` | yes | Unique. |
 | `name` | yes | Shown in the scenario picker and as the panel title. |
 | `desc` | no | One or two sentences of context. |
+| `actor` | no | Use case: the node id of the `person` whose goal the scenario serves (usually the one who starts it). Any other type is an error. |
+| `goal` | no | Use case: what that person wants, in one sentence. |
+| `trigger` | no | Use case: the event that starts it (a click, a request, a schedule). |
+| `preconditions` | no | Use case: what must hold before it starts. A string, or an array of strings. |
+| `outcome` | no | Use case: what holds when it has succeeded (its success guarantee). |
 | `steps` | yes | Non-empty array, in execution order. |
+| `rdf` | no | Extension terms for the RDF graph, as on nodes. |
 
 Each step:
 
@@ -177,6 +187,20 @@ Each step:
 | `variants` | no | Array of variant ids in which this step happens. Selecting a variant in the toolbar removes the other steps. |
 
 Steps do not need a matching entry in `edges`, but a call that appears in a scenario normally deserves one.
+
+### Use cases
+
+The five use-case fields are optional and shown as a short list under the scenario's description (Dynamic tab and the sequence inside a box). Fill them **only from evidence in the code or the project's docs**, and say where it comes from when it is not obvious: the role check on a route (`require_role("admin")`) gives the actor and a precondition; the route or button that starts the flow gives the trigger; error answers give preconditions (`404 "no pending tasks"`); the last writes give the outcome. Leave a field out rather than guess.
+
+```js
+{ id: 'export', name: 'Export approved tasks (COCO)', desc: '…',
+  actor: 'admin',
+  goal: 'Download every approved annotation as one COCO-style JSON file.',
+  trigger: 'The admin clicks "Export approved annotations" on the admin page.',
+  preconditions: 'Signed in with the admin role: POST /api/exports and GET /api/exports/{id} require it.',
+  outcome: 'The worker writes exports/export-<id>.coco.json to MinIO and marks the export done; the page shows a download URL.',
+  steps: [ … ] }
+```
 
 The same scenarios also draw the **sequence inside a box** on the map (the `⇅ sequence` button of an open box; see features.md). Nothing extra goes in the model. A box offers it as soon as some step crosses its border or runs between two of its children.
 
@@ -229,7 +253,29 @@ source: { repoUrl: 'https://github.com/org/repo', branch: 'main' }
 - `defaultPins`: array of node ids. Pick 5 to 10 across levels that together tell the core story; the Pinned board draws only those and the relationships between them.
 - `levelNames`: array of exactly four strings replacing `System context`, `Containers`, `Components`, `Code`.
 - `legend`: object mapping a kind (`person`, `system`/`highlight`, `container`, `store`, `code`/`plain`, `ext`, `sibling`, `state`, a tone, or `dashed`) to its legend label. Required in practice for any tone you use that is not a variant's tone.
-- `rdf`: `{ base, vocab }`, both optional absolute IRIs. `base` is the prefix of every element IRI in the RDF export. Default: `source.repoUrl` + `#` when set, else `urn:architecture:<project-slug>:`. See rdf-graph.md.
+- `rdf`: `{ base, vocab, prefixes }`, all optional. `base` is the prefix of every element IRI in the RDF export. Default: `source.repoUrl` + `#` when set, else `urn:architecture:<project-slug>:`. `vocab` replaces the `c4:` namespace of the published ontology; leave it out (with another vocabulary the graph no longer uses the ontology and the SHACL shapes do not apply). `prefixes` maps prefix names to the namespaces of extension terms. See rdf-graph.md.
+
+## Extension terms
+
+Facts the explorer has no field for (deployment, ownership, data classification, compliance) go into the RDF graph through an `rdf` object on a node, an edge or a scenario. Declare each namespace once in `rdf.prefixes`, in a namespace of your own, **never `c4:`**:
+
+```js
+rdf: { prefixes: { dep: 'https://example.org/ontology/deployment#' } },
+// on a node
+{ id: 'postgres', type: 'store', name: 'PostgreSQL', /* … */
+  rdf: { 'dep:hostPort': 5432, 'dep:classification': { '@id': 'dep:Confidential' } } }
+```
+
+| Value | Meaning |
+|---|---|
+| `'text'`, `42`, `1.5`, `true` | a literal |
+| `{ '@id': 'prefix:name' }`, `{ '@id': 'https://…' }` | an IRI |
+| `{ '@id': ':api' }` | the node `api` of this model |
+| `{ '@value': '2026-01-31', '@type': 'xsd:date' }`, `{ '@value': 'Bonjour', '@language': 'fr' }` | a typed or language-tagged literal |
+| `[ … ]` | several values (a set: the order is not kept) |
+| `'rdf:type': { '@id': 'prefix:Class' }` | an extra class of your own, a subclass of a `c4:` class |
+
+Keys are `prefix:name` with a declared prefix (or the built-in `rdf`, `rdfs`, `xsd`, `dcterms`, `schema`, `sh`) or a full IRI. The validator rejects unknown prefixes, malformed values, and properties the export already writes from the model's own fields (`rdfs:label`, `dcterms:*`, any `c4:` or `c4v:` term). The page does not draw these terms; they are for the graph. Ship an ontology file and SHACL shapes with them: `${CLAUDE_PLUGIN_ROOT}/ontology/EXTENDING.md`.
 
 ## Layout: `at`
 

@@ -349,6 +349,14 @@ window.MODEL = {
 
     { id: 'annotate', name: 'Annotate + submit',
       desc: 'An annotator claims the oldest pending task, draws boxes and submits it. Status: pending → in_progress → submitted.',
+      actor: 'annotator',
+      goal: 'Get the next image annotated with labelled boxes and handed over for review.',
+      trigger: 'The annotator opens /annotate, which asks the API for the next task.',
+      preconditions: [
+        'Signed in with the annotator role: POST /api/tasks/next and POST /api/tasks/{id}/submit require it.',
+        'A task is pending, or the annotator already has one in progress; otherwise the API answers 404 "no pending tasks".'
+      ],
+      outcome: 'The task is submitted with at least one box (an empty submit is refused with 422) and appears in the review queue.',
       steps: [
         { from: 'annotator', to: 'annotate-page', label: 'opens /annotate' },
         { from: 'annotate-page', to: 'client', label: 'claimNextTask()' },
@@ -413,6 +421,11 @@ window.MODEL = {
 
     { id: 'export', name: 'Export approved tasks (COCO)',
       desc: 'An admin requests an export. The API only queues it; the worker builds the file and the page polls until a download URL appears.',
+      actor: 'admin',
+      goal: 'Download every approved annotation as one COCO-style JSON file.',
+      trigger: 'The admin clicks "Export approved annotations" on the admin page.',
+      preconditions: 'Signed in with the admin role: POST /api/exports and GET /api/exports/{id} require it.',
+      outcome: 'The worker writes exports/export-<id>.coco.json to MinIO and marks the export done with its task count; the page shows a presigned download URL.',
       steps: [
         { from: 'admin', to: 'admin-page', label: 'Export approved annotations' },
         { from: 'admin-page', to: 'client', label: 'requestExport()' },
@@ -946,6 +959,7 @@ html.editing #map .nd { cursor: grab; }
           <button type="button" data-export="html">HTML page<small>the diagram on a page of its own, with its colours (.html)</small></button>
           <p class="menu-h">The model</p>
           <button type="button" data-export="jsonld">JSON-LD<small>the architecture as an RDF graph (.jsonld)</small></button>
+          <button type="button" data-export="ttl">Turtle<small>the same graph, easy to read and diff (.ttl)</small></button>
           <button type="button" data-export="rete">rete graph<small>one queryable file (.rete); fetches the builder from a CDN</small></button>
           <p id="export-msg" role="status"></p>
         </div></div>
@@ -954,7 +968,7 @@ html.editing #map .nd { cursor: grab; }
       <b class="ed-title">✎ Editing</b><span class="ed-count" id="ed-count"></span>
       <span class="ed-group" id="ed-palette" title="Drag a type onto the map, or click it to add one inside the selected box"></span>
       <span class="ed-group"><button type="button" data-ed="undo" title="Undo (Ctrl+Z)">↶ undo</button><button type="button" data-ed="redo" title="Redo (Ctrl+Y)">↷ redo</button></span>
-      <span class="ed-group"><span class="ed-k">download</span><button type="button" data-ed="dl-model" title="The edited model, to rebuild the page from">model.js</button><button type="button" data-ed="dl-page" title="This page with the edited model in it">page</button><button type="button" data-ed="dl-jsonld" title="The edited graph as JSON-LD">JSON-LD</button><button type="button" data-ed="dl-rete" title="The edited graph as a .rete file (fetches the builder from a CDN)">.rete</button></span>
+      <span class="ed-group"><span class="ed-k">download</span><button type="button" data-ed="dl-model" title="The edited model, to rebuild the page from">model.js</button><button type="button" data-ed="dl-page" title="This page with the edited model in it">page</button><button type="button" data-ed="dl-jsonld" title="The edited graph as JSON-LD">JSON-LD</button><button type="button" data-ed="dl-ttl" title="The edited graph as Turtle">.ttl</button><button type="button" data-ed="dl-rete" title="The edited graph as a .rete file (fetches the builder from a CDN)">.rete</button></span>
       <span class="spacer"></span>
       <button type="button" data-ed="discard" title="Go back to the model this page was built with (undoable)">discard edits</button><button type="button" class="ed-done" data-ed="done">✓ done</button>
       <p class="ed-hint">Drag a box to move it, or into an open box to put it inside · Alt+drag from one box to another to connect them · Delete removes the selected box · edits stay in this browser until you download them</p>
@@ -1182,6 +1196,78 @@ window.validateArchModel = function (M) {
     if (!M.rdf || typeof M.rdf !== 'object') E.push('rdf must be an object.');
     else ['base', 'vocab'].forEach(function (k) { if (M.rdf[k] !== undefined && !/^[a-z][a-z0-9+.-]*:\S+$/i.test(M.rdf[k])) E.push('rdf.' + k + ' must be an absolute IRI such as "https://example.org/arch/" (it is used as a prefix, so end it with / # or :).'); });
   }
+  // use cases: optional fields of a scenario
+  (Array.isArray(M.scenarios) ? M.scenarios : []).forEach(function (s, i) {
+    if (!s || typeof s !== 'object') return;
+    var w = 'scenarios[' + i + ']' + (s.id ? ' "' + s.id + '"' : '');
+    if (s.actor !== undefined) { if (!byId[s.actor]) E.push(w + ': actor "' + s.actor + '" is not a node id.'); else if (byId[s.actor].type !== 'person') E.push(w + ': actor "' + s.actor + '" is a ' + byId[s.actor].type + '; the primary actor of a use case is a person.'); }
+    ['goal', 'trigger', 'outcome'].forEach(function (k) { if (s[k] !== undefined && !str(s[k])) E.push(w + ': ' + k + ' must be a non-empty string.'); });
+    if (s.preconditions !== undefined && !(str(s.preconditions) || (Array.isArray(s.preconditions) && s.preconditions.length && s.preconditions.every(str)))) E.push(w + ': preconditions must be a string or a non-empty array of strings.');
+  });
+  M.nodes.forEach(function (n, i) {
+    if (!n) return;
+    if (n.path === '.') W.push('nodes[' + i + '] "' + n.id + '": path "." is the repository root in the RDF graph and comes back as ""; write "" for the root.');
+    // C4 rules the SHACL shapes (ontology/c4-shapes.ttl) check where the level warning above does not fire (a parent of a higher level)
+    var pt = n.parent != null && byId[n.parent] ? byId[n.parent].type : null;
+    if (n.type === 'component' && ['person', 'system', 'ext', 'sibling'].indexOf(pt) >= 0) W.push('nodes[' + i + '] "' + n.id + '": a component belongs inside a container or data store, not directly in a ' + pt + ' (C4; the RDF graph will not pass the SHACL shapes).');
+    if ((n.type === 'container' || n.type === 'store') && pt === 'person') W.push('nodes[' + i + '] "' + n.id + '": a ' + n.type + ' belongs inside a software system (C4; the RDF graph will not pass the SHACL shapes).');
+  });
+  // RDF extension terms (references/rdf-graph.md): rdf.prefixes, and an `rdf` object (property → value) on nodes, edges and scenarios
+  var RV = M.rdf && typeof M.rdf === 'object' ? M.rdf : {}, PXN = { c4: 1, c4v: 1, rdf: 1, rdfs: 1, xsd: 1, dcterms: 1, schema: 1, sh: 1 };
+  var NSX = { c4: RV.vocab || 'https://caviri.github.io/c4-model-agentic-plugin/ontology/c4#', c4v: 'https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view#',
+    rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', rdfs: 'http://www.w3.org/2000/01/rdf-schema#', xsd: 'http://www.w3.org/2001/XMLSchema#',
+    dcterms: 'http://purl.org/dc/terms/', schema: 'https://schema.org/', sh: 'http://www.w3.org/ns/shacl#' };
+  var known = {}; Object.keys(PXN).forEach(function (k) { known[k] = true; });
+  if (RV.prefixes !== undefined) {
+    if (!RV.prefixes || typeof RV.prefixes !== 'object' || Array.isArray(RV.prefixes)) E.push('rdf.prefixes must be an object of prefix → namespace IRI.');
+    else Object.keys(RV.prefixes).forEach(function (k) {
+      var ns = RV.prefixes[k];
+      if (PXN[k]) E.push('rdf.prefixes: "' + k + '" is built in (' + Object.keys(PXN).join(', ') + ') and cannot be declared.');
+      else if (!/^[A-Za-z](?:[A-Za-z0-9_.-]*[A-Za-z0-9_-])?$/.test(k)) E.push('rdf.prefixes: "' + k + '" is not a prefix name: a letter, then letters, digits, "-", "_" or ".", not ending in ".".');
+      else if (typeof ns !== 'string' || !/^[a-z][a-z0-9+.-]*:[^\s<>"{}|\\^`]*[\/#:]$/i.test(ns)) E.push('rdf.prefixes.' + k + ' must be an absolute namespace IRI ending in / or #, such as "https://example.org/ns#".');
+      else { known[k] = true; NSX[k] = ns; }
+    });
+  }
+  function rdfName(s, w, what) {   // what: 'property' | 'value' | 'datatype'
+    if (typeof s !== 'string' || !s) { E.push(w + ': a ' + what + ' name must be a non-empty string.'); return null; }
+    if (what === 'value' && s.charAt(0) === ':') { if (!byId[s.slice(1)]) E.push(w + ': "' + s + '" names no node (":<id>" points at a node of this model).'); return null; }
+    var i = s.indexOf(':'), k = s.slice(0, i);
+    if (i > 0 && known[k] === true) return k + ':' + s.slice(i + 1);
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(s) || /^urn:/i.test(s)) {
+      if (/[\s<>"{}|\\^`]/.test(s)) { E.push(w + ': "' + s + '" has a space or a character an IRI cannot hold.'); return null; }
+      for (var p in NSX) if (s.indexOf(NSX[p]) === 0) return p + ':' + s.slice(NSX[p].length);
+      return s;
+    }
+    E.push(w + ': "' + s + '" ' + (i > 0 ? 'uses the unknown prefix "' + k + '": declare it in rdf.prefixes, or write the full IRI.' : 'is neither prefix:name nor a full IRI.'));
+    return null;
+  }
+  var OWNP = /^(rdfs:(label|seeAlso)|dcterms:(identifier|title|description|isPartOf|hasPart|source|conformsTo)|schema:position|rdf:(first|rest)|sh:(declare|prefix|namespace)|c4v?:.*)$/;
+  function rdfValue(v, w) {
+    if (Array.isArray(v)) { if (!v.length) E.push(w + ': an empty list writes nothing; remove it.'); v.forEach(function (x) { if (Array.isArray(x)) E.push(w + ': lists cannot be nested.'); else rdfValue(x, w); }); return; }
+    if (typeof v === 'string' || typeof v === 'boolean') return;
+    if (typeof v === 'number') { if (!isFinite(v) || (Math.floor(v) === v && Math.abs(v) > 9007199254740991)) E.push(w + ': ' + v + ' cannot be written exactly; use { "@value": "…", "@type": "xsd:…" }.'); return; }
+    var ks = v && typeof v === 'object' ? Object.keys(v).sort().join(',') : '';
+    if (ks === '@id') { rdfName(v['@id'], w, 'value'); return; }
+    if ((ks === '@value' || ks === '@type,@value' || ks === '@language,@value') && typeof v['@value'] === 'string') {
+      if (v['@type'] !== undefined) rdfName(v['@type'], w, 'datatype');
+      if (v['@language'] !== undefined && !/^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/.test(v['@language'])) E.push(w + ': "' + v['@language'] + '" is not a language tag.');
+      return;
+    }
+    E.push(w + ': a value is a string, a number, true/false, { "@id": name }, { "@value": "…", "@type": name }, { "@value": "…", "@language": tag }, or a list of these.');
+  }
+  function checkExt(x, w) {
+    if (x === undefined) return;
+    if (!x || typeof x !== 'object' || Array.isArray(x)) { E.push(w + ': rdf must be an object of property name → value.'); return; }
+    Object.keys(x).forEach(function (k) {
+      var wk = w + ': rdf["' + k + '"]', c = rdfName(k, wk, 'property');
+      if (c && OWNP.test(c)) E.push(wk + ': ' + c + ' is written from the model\'s own fields (or is a c4/c4v term); put extension terms in a namespace of your own.');
+      if (c === 'rdf:type') [].concat(x[k]).forEach(function (t) { var tc = t && typeof t === 'object' && typeof t['@id'] === 'string' ? rdfName(t['@id'], wk, 'value') : null; if (!tc) E.push(wk + ': a type is a class name: { "@id": "prefix:Class" }.'); else if (/^c4v?:/.test(tc)) E.push(wk + ': ' + tc + ' comes from the node type; add a class of your own (a subclass of it).'); });
+      rdfValue(x[k], wk);
+    });
+  }
+  M.nodes.forEach(function (n, i) { if (n) checkExt(n.rdf, 'nodes[' + i + '] "' + n.id + '"'); });
+  (Array.isArray(M.edges) ? M.edges : []).forEach(function (e, i) { if (e) checkExt(e.rdf, 'edges[' + i + ']'); });
+  (Array.isArray(M.scenarios) ? M.scenarios : []).forEach(function (s, i) { if (s) checkExt(s.rdf, 'scenarios[' + i + ']' + (s.id ? ' "' + s.id + '"' : '')); });
   // a colour that is used by hand but explained nowhere
   var explained = {}, usedTone = {};
   ((M.variants && Array.isArray(M.variants.items)) ? M.variants.items : []).forEach(function (v, i) { if (v) explained[v.tone || TONES[i % TONES.length]] = true; });
@@ -2051,122 +2137,561 @@ window.archCore = function (MODEL) {
 
 <script id="rdf">
 /* BEGIN RDF */
-/* MODEL → RDF. One list of resources feeds both serialisations (JSON-LD and N-Triples), so they cannot drift.
-   Used by the page (export menu) and by scripts/build-explorer.mjs. No DOM access. Vocabulary: references/rdf-graph.md */
-window.archRdf = function (MODEL) {
-  var cfg = MODEL.rdf || {}, P = MODEL.project || {}, SRC = MODEL.source || {};
-  var NS = { rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', rdfs: 'http://www.w3.org/2000/01/rdf-schema#', xsd: 'http://www.w3.org/2001/XMLSchema#',
-    dcterms: 'http://purl.org/dc/terms/', schema: 'https://schema.org/', arch: cfg.vocab || 'urn:arch-explorer:vocab#' };
-  // JSON-LD term → [property, true when the value is an IRI]
-  var TERMS = {
-    name: ['rdfs:label'], description: ['dcterms:description'], identifier: ['dcterms:identifier'], title: ['dcterms:title'],
-    isPartOf: ['dcterms:isPartOf', true], hasPart: ['dcterms:hasPart', true], seeAlso: ['rdfs:seeAlso', true], repository: ['dcterms:source', true],
-    position: ['schema:position'],
-    summary: ['arch:summary'], tag: ['arch:tag'], note: ['arch:note'], technology: ['arch:technology'], level: ['arch:level'], kind: ['arch:kind'],
-    path: ['arch:path'], line: ['arch:line'], link: ['arch:link'], branch: ['arch:branch'], dashed: ['arch:dashed'],
-    initial: ['arch:initial'], final: ['arch:final'], inVariant: ['arch:inVariant', true], variantDimension: ['arch:variantDimension'],
-    uses: ['arch:uses', true], transitionsTo: ['arch:transitionsTo', true],
-    source: ['arch:source', true], target: ['arch:target', true], summaryLabel: ['arch:summaryLabel'],
-    scenario: ['arch:scenario', true], step: ['arch:step', true], reply: ['arch:reply']
-  };
-  var CLASS = { person: 'arch:Person', system: 'arch:SoftwareSystem', ext: 'arch:ExternalSystem', sibling: 'arch:SiblingSystem', container: 'arch:Container',
-    store: 'arch:DataStore', component: 'arch:Component', code: 'arch:CodeElement', state: 'arch:State' };
-  var BASE_LEVEL = { person: 1, system: 1, ext: 1, sibling: 1, container: 2, store: 2, component: 3, code: 4 };
+/* MODEL ⇄ RDF graph. One list of resources feeds every serialisation (JSON-LD, N-Triples, Turtle), so they cannot drift, and
+   archRdf.fromTriples() reads such a graph back into a MODEL: the graph carries everything the page draws.
+   Terms: the plugin's ontology, ontology/c4.ttl (the architecture, c4:) and ontology/c4-view.ttl (how the explorer draws it, c4v:).
+   Used by the page (export menu, editor) and by scripts/build-explorer.mjs, model-from-rdf.mjs and check-roundtrip.mjs.
+   No DOM access. Mapping: references/rdf-graph.md */
+(function () {
+var SITE = 'https://caviri.github.io/c4-model-agentic-plugin/ontology/';
+var C4 = SITE + 'c4#', C4V = SITE + 'c4-view#', ONTOLOGIES = [SITE + 'c4', SITE + 'c4-view'];
+var STD = { rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', rdfs: 'http://www.w3.org/2000/01/rdf-schema#', xsd: 'http://www.w3.org/2001/XMLSchema#',
+  dcterms: 'http://purl.org/dc/terms/', schema: 'https://schema.org/', sh: 'http://www.w3.org/ns/shacl#' };
+var RDF = STD.rdf, XSD = STD.xsd;
+// JSON-LD term → [property, value]: literal (none) · 'iri' · 'list' (an rdf:List of literals) · 'iris' (an rdf:List of IRIs)
+var TERMS = {
+  // the architecture (c4:) and the vocabularies it reuses
+  name: ['rdfs:label'], description: ['dcterms:description'], identifier: ['dcterms:identifier'], title: ['dcterms:title'],
+  isPartOf: ['dcterms:isPartOf', 'iri'], hasPart: ['dcterms:hasPart', 'iri'], seeAlso: ['rdfs:seeAlso', 'iri'], repository: ['dcterms:source', 'iri'],
+  conformsTo: ['dcterms:conformsTo', 'iri'], position: ['schema:position'],
+  summary: ['c4:summary'], tag: ['c4:tag'], note: ['c4:note'], technology: ['c4:technology'], level: ['c4:level'],
+  path: ['c4:path'], line: ['c4:line'], link: ['c4:link'], branch: ['c4:branch'],
+  initial: ['c4:initial'], final: ['c4:final'], inVariant: ['c4:inVariant', 'iri'], variantDimension: ['c4:variantDimension'],
+  uses: ['c4:uses', 'iri'], transitionsTo: ['c4:transitionsTo', 'iri'],
+  source: ['c4:source', 'iri'], target: ['c4:target', 'iri'], summaryLabel: ['c4:summaryLabel'],
+  inScenario: ['c4:inScenario', 'iri'], hasStep: ['c4:hasStep', 'iri'], isReply: ['c4:isReply'],
+  primaryActor: ['c4:primaryActor', 'iri'], goal: ['c4:goal'], trigger: ['c4:trigger'], precondition: ['c4:precondition'], outcome: ['c4:outcome'],
+  // how the explorer draws it (c4v:): order, layout, colours, view defaults, and the order of multi-valued fields
+  order: ['c4v:order'], style: ['c4v:style'], dashed: ['c4v:dashed'], column: ['c4v:column'], row: ['c4v:row'],
+  noteList: ['c4v:noteList', 'list'], technologyList: ['c4v:technologyList', 'list'], variantList: ['c4v:variantList', 'iris'], preconditionList: ['c4v:preconditionList', 'list'],
+  shortName: ['c4v:shortName'], tone: ['c4v:tone'], subtitle: ['c4v:subtitle'], toolbarTitle: ['c4v:toolbarTitle'], placeholder: ['c4v:placeholder'],
+  startLevel: ['c4v:startLevel'], openElements: ['c4v:openElements', 'iris'], edgeStyle: ['c4v:edgeStyle'], theme: ['c4v:theme'],
+  defaultPins: ['c4v:defaultPins', 'iris'], levelNames: ['c4v:levelNames', 'list'], legendEntry: ['c4v:legendEntry', 'iri'], legendKey: ['c4v:legendKey'],
+  sourceHost: ['c4v:sourceHost'], fileTemplate: ['c4v:fileTemplate'], dirTemplate: ['c4v:dirTemplate'], lineTemplate: ['c4v:lineTemplate'], linkLabel: ['c4v:linkLabel'],
+  base: ['c4v:base'], vocabulary: ['c4v:vocabulary'], declare: ['sh:declare', 'iri'], prefix: ['sh:prefix'], namespace: ['sh:namespace']
+};
+// node type → its c4: classes (superclasses written out, so SPARQL without inference and SHACL find them); c4:Element is added to all
+var CLASS = { person: ['Person'], system: ['SoftwareSystem'], ext: ['SoftwareSystem', 'ExternalSystem'], sibling: ['SoftwareSystem', 'SiblingSystem'],
+  container: ['Container'], store: ['Container', 'DataStore'], component: ['Component'], code: ['CodeElement'], state: ['State'] };
+var BASE_LEVEL = { person: 1, system: 1, ext: 1, sibling: 1, container: 2, store: 2, component: 3, code: 4 };
+var PREFIX_RE = /^[A-Za-z](?:[A-Za-z0-9_.-]*[A-Za-z0-9_-])?$/;
+// a Turtle local name (PN_LOCAL, ASCII part): anything else is written as a full <IRI>
+var PN_LOCAL = /^(?:(?:[A-Za-z0-9_:]|%[0-9A-Fa-f]{2})(?:(?:[A-Za-z0-9_.:-]|%[0-9A-Fa-f]{2})*(?:[A-Za-z0-9_:-]|%[0-9A-Fa-f]{2}))?)?$/;
 
-  function slug(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'model'; }
-  function cleanIri(u) { return String(u).replace(/[\s<>"{}|\\^`]/g, function (c) { return '%' + c.charCodeAt(0).toString(16).toUpperCase(); }); }
-  function isAbs(u) { return /^[a-z][a-z0-9+.-]*:/i.test(u); }
-  // element IRIs: base + id. Default base: the repository URL with "#", else a URN built from the project name.
-  var base = cleanIri(cfg.base || (SRC.repoUrl ? String(SRC.repoUrl).replace(/[#\/]+$/, '') + '#' : 'urn:architecture:' + slug(P.id || P.name) + ':'));
+function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+function slug(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'model'; }
+function cleanIri(u) { return String(u).replace(/[\s<>"{}|\\^`]/g, function (c) { return '%' + c.charCodeAt(0).toString(16).toUpperCase(); }); }
+function isAbs(u) { return /^[a-z][a-z0-9+.-]*:/i.test(u); }
+function isFull(s) { return /^[a-z][a-z0-9+.-]*:\/\//i.test(s) || /^urn:/i.test(s); }
+function str(v) { return typeof v === 'string' && v !== '' ? v : undefined; }
+function strs(v) { var a = (v == null ? [] : [].concat(v)).filter(function (x) { return typeof x === 'string' && x !== ''; }); return a.length ? a : undefined; }
+function num(v) { return typeof v === 'number' && isFinite(v) ? v : undefined; }
+function flag(v) { return v === true || undefined; }
+function isInt(v) { return Math.floor(v) === v && Math.abs(v) <= 9007199254740991; }
+function dbl(v) { return v.toExponential(15).replace(/(\d)0*e\+?/, '$1E'); }   // canonical xsd:double, as JSON-LD writes it
+function q(s) {
+  return '"' + String(s).replace(/[\\"\u0000-\u001f\u007f]/g, function (c) {
+    return { '\\': '\\\\', '"': '\\"', '\n': '\\n', '\r': '\\r', '\t': '\\t' }[c] || '\\u' + ('000' + c.charCodeAt(0).toString(16).toUpperCase()).slice(-4);
+  }) + '"';
+}
+// the JSON value of a typed literal when JSON carries it exactly (canonical form); undefined otherwise
+function nativeOf(lex, dt) {
+  if (dt === XSD + 'string') return lex;
+  if (dt === XSD + 'boolean') return lex === 'true' ? true : lex === 'false' ? false : undefined;
+  if (dt === XSD + 'integer') return /^-?(0|[1-9][0-9]*)$/.test(lex) && Math.abs(+lex) <= 9007199254740991 ? +lex : undefined;
+  if (dt === XSD + 'double') { var d = +lex; return isFinite(d) && !isInt(d) && dbl(d) === lex ? d : undefined; }
+  return undefined;
+}
+// element IRIs: base + id. Default base: the repository URL with "#", else a URN built from the project name
+function baseOf(M) {
+  var cfg = M.rdf || {}, P = M.project || {}, SRC = M.source || {};
+  return cleanIri(cfg.base || (SRC.repoUrl ? String(SRC.repoUrl).replace(/[#\/]+$/, '') + '#' : 'urn:architecture:' + slug(P.id || P.name) + ':'));
+}
+// prefix → namespace: the built-in ones, then MODEL.rdf.prefixes (a built-in or invalid name is skipped; the validator reports it)
+function nsOf(M) {
+  var cfg = M.rdf || {}, NS = { c4: cleanIri(cfg.vocab || C4), c4v: C4V }, PX = cfg.prefixes && typeof cfg.prefixes === 'object' ? cfg.prefixes : {};
+  Object.keys(STD).forEach(function (k) { NS[k] = STD[k]; });
+  Object.keys(PX).forEach(function (k) { if (!own(NS, k) && PREFIX_RE.test(k) && typeof PX[k] === 'string' && isAbs(PX[k])) NS[k] = cleanIri(PX[k]); });
+  return NS;
+}
+// predicates the export writes from the model's own fields; an `rdf` object cannot add to them
+function reservedFn(NS) {
+  var own_ = Object.create(null);
+  Object.keys(TERMS).forEach(function (t) { var c = TERMS[t][0], i = c.indexOf(':'); own_[NS[c.slice(0, i)] + c.slice(i + 1)] = true; });
+  own_[RDF + 'first'] = own_[RDF + 'rest'] = true;
+  return function (iri) { return !!own_[iri] || iri.indexOf(NS.c4) === 0 || iri.indexOf(C4V) === 0; };
+}
+// names in `rdf` objects: prefix:local with a known prefix, a full IRI (scheme://… or urn:…), or, as a value, :<node id>
+function namer(NS, base, ids) {
+  var byIri = Object.create(null), keys = Object.keys(NS);
+  ids.forEach(function (id) { byIri[base + encodeURIComponent(id)] = id; });
+  return {
+    expand: function (s, isValue) {
+      s = String(s);
+      if (isValue && s.charAt(0) === ':') return base + encodeURIComponent(s.slice(1));
+      var i = s.indexOf(':'), k = s.slice(0, i);
+      if (i > 0 && own(NS, k)) return NS[k] + s.slice(i + 1);
+      return isFull(s) ? cleanIri(s) : null;
+    },
+    compact: function (iri, isValue) {
+      if (isValue && byIri[iri] !== undefined) return ':' + byIri[iri];
+      var best = null;
+      keys.forEach(function (k) { var n = NS[k]; if (iri.indexOf(n) === 0 && iri.length > n.length && (!best || n.length > NS[best].length)) best = k; });
+      return best ? best + ':' + iri.slice(NS[best].length) : iri;
+    }
+  };
+}
+
+window.archRdf = function (MODEL) {
+  var cfg = MODEL.rdf || {}, P = MODEL.project || {}, SRC = MODEL.source || {}, V = MODEL.view || {};
+  var NS = nsOf(MODEL), base = baseOf(MODEL), reserved = reservedFn(NS);
+  var EXT = {}; Object.keys(NS).forEach(function (k) { if (k !== 'c4' && k !== 'c4v' && !own(STD, k)) EXT[k] = NS[k]; });
+  var NODES = Array.isArray(MODEL.nodes) ? MODEL.nodes : [];
+  var names = namer(NS, base, NODES.filter(Boolean).map(function (n) { return String(n.id); }));
   var enc = encodeURIComponent;
   function nodeIri(id) { return base + enc(id); }
+  function variantIri(id) { return base + 'variant:' + enc(id); }
   // other resources carry a "kind:" prefix; ":" cannot appear in an encoded node id, so they never collide
   var modelIri = base + 'model:' + slug(P.id || P.name);
+  function expand(curie) { var i = curie.indexOf(':'); return NS[curie.slice(0, i)] + curie.slice(i + 1); }
 
-  var res = [], seen = {};
-  function R(id, types) { var r = { id: id, types: types, props: [] }; res.push(r); return r; }
-  function add(r, term, v, isIri) {
-    if (v === undefined || v === null || v === '' || v === false) return;
-    var key = r.id + '\u0000' + term + '\u0000' + (isIri ? 'i' : typeof v) + '\u0000' + v;
-    if (seen[key]) return; seen[key] = true;
-    r.props.push([term, v]);
+  // values: a literal (string, number, boolean), { '@id': iri }, { '@value', '@type' | '@language' } or { '@list': [values] }
+  var res = [], seen = Object.create(null);
+  function R(id, types) { var r = { id: id, types: types.map(function (t) { return t.indexOf('://') > 0 ? t : expand(t); }), props: [] }; res.push(r); return r; }
+  function put(r, k, p, o) { var key = r.id + '\u0000' + p + '\u0000' + JSON.stringify(o); if (seen[key]) return; seen[key] = true; r.props.push({ k: k, p: p, o: o }); }
+  // a model field: nothing is written when it is absent, empty or false
+  function add(r, term, v) {
+    if (!r || v === undefined || v === null || v === '' || v === false || (typeof v === 'number' && !isFinite(v))) return;
+    var t = TERMS[term]; put(r, term, expand(t[0]), t[1] === 'iri' ? { '@id': v } : v);
   }
-  function variants(r, list) { if (Array.isArray(list)) list.forEach(function (v) { add(r, 'inVariant', base + 'variant:' + enc(v)); }); }
+  // the order of a list, as an rdf:List, when it has at least `min` items (fields that also have one triple per value use 2)
+  function addList(r, term, list, min) { if (list && list.length >= min) add(r, term, { '@list': list.map(function (x) { return TERMS[term][1] === 'iris' ? { '@id': x } : x; }) }); }
+  function anyUri(s) { return { '@value': String(s), '@type': XSD + 'anyURI' }; }
+  function variants(r, list) { list = strs(list); if (!list) return; list.forEach(function (v) { add(r, 'inVariant', variantIri(v)); }); addList(r, 'variantList', list.map(variantIri), 2); }
+  // extension terms: the `rdf` object of a node, edge or scenario (property name → value or list of values), written as given
+  function extValue(v) {
+    if (typeof v === 'string' || typeof v === 'boolean') return v;
+    if (typeof v === 'number') return isFinite(v) ? v : undefined;
+    if (!v || typeof v !== 'object') return undefined;
+    if (typeof v['@id'] === 'string') { var i = names.expand(v['@id'], true); return i ? { '@id': i } : undefined; }
+    if (typeof v['@value'] !== 'string') return undefined;
+    if (typeof v['@language'] === 'string') return { '@value': v['@value'], '@language': v['@language'] };
+    if (typeof v['@type'] !== 'string') return v['@value'];
+    var d = names.expand(v['@type'], false), nat = d && nativeOf(v['@value'], d);
+    return !d ? undefined : nat !== undefined ? nat : { '@value': v['@value'], '@type': d };
+  }
+  function ext(r, obj) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return;
+    Object.keys(obj).forEach(function (key) {
+      var p = names.expand(key, false); if (!p || reserved(p)) return;
+      [].concat(obj[key]).forEach(function (v) {
+        var o = extValue(v); if (o === undefined) return;
+        if (p === RDF + 'type') { if (o['@id'] && !reserved(o['@id']) && r.types.indexOf(o['@id']) < 0) r.types.push(o['@id']); return; }
+        put(r, jsonName(p), p, o);
+      });
+    });
+  }
 
-  var m = R(modelIri, ['arch:Model']);
-  add(m, 'title', (P.name || 'Untitled') + ' architecture'); add(m, 'name', P.name); add(m, 'description', P.intro); add(m, 'identifier', P.id || slug(P.name));
-  if (SRC.repoUrl && isAbs(SRC.repoUrl)) { add(m, 'repository', cleanIri(SRC.repoUrl)); add(m, 'branch', SRC.branch || 'main'); }
-  var vitems = (MODEL.variants && MODEL.variants.items) || [];
-  if (vitems.length) add(m, 'variantDimension', MODEL.variants.label || 'Variant');
-  vitems.forEach(function (v) { var r = R(base + 'variant:' + enc(v.id), ['arch:Variant']); add(r, 'name', v.name || v.id); add(r, 'identifier', v.id); add(r, 'isPartOf', modelIri); });
+  var m = R(modelIri, ['c4:Model']);
+  add(m, 'title', (P.name || 'Untitled') + ' architecture'); add(m, 'name', P.name); add(m, 'description', P.intro); add(m, 'identifier', P.id);
+  if (NS.c4 === C4) add(m, 'conformsTo', ONTOLOGIES[0]);
+  add(m, 'conformsTo', ONTOLOGIES[1]);
+  if (SRC.repoUrl && isAbs(SRC.repoUrl)) add(m, 'repository', cleanIri(SRC.repoUrl));
+  add(m, 'branch', SRC.branch);
+  add(m, 'subtitle', P.subtitle); add(m, 'toolbarTitle', P.title); add(m, 'placeholder', MODEL.placeholder === true);
+  add(m, 'sourceHost', SRC.host); add(m, 'fileTemplate', SRC.fileTemplate); add(m, 'dirTemplate', SRC.dirTemplate); add(m, 'lineTemplate', SRC.lineTemplate); add(m, 'linkLabel', SRC.linkLabel);
+  add(m, 'startLevel', V.startLevel); add(m, 'edgeStyle', V.edges); add(m, 'theme', V.theme);
+  addList(m, 'openElements', (strs(V.open) || []).map(nodeIri), 1);
+  addList(m, 'defaultPins', (strs(MODEL.defaultPins) || []).map(nodeIri), 1);
+  addList(m, 'levelNames', strs(MODEL.levelNames), 1);
+  if (MODEL.legend && typeof MODEL.legend === 'object') Object.keys(MODEL.legend).forEach(function (k) {
+    if (!str(MODEL.legend[k])) return;
+    var e = R(base + 'legend:' + enc(k), ['c4v:LegendEntry']); add(e, 'legendKey', k); add(e, 'name', MODEL.legend[k]); add(m, 'legendEntry', e.id);
+  });
+  if (str(cfg.base)) add(m, 'base', anyUri(cfg.base));
+  if (str(cfg.vocab)) add(m, 'vocabulary', anyUri(cfg.vocab));
+  Object.keys(EXT).forEach(function (k) {
+    var d = R(base + 'prefix:' + enc(k), ['sh:PrefixDeclaration']); add(d, 'prefix', k); add(d, 'namespace', anyUri(EXT[k])); add(m, 'declare', d.id);
+  });
+  var vitems = (MODEL.variants && Array.isArray(MODEL.variants.items)) ? MODEL.variants.items.filter(function (v) { return v && str(v.id); }) : [];
+  if (vitems.length) add(m, 'variantDimension', MODEL.variants.label);
+  vitems.forEach(function (v, i) {
+    var r = R(variantIri(v.id), ['c4:Variant']);
+    add(r, 'name', v.name || v.id); add(r, 'identifier', v.id); add(r, 'isPartOf', modelIri); add(r, 'order', i + 1); add(r, 'shortName', v.short); add(r, 'tone', v.tone);
+  });
 
-  var byId = {}, nodeRes = {}; (MODEL.nodes || []).forEach(function (n) { byId[n.id] = n; });
+  var byId = {}, nodeRes = {}; NODES.forEach(function (n) { if (n) byId[n.id] = n; });
   function level(n) { if (n.type !== 'state') return BASE_LEVEL[n.type]; var p = byId[n.parent]; return Math.min(4, (p ? level(p) : 3) + 1); }
-  (MODEL.nodes || []).forEach(function (n) {
-    var r = R(nodeIri(n.id), ['arch:Element', CLASS[n.type]]); nodeRes[r.id] = r;
+  NODES.forEach(function (n, i) {
+    var r = R(nodeIri(n.id), ['c4:Element'].concat((CLASS[n.type] || []).map(function (c) { return 'c4:' + c; }))); nodeRes[r.id] = r;
     add(r, 'name', n.name); add(r, 'identifier', n.id); add(r, 'description', n.desc); add(r, 'summary', n.sub); add(r, 'tag', n.tag);
-    add(r, 'level', level(n)); add(r, 'kind', n.kind);
-    (n.notes || []).forEach(function (x) { add(r, 'note', x); });
-    [].concat(n.tech || []).forEach(function (x) { add(r, 'technology', x); });
+    add(r, 'level', level(n));
+    var notes = strs(n.notes), tech = strs(n.tech);
+    (notes || []).forEach(function (x) { add(r, 'note', x); }); addList(r, 'noteList', notes, 2);
+    (tech || []).forEach(function (x) { add(r, 'technology', x); }); addList(r, 'technologyList', tech, 2);
     if (typeof n.path === 'string') add(r, 'path', n.path === '' ? '.' : n.path);
     add(r, 'line', n.line);
     if (n.url) { if (isAbs(n.url)) add(r, 'seeAlso', cleanIri(n.url)); else add(r, 'link', n.url); }
-    add(r, 'dashed', !!n.dashed); add(r, 'initial', !!n.initial); add(r, 'final', !!n.final);
+    add(r, 'initial', !!n.initial); add(r, 'final', !!n.final);
     variants(r, n.variants);
     if (n.parent != null) { add(r, 'isPartOf', nodeIri(n.parent)); }
     else { add(r, 'isPartOf', modelIri); add(m, 'hasPart', r.id); }
+    add(r, 'order', i + 1); add(r, 'style', n.kind); add(r, 'dashed', !!n.dashed);
+    if (Array.isArray(n.at)) { add(r, 'column', num(n.at[0])); add(r, 'row', num(n.at[1])); }
+    ext(r, n.rdf);
   });
   // containment the other way round, so "what is inside X" is one hop too
-  (MODEL.nodes || []).forEach(function (n) { if (n.parent != null) add(nodeRes[nodeIri(n.parent)], 'hasPart', nodeIri(n.id)); });
+  NODES.forEach(function (n) { if (n.parent != null) add(nodeRes[nodeIri(n.parent)], 'hasPart', nodeIri(n.id)); });
 
   // every relationship is a resource (source, target, label …) plus a direct shortcut triple source → target
   (MODEL.edges || []).forEach(function (e, i) {
     var trans = byId[e.from] && byId[e.to] && byId[e.from].type === 'state' && byId[e.to].type === 'state';
-    var r = R(base + 'rel:' + (i + 1), trans ? ['arch:Relationship', 'arch:Transition'] : ['arch:Relationship']);
+    var r = R(base + 'rel:' + (i + 1), trans ? ['c4:Relationship', 'c4:Transition'] : ['c4:Relationship']);
     add(r, 'source', nodeIri(e.from)); add(r, 'target', nodeIri(e.to)); add(r, 'name', e.label); add(r, 'summaryLabel', e.summary);
-    add(r, 'kind', e.kind); add(r, 'dashed', !!e.dashed); variants(r, e.variants);
+    variants(r, e.variants); add(r, 'order', i + 1); add(r, 'style', e.kind); add(r, 'dashed', !!e.dashed);
+    ext(r, e.rdf);
     add(nodeRes[nodeIri(e.from)], trans ? 'transitionsTo' : 'uses', nodeIri(e.to));
   });
-  (MODEL.scenarios || []).forEach(function (s) {
-    var sid = base + 'scenario:' + enc(s.id), r = R(sid, ['arch:Scenario']);
+  // a scenario is a dynamic diagram (ordered steps) and, optionally, a use case (primary actor, goal, trigger, preconditions, outcome)
+  (MODEL.scenarios || []).forEach(function (s, i) {
+    var sid = base + 'scenario:' + enc(s.id), r = R(sid, ['c4:Scenario']), pre = strs(s.preconditions);
     add(r, 'name', s.name); add(r, 'identifier', s.id); add(r, 'description', s.desc); add(r, 'isPartOf', modelIri);
+    if (str(s.actor)) add(r, 'primaryActor', nodeIri(s.actor));
+    add(r, 'goal', s.goal); add(r, 'trigger', s.trigger);
+    (pre || []).forEach(function (x) { add(r, 'precondition', x); }); addList(r, 'preconditionList', pre, 2);
+    add(r, 'outcome', s.outcome); add(r, 'order', i + 1);
     (s.steps || []).forEach(function (st, j) {
-      var q = R(base + 'step:' + enc(s.id) + ':' + (j + 1), ['arch:Step']);
-      add(r, 'step', q.id); add(q, 'scenario', sid); add(q, 'position', j + 1);
-      add(q, 'source', nodeIri(st.from)); add(q, 'target', nodeIri(st.to)); add(q, 'name', st.label); add(q, 'reply', !!st.reply); variants(q, st.variants);
+      var stp = R(base + 'step:' + enc(s.id) + ':' + (j + 1), ['c4:Step']);
+      add(r, 'hasStep', stp.id); add(stp, 'inScenario', sid); add(stp, 'position', j + 1);
+      add(stp, 'source', nodeIri(st.from)); add(stp, 'target', nodeIri(st.to)); add(stp, 'name', st.label); add(stp, 'isReply', !!st.reply); variants(stp, st.variants);
     });
+    ext(r, s.rdf);
   });
 
-  function expand(curie) { var i = curie.indexOf(':'); return NS[curie.slice(0, i)] + curie.slice(i + 1); }
+  // JSON-LD: the context names every term; an extension prefix that clashes with a term name is not used there (full IRIs instead)
+  function jsonName(iri) {
+    var c = names.compact(iri, false), i = c.indexOf(':');
+    return i > 0 && c !== iri && !own(TERMS, c.slice(0, i)) && c.slice(i + 1, i + 3) !== '//' ? c : iri;
+  }
+  function jsonValue(o) {
+    if (!o || typeof o !== 'object') return o;
+    if (o['@id'] !== undefined) return { '@id': jsonName(o['@id']) };
+    if (o['@list']) return { '@list': o['@list'].map(jsonValue) };
+    return o['@type'] ? { '@value': o['@value'], '@type': jsonName(o['@type']) } : o;
+  }
   function context() {
-    var c = {}; Object.keys(NS).forEach(function (k) { if (k !== 'rdf') c[k] = NS[k]; });
-    Object.keys(TERMS).forEach(function (t) { c[t] = TERMS[t][1] ? { '@id': TERMS[t][0], '@type': '@id' } : TERMS[t][0]; });
+    var c = {}; Object.keys(NS).forEach(function (k) { if (!own(TERMS, k)) c[k] = NS[k]; });
+    Object.keys(TERMS).forEach(function (t) {
+      var d = TERMS[t];
+      c[t] = !d[1] ? d[0] : d[1] === 'iri' ? { '@id': d[0], '@type': '@id' } : d[1] === 'iris' ? { '@id': d[0], '@type': '@id', '@container': '@list' } : { '@id': d[0], '@container': '@list' };
+    });
     return c;
   }
   function toJsonLd() {
     return { '@context': context(), '@graph': res.map(function (r) {
-      var o = { '@id': r.id, '@type': r.types.length === 1 ? r.types[0] : r.types };
-      r.props.forEach(function (p) { if (o[p[0]] === undefined) o[p[0]] = p[1]; else o[p[0]] = [].concat(o[p[0]], [p[1]]); });
+      var o = { '@id': r.id, '@type': r.types.length === 1 ? jsonName(r.types[0]) : r.types.map(jsonName) };
+      r.props.forEach(function (x) {
+        var t = own(TERMS, x.k) ? TERMS[x.k] : null, v;
+        if (t && t[1] === 'iri') v = x.o['@id'];
+        else if (t && t[1] === 'iris') v = x.o['@list'].map(function (y) { return y['@id']; });
+        else if (t && t[1] === 'list') v = x.o['@list'];
+        else v = jsonValue(x.o);
+        o[x.k] = o[x.k] === undefined ? v : [].concat(o[x.k], [v]);
+      });
       return o;
     }) };
   }
   function ntLiteral(v) {
-    if (typeof v === 'number') return '"' + v + '"^^<' + NS.xsd + (Math.floor(v) === v ? 'integer' : 'double') + '>';
-    if (typeof v === 'boolean') return '"' + v + '"^^<' + NS.xsd + 'boolean>';
-    return '"' + String(v).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + '"';
+    if (typeof v === 'number') return isInt(v) ? '"' + v + '"^^<' + XSD + 'integer>' : '"' + dbl(v) + '"^^<' + XSD + 'double>';
+    if (typeof v === 'boolean') return '"' + v + '"^^<' + XSD + 'boolean>';
+    return q(v);
   }
   function triples() {
-    var out = [];
+    var out = [], bn = 0;
+    function obj(o, more) {
+      if (!o || typeof o !== 'object') return ntLiteral(o);
+      if (o['@id'] !== undefined) return '<' + o['@id'] + '>';
+      if (o['@list']) {
+        if (!o['@list'].length) return '<' + RDF + 'nil>';
+        var ids = o['@list'].map(function () { return '_:l' + (++bn); });
+        o['@list'].forEach(function (x, i) { more.push(ids[i] + ' <' + RDF + 'first> ' + obj(x, more) + ' .', ids[i] + ' <' + RDF + 'rest> ' + (ids[i + 1] || '<' + RDF + 'nil>') + ' .'); });
+        return ids[0];
+      }
+      return q(o['@value']) + (o['@language'] ? '@' + o['@language'] : o['@type'] ? '^^<' + o['@type'] + '>' : '');
+    }
     res.forEach(function (r) {
-      r.types.forEach(function (t) { out.push('<' + r.id + '> <' + NS.rdf + 'type> <' + expand(t) + '> .'); });
-      r.props.forEach(function (p) { var t = TERMS[p[0]]; out.push('<' + r.id + '> <' + expand(t[0]) + '> ' + (t[1] ? '<' + p[1] + '>' : ntLiteral(p[1])) + ' .'); });
+      r.types.forEach(function (t) { out.push('<' + r.id + '> <' + RDF + 'type> <' + t + '> .'); });
+      r.props.forEach(function (x) { var more = []; out.push('<' + r.id + '> <' + x.p + '> ' + obj(x.o, more) + ' .'); out.push.apply(out, more); });
     });
     return out;
   }
-  return { base: base, vocab: NS.arch, modelIri: modelIri, title: (P.name || 'Untitled') + ' architecture', fileStem: slug(P.id || P.name) + '-architecture',
-    nodeIri: nodeIri, resources: res, context: context, toJsonLd: toJsonLd, tripleCount: function () { return triples().length; },
-    toNTriples: function () { return triples().join('\n') + '\n'; } };
+  // Turtle: subjects grouped with ; and , · prefixed names where the local part is a valid PN_LOCAL, full <IRIs> otherwise ·
+  // the empty prefix ":" is the base of this model's resources
+  function toTurtle() {
+    var used = {}, PFX = Object.keys(NS).map(function (k) { return [k, NS[k]]; }).concat([['', base]]), FIXED = ['c4', 'c4v', 'rdf', 'rdfs', 'xsd', 'dcterms', 'schema'];
+    function name(iri) {
+      var best = null;
+      PFX.forEach(function (c) { if (iri.indexOf(c[1]) === 0 && PN_LOCAL.test(iri.slice(c[1].length)) && (!best || c[1].length > best[1].length)) best = c; });
+      if (!best) return '<' + iri + '>';
+      used[best[0]] = true; return best[0] + ':' + iri.slice(best[1].length);
+    }
+    function obj(o) {
+      if (!o || typeof o !== 'object') return typeof o === 'number' ? (isInt(o) ? String(o) : dbl(o)) : typeof o === 'boolean' ? String(o) : q(o);
+      if (o['@id'] !== undefined) return name(o['@id']);
+      if (o['@list']) return '(' + o['@list'].map(function (x) { return ' ' + obj(x); }).join('') + ' )';
+      return q(o['@value']) + (o['@language'] ? '@' + o['@language'] : o['@type'] ? '^^' + name(o['@type']) : '');
+    }
+    var body = res.map(function (r) {
+      var parts = [], groups = [], at = Object.create(null);
+      if (r.types.length) parts.push('a ' + r.types.map(name).join(', '));
+      r.props.forEach(function (x) { if (at[x.p] === undefined) { at[x.p] = groups.length; groups.push([x.p, []]); } groups[at[x.p]][1].push(obj(x.o)); });
+      // several objects: on one line when short, else packed into lines of about 100 characters
+      groups.forEach(function (g) {
+        var head = name(g[0]) + ' ', lines = [''];
+        g[1].forEach(function (x) { var l = lines.length - 1; if (lines[l] && lines[l].length + x.length > 92) lines.push(''), l++; lines[l] += (lines[l] ? ', ' : '') + x; });
+        parts.push(head + lines.join(',\n        '));
+      });
+      return name(r.id) + ' ' + parts.join(' ;\n    ') + ' .';
+    });
+    var head = FIXED.concat(Object.keys(NS).filter(function (k) { return used[k] && FIXED.indexOf(k) < 0; }), used[''] ? [''] : []);
+    return '# ' + String(P.name || 'Untitled').replace(/[\r\n]+/g, ' ') + ' architecture · terms: ' + ONTOLOGIES.join(' , ') + '\n' +
+      head.map(function (k) { return '@prefix ' + k + ': <' + (k ? NS[k] : base) + '> .'; }).join('\n') + '\n\n' + body.join('\n\n') + '\n';
+  }
+  return { base: base, vocab: NS.c4, prefixes: NS, modelIri: modelIri, ontology: NS.c4 === C4 ? ONTOLOGIES[0] : null,
+    title: (P.name || 'Untitled') + ' architecture', fileStem: slug(P.id || P.name) + '-architecture',
+    nodeIri: nodeIri, expand: names.expand, resources: res, context: context, toJsonLd: toJsonLd, toTurtle: toTurtle,
+    tripleCount: function () { return triples().length; }, toNTriples: function () { return triples().join('\n') + '\n'; } };
 };
+
+/* The documented normal form of a MODEL: what a graph gives back (references/rdf-graph.md, "Recreating the diagrams").
+   Keys in a fixed order; empty strings, empty lists and false flags dropped; tech and preconditions always lists; path "."
+   becomes "" (both the repository root); a variant name equal to its id dropped (that is the default); extension values
+   deduplicated and sorted, one value unwrapped, names in their shortest form (prefix:local, :<node id>); unknown fields dropped. */
+function canonical(M) {
+  M = M && typeof M === 'object' ? M : {};
+  var NS = nsOf(M), reserved = reservedFn(NS), base = baseOf(M), NODES = Array.isArray(M.nodes) ? M.nodes : [];
+  var names = namer(NS, base, NODES.filter(function (n) { return n && str(n.id); }).map(function (n) { return n.id; }));
+  function o(pairs) { var r = {}; pairs.forEach(function (p) { if (p[1] !== undefined) r[p[0]] = p[1]; }); return Object.keys(r).length ? r : undefined; }
+  function map(v, f) { var a = Array.isArray(v) ? v.map(f).filter(function (x) { return x !== undefined; }) : []; return a.length ? a : undefined; }
+  function sorted(v) { return v && typeof v === 'object' && !Array.isArray(v) ? o(Object.keys(v).sort().map(function (k) { return [k, str(v[k])]; })) : undefined; }
+  function extVal(v) {
+    if (typeof v === 'string' || typeof v === 'boolean') return v;
+    if (typeof v === 'number') return isFinite(v) ? v : undefined;
+    if (!v || typeof v !== 'object') return undefined;
+    if (typeof v['@id'] === 'string') { var i = names.expand(v['@id'], true); return i ? { '@id': names.compact(i, true) } : undefined; }
+    if (typeof v['@value'] !== 'string') return undefined;
+    if (typeof v['@language'] === 'string') return { '@value': v['@value'], '@language': v['@language'] };
+    if (typeof v['@type'] !== 'string') return v['@value'];
+    var d = names.expand(v['@type'], false), nat = d && nativeOf(v['@value'], d);
+    return !d ? undefined : nat !== undefined ? nat : { '@value': v['@value'], '@type': names.compact(d, false) };
+  }
+  function ext(x) {
+    if (!x || typeof x !== 'object' || Array.isArray(x)) return undefined;
+    var out = {};
+    Object.keys(x).forEach(function (k) {
+      var p = names.expand(k, false); if (!p || reserved(p)) return;
+      var ck = names.compact(p, false);
+      [].concat(x[k]).forEach(function (v) {
+        v = extVal(v); if (v === undefined) return;
+        if (p === RDF + 'type' && (!v['@id'] || reserved(names.expand(v['@id'], true) || ''))) return;
+        (out[ck] = out[ck] || []).push(v);
+      });
+    });
+    return o(Object.keys(out).sort().map(function (k) {
+      var seen = {}, vs = out[k].map(function (v) { return [JSON.stringify(v), v]; }).filter(function (p) { return seen[p[0]] ? false : (seen[p[0]] = true); })
+        .sort(function (a, b) { return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0; }).map(function (p) { return p[1]; });
+      return [k, vs.length === 1 ? vs[0] : vs];
+    }));
+  }
+  var P = M.project || {}, S = M.source || {}, VV = M.variants || {}, V = M.view || {}, R = M.rdf || {};
+  var items = map(VV.items, function (v) { return v && o([['id', str(v.id)], ['name', v.name !== v.id ? str(v.name) : undefined], ['short', str(v.short)], ['tone', str(v.tone)]]); });
+  return o([
+    ['placeholder', flag(M.placeholder)],
+    ['project', o([['name', str(P.name)], ['subtitle', str(P.subtitle)], ['title', str(P.title)], ['id', str(P.id)], ['intro', str(P.intro)]])],
+    ['source', o([['repoUrl', str(S.repoUrl) && isAbs(S.repoUrl) ? cleanIri(S.repoUrl) : undefined], ['branch', str(S.branch)], ['host', str(S.host)], ['fileTemplate', str(S.fileTemplate)],
+      ['dirTemplate', str(S.dirTemplate)], ['lineTemplate', str(S.lineTemplate)], ['linkLabel', str(S.linkLabel)]])],
+    ['variants', items ? o([['label', str(VV.label)], ['items', items]]) : undefined],
+    ['view', o([['startLevel', num(V.startLevel)], ['open', strs(V.open)], ['edges', str(V.edges)], ['theme', str(V.theme)]])],
+    ['nodes', map(M.nodes, function (n) {
+      var url = n && str(n.url);
+      return n && o([['id', str(n.id)], ['parent', n.parent == null ? undefined : str(n.parent)], ['type', str(n.type)], ['kind', str(n.kind)], ['name', str(n.name)],
+        ['tag', str(n.tag)], ['sub', str(n.sub)], ['desc', str(n.desc)], ['notes', strs(n.notes)], ['tech', strs(n.tech)],
+        ['path', typeof n.path === 'string' ? (n.path === '.' ? '' : n.path) : undefined], ['line', num(n.line)], ['url', url && isAbs(url) ? cleanIri(url) : url],
+        ['initial', flag(n.initial)], ['final', flag(n.final)], ['dashed', flag(n.dashed)], ['variants', strs(n.variants)],
+        ['at', Array.isArray(n.at) && num(n.at[0]) !== undefined && num(n.at[1]) !== undefined ? [n.at[0], n.at[1]] : undefined], ['rdf', ext(n.rdf)]]);
+    })],
+    ['edges', map(M.edges, function (e) {
+      return e && o([['from', str(e.from)], ['to', str(e.to)], ['label', str(e.label)], ['summary', str(e.summary)], ['kind', str(e.kind)], ['dashed', flag(e.dashed)],
+        ['variants', strs(e.variants)], ['rdf', ext(e.rdf)]]);
+    })],
+    ['scenarios', map(M.scenarios, function (s) {
+      return s && o([['id', str(s.id)], ['name', str(s.name)], ['desc', str(s.desc)], ['actor', str(s.actor)], ['goal', str(s.goal)], ['trigger', str(s.trigger)],
+        ['preconditions', strs(s.preconditions)], ['outcome', str(s.outcome)],
+        ['steps', map(s.steps, function (st) { return st && o([['from', str(st.from)], ['to', str(st.to)], ['label', str(st.label)], ['reply', flag(st.reply)], ['variants', strs(st.variants)]]); })],
+        ['rdf', ext(s.rdf)]]);
+    })],
+    ['defaultPins', strs(M.defaultPins)], ['levelNames', strs(M.levelNames)], ['legend', sorted(M.legend)],
+    ['rdf', o([['base', str(R.base)], ['vocab', str(R.vocab)], ['prefixes', sorted(R.prefixes)]])]
+  ]) || {};
+}
+
+/* The way back: RDF triples → MODEL, the inverse of the mapping above (in the normal form of canonical()).
+   triples: [[s, p, o], …] with terms { type: 'iri' | 'bnode' | 'literal', value, datatype?, language? } (as parseNTriples gives them). */
+function fromTriples(triples) {
+  var S = Object.create(null);
+  function key(t) { return t.type === 'bnode' ? '_:' + t.value : t.value; }
+  triples.forEach(function (t) { var s = key(t[0]), m = S[s] || (S[s] = Object.create(null)), p = t[1].value; (m[p] || (m[p] = [])).push(t[2]); });
+  var c4 = C4;
+  triples.forEach(function (t) { if (t[1].value === C4V + 'vocabulary' && t[2].type === 'literal') c4 = cleanIri(t[2].value); });
+  var NS = { c4: c4, c4v: C4V }; Object.keys(STD).forEach(function (k) { NS[k] = STD[k]; });
+  function P(t) { var c = TERMS[t][0], i = c.indexOf(':'); return NS[c.slice(0, i)] + c.slice(i + 1); }
+  function vals(s, t) { var m = S[s]; return (m && m[P(t)]) || []; }
+  function lit(s, t) { var x = vals(s, t)[0]; return x && x.type === 'literal' ? x.value : undefined; }
+  function number(s, t) { var v = lit(s, t); return v === undefined ? undefined : +v; }
+  function bool(s, t) { var v = lit(s, t); return v === 'true' || v === '1' || undefined; }
+  function ref(s, t) { var x = vals(s, t)[0]; return x && x.type !== 'literal' ? key(x) : undefined; }
+  function list(s, t) {
+    var x = vals(s, t)[0]; if (!x) return null;
+    var out = [], k = key(x), guard = 0;
+    while (k !== RDF + 'nil') {
+      var m = S[k]; if (!m || !m[RDF + 'first'] || guard++ > 1e6) return null;
+      out.push(m[RDF + 'first'][0]); k = m[RDF + 'rest'] ? key(m[RDF + 'rest'][0]) : RDF + 'nil';
+    }
+    return out;
+  }
+  function typed(cls) { return Object.keys(S).filter(function (s) { return (S[s][RDF + 'type'] || []).some(function (x) { return x.value === cls; }); }); }
+  function local(s) { var m = /[^#\/:]*$/.exec(s)[0]; try { return decodeURIComponent(m); } catch (e) { return m; } }
+  function ordered(list_) {
+    return list_.map(function (s) { return { s: s, o: number(s, 'order'), id: lit(s, 'identifier') || s }; })
+      .sort(function (a, b) { return (a.o === undefined) - (b.o === undefined) || (a.o - b.o) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0); })
+      .map(function (x) { return x.s; });
+  }
+  var models = typed(NS.c4 + 'Model');
+  if (models.length !== 1) throw new Error('the graph should describe one ' + NS.c4 + 'Model; it describes ' + models.length);
+  var mo = models[0];
+  var TYPE_OF = [['State', 'state'], ['CodeElement', 'code'], ['Component', 'component'], ['DataStore', 'store'], ['Container', 'container'],
+    ['ExternalSystem', 'ext'], ['SiblingSystem', 'sibling'], ['SoftwareSystem', 'system'], ['Person', 'person']];
+  var EL = typed(NS.c4 + 'Element');
+  TYPE_OF.forEach(function (c) { typed(NS.c4 + c[0]).forEach(function (s) { if (EL.indexOf(s) < 0) EL.push(s); }); });
+  EL = ordered(EL);
+  var idOf = Object.create(null), vid = Object.create(null), VAR = ordered(typed(NS.c4 + 'Variant')), STEPS = typed(NS.c4 + 'Step');
+  EL.forEach(function (s) { idOf[s] = lit(s, 'identifier') || local(s); });
+  VAR.forEach(function (s) { vid[s] = lit(s, 'identifier') || local(s); });
+  function ids(objs, map_) { return objs.map(function (x) { return map_[key(x)]; }).filter(function (x) { return x !== undefined; }); }
+  function idList(s, t) { var l = list(s, t); return l ? ids(l, idOf) : undefined; }
+  function variantsOf(s) {
+    var l = list(s, 'variantList'); if (l) return ids(l, vid);
+    var v = ids(vals(s, 'inVariant'), vid);
+    return VAR.map(function (x) { return vid[x]; }).filter(function (x) { return v.indexOf(x) >= 0; });
+  }
+  function strList(s, listTerm, t) {
+    var l = list(s, listTerm); if (l) return l.map(function (x) { return x.value; });
+    return vals(s, t).filter(function (x) { return x.type === 'literal'; }).map(function (x) { return x.value; }).sort();
+  }
+  function typeOf(s) {
+    var ts = (S[s][RDF + 'type'] || []).map(function (x) { return x.value; });
+    for (var i = 0; i < TYPE_OF.length; i++) if (ts.indexOf(NS.c4 + TYPE_OF[i][0]) >= 0) return TYPE_OF[i][1];
+  }
+  // extension terms: every other property of a node, edge or scenario, and its types outside c4: and c4v:
+  var reserved = reservedFn(NS);
+  function extOf(s) {
+    var out = {}, m = S[s];
+    Object.keys(m).forEach(function (p) {
+      if (reserved(p)) return;
+      m[p].forEach(function (x) {
+        if (p === RDF + 'type' && reserved(x.value)) return;
+        var v = x.type === 'iri' ? { '@id': x.value } : x.type !== 'literal' ? undefined :
+          x.language ? { '@value': x.value, '@language': x.language } : { '@value': x.value, '@type': x.datatype || XSD + 'string' };
+        if (v !== undefined) (out[p] = out[p] || []).push(v);
+      });
+    });
+    return out;
+  }
+  var legend = {}, prefixes = {};
+  vals(mo, 'legendEntry').forEach(function (x) { var k = lit(key(x), 'legendKey'); if (k !== undefined) legend[k] = lit(key(x), 'name'); });
+  vals(mo, 'declare').forEach(function (x) { var k = lit(key(x), 'prefix'); if (k !== undefined) prefixes[k] = lit(key(x), 'namespace'); });
+  return canonical({
+    placeholder: bool(mo, 'placeholder'),
+    project: { name: lit(mo, 'name'), subtitle: lit(mo, 'subtitle'), title: lit(mo, 'toolbarTitle'), id: lit(mo, 'identifier'), intro: lit(mo, 'description') },
+    source: { repoUrl: ref(mo, 'repository'), branch: lit(mo, 'branch'), host: lit(mo, 'sourceHost'), fileTemplate: lit(mo, 'fileTemplate'),
+      dirTemplate: lit(mo, 'dirTemplate'), lineTemplate: lit(mo, 'lineTemplate'), linkLabel: lit(mo, 'linkLabel') },
+    variants: { label: lit(mo, 'variantDimension'), items: VAR.map(function (s) { return { id: vid[s], name: lit(s, 'name'), short: lit(s, 'shortName'), tone: lit(s, 'tone') }; }) },
+    view: { startLevel: number(mo, 'startLevel'), open: idList(mo, 'openElements'), edges: lit(mo, 'edgeStyle'), theme: lit(mo, 'theme') },
+    nodes: EL.map(function (s) {
+      var p = ref(s, 'isPartOf'), col = number(s, 'column'), row = number(s, 'row'), path = lit(s, 'path');
+      return { id: idOf[s], parent: p !== undefined ? idOf[p] : undefined, type: typeOf(s), kind: lit(s, 'style'), name: lit(s, 'name'), tag: lit(s, 'tag'),
+        sub: lit(s, 'summary'), desc: lit(s, 'description'), notes: strList(s, 'noteList', 'note'), tech: strList(s, 'technologyList', 'technology'),
+        path: path === '.' ? '' : path, line: number(s, 'line'), url: ref(s, 'seeAlso') || lit(s, 'link'),
+        initial: bool(s, 'initial'), final: bool(s, 'final'), dashed: bool(s, 'dashed'), variants: variantsOf(s),
+        at: col !== undefined && row !== undefined ? [col, row] : undefined, rdf: extOf(s) };
+    }),
+    edges: ordered(typed(NS.c4 + 'Relationship')).map(function (s) {
+      return { from: idOf[ref(s, 'source')], to: idOf[ref(s, 'target')], label: lit(s, 'name'), summary: lit(s, 'summaryLabel'), kind: lit(s, 'style'),
+        dashed: bool(s, 'dashed'), variants: variantsOf(s), rdf: extOf(s) };
+    }),
+    scenarios: ordered(typed(NS.c4 + 'Scenario')).map(function (s) {
+      var st = vals(s, 'hasStep').map(key);
+      STEPS.forEach(function (x) { if (ref(x, 'inScenario') === s && st.indexOf(x) < 0) st.push(x); });
+      st.sort(function (a, b) { return number(a, 'position') - number(b, 'position'); });
+      return { id: lit(s, 'identifier'), name: lit(s, 'name'), desc: lit(s, 'description'), actor: idOf[ref(s, 'primaryActor')], goal: lit(s, 'goal'),
+        trigger: lit(s, 'trigger'), preconditions: strList(s, 'preconditionList', 'precondition'), outcome: lit(s, 'outcome'),
+        steps: st.map(function (x) { return { from: idOf[ref(x, 'source')], to: idOf[ref(x, 'target')], label: lit(x, 'name'), reply: bool(x, 'isReply'), variants: variantsOf(x) }; }),
+        rdf: extOf(s) };
+    }),
+    defaultPins: idList(mo, 'defaultPins'), levelNames: (list(mo, 'levelNames') || []).map(function (x) { return x.value; }), legend: legend,
+    rdf: { base: lit(mo, 'base'), vocab: lit(mo, 'vocabulary'), prefixes: prefixes }
+  });
+}
+
+// N-Triples (and the default-graph lines of N-Quads) → triples for fromTriples(). No dependencies.
+function parseNTriples(text) {
+  var out = [];
+  function unesc(s) {
+    return s.replace(/\\(?:u([0-9A-Fa-f]{4})|U([0-9A-Fa-f]{8})|(.))/g, function (m, u, U, c) {
+      if (u || U) return String.fromCodePoint(parseInt(u || U, 16));
+      return { t: '\t', b: '\b', n: '\n', r: '\r', f: '\f', '"': '"', "'": "'", '\\': '\\' }[c] || m;
+    });
+  }
+  String(text).split(/\r\n|\n|\r/).forEach(function (line, n) {
+    var i = 0, L = line.length;
+    function ws() { while (i < L && (line[i] === ' ' || line[i] === '\t')) i++; }
+    function fail(what) { throw new Error('N-Triples line ' + (n + 1) + ': ' + what + ': ' + line.slice(0, 160)); }
+    function term() {
+      ws();
+      var c = line[i], j;
+      if (c === '<') { j = line.indexOf('>', i); if (j < 0) fail('unclosed IRI'); var iri = unesc(line.slice(i + 1, j)); i = j + 1; return { type: 'iri', value: iri }; }
+      if (c === '_' && line[i + 1] === ':') {
+        j = i + 2; while (j < L && !/\s/.test(line[j])) j++;
+        while (line[j - 1] === '.' && j > i + 3) j--;
+        var b = line.slice(i + 2, j); i = j; return { type: 'bnode', value: b };
+      }
+      if (c === '"') {
+        j = i + 1; while (j < L && line[j] !== '"') j += line[j] === '\\' ? 2 : 1;
+        if (j >= L) fail('unclosed string');
+        var v = unesc(line.slice(i + 1, j)), dt = XSD + 'string', lang = null; i = j + 1;
+        if (line.substr(i, 2) === '^^') { i += 2; var d = term(); if (d.type !== 'iri') fail('bad datatype'); dt = d.value; }
+        else if (line[i] === '@') { var lm = /^@([a-zA-Z]+(?:-[a-zA-Z0-9]+)*)/.exec(line.slice(i)); if (!lm) fail('bad language tag'); lang = lm[1]; dt = RDF + 'langString'; i += lm[0].length; }
+        return { type: 'literal', value: v, datatype: dt, language: lang };
+      }
+      fail('expected an IRI, a blank node or a literal');
+    }
+    ws(); if (i >= L || line[i] === '#') return;
+    var s = term(), p = term(), o = term(); ws();
+    if (line[i] === '<' || line[i] === '_') { term(); ws(); }   // N-Quads: a graph name, ignored (default graph only)
+    if (line[i] !== '.') fail('expected "."');
+    i++; ws(); if (i < L && line[i] !== '#') fail('unexpected text after "."');
+    if (s.type === 'literal' || p.type !== 'iri') fail('the subject must be an IRI or a blank node, the predicate an IRI');
+    out.push([s, p, o]);
+  });
+  return out;
+}
+
+window.archRdf.fromTriples = fromTriples;
+window.archRdf.fromNTriples = function (text) { return fromTriples(parseNTriples(text)); };
+window.archRdf.parseNTriples = parseNTriples;
+window.archRdf.normalizeModel = canonical;
+window.archRdf.vocab = { c4: C4, c4v: C4V, ontologies: ONTOLOGIES.slice() };
+})();
 /* END RDF */
 </script>
 
@@ -2537,7 +3062,7 @@ function projectForm() {
     '<h3>Source links</h3><div class="ed-form"><div class="ed-2">' + field('pf:source.repoUrl', 'Repository URL', S.repoUrl, ' spellcheck="false" placeholder="https://github.com/org/repo"') + field('pf:source.branch', 'Branch', S.branch, ' placeholder="main"') + '</div></div>' +
     '<h3>RDF</h3><div class="ed-form"><div class="ed-2">' + field('pf:rdf.base', 'Base IRI of the boxes', R.base, ' spellcheck="false" placeholder="' + esc(g ? g.base : '') + '"') +
       field('pf:rdf.vocab', 'Vocabulary IRI', R.vocab, ' spellcheck="false" placeholder="' + esc(g ? g.vocab : '') + '"') + '</div>' +
-      '<p class="ed-help">' + (g ? g.tripleCount() + ' triples. ' : '') + 'Each box is base + id. Download the graph from the edit bar as JSON-LD or .rete.</p></div>' +
+      '<p class="ed-help">' + (g ? g.tripleCount() + ' triples. ' : '') + 'Each box is base + id. Download the graph from the edit bar as JSON-LD, Turtle or .rete.</p></div>' +
     '<h3>Opening view</h3><div class="ed-form"><div class="ed-3">' +
       '<label class="ed-f"><span>Start level</span><select data-k="pf:view.startLevel">' + opts(['', 1, 2, 3, 4], V.startLevel || '', ['default (2)', 'L1', 'L2', 'L3', 'L4']) + '</select></label>' +
       '<label class="ed-f"><span>Theme</span><select data-k="pf:view.theme">' + opts(themes, V.theme || '', themes.map(function (t) { return t || 'default (auto)'; })) + '</select></label>' +
@@ -2638,10 +3163,10 @@ function bar(cmd) {
     if (!html) { say('This page does not have the MODEL markers, so it cannot write itself back; download model.js instead.', true); return; }
     download(html, 'text/html', 'index.html'); say('Saved index.html: this page with the edited model in it.');
   }
-  else if (cmd === 'dl-jsonld' || cmd === 'dl-rete') {
+  else if (cmd === 'dl-jsonld' || cmd === 'dl-ttl' || cmd === 'dl-rete') {
     var rd = X().rdf; if (!rd) return;
     say(cmd === 'dl-rete' ? 'Building the .rete graph…' : '');
-    Promise.resolve(rd.download(cmd === 'dl-rete' ? 'rete' : 'jsonld')).then(function () { var m2 = $('export-msg'); say(m2 ? m2.textContent : ''); });
+    Promise.resolve(rd.download(cmd === 'dl-rete' ? 'rete' : cmd === 'dl-ttl' ? 'ttl' : 'jsonld')).then(function () { var m2 = $('export-msg'); say(m2 ? m2.textContent : ''); });
   }
 }
 
@@ -3563,7 +4088,7 @@ function renderSeqPanel() {
   var sc = SCEN[S.sc];
   panel.innerHTML = sheetBtn() +
     '<div class="pcrumb">' + ancestors(n).concat([n]).map(function (a) { return '<button type="button" data-go="' + esc(a.id) + '">' + esc(a.name) + '</button>'; }).join('<span>›</span>') + '</div>' +
-    '<span class="ptag">Sequence inside ' + esc(n.name) + '</span><h2>' + esc(sc.name) + '</h2>' + (sc.desc ? '<p>' + esc(sc.desc) + '</p>' : '') +
+    '<span class="ptag">Sequence inside ' + esc(n.name) + '</span><h2>' + esc(sc.name) + '</h2>' + (sc.desc ? '<p>' + esc(sc.desc) + '</p>' : '') + useCase(S.sc) +
     '<h3>Step ' + s.n + ' of ' + S.steps.length + '</h3>' +
     '<p style="font-size:16px"><b>' + esc(s.a.name) + '</b> ' + (s.ret ? '⇠ replies to' : '→') + ' <b>' + esc(s.b.name) + '</b></p>' +
     '<div class="actions"><button type="button" class="btn" data-act="seq-prev">◀ previous</button><button type="button" class="btn" data-act="seq-play">' + (seqPlaying(n) ? '❚❚ pause' : '▶ play') + '</button><button type="button" class="btn" data-act="seq-next">next ▶</button>' +
@@ -4260,10 +4785,21 @@ on(document.getElementById('dyn-wrap'), 'click', function (ev) {
   if (g) { selected = byId[g.dataset.id]; renderPanel(); }
 });
 
+// the use case behind scenario i (actor, goal, trigger, preconditions, outcome: all optional), as a short list under its description
+function useCase(i) {
+  var s = (MODEL.scenarios || [])[i] || {}, a = s.actor != null && byId[s.actor], pre = s.preconditions == null ? [] : [].concat(s.preconditions), li = [];
+  function row(k, v) { li.push('<li><b>' + k + ':</b> ' + v + '</li>'); }
+  if (a) row('Primary actor', esc(a.name));
+  if (s.goal) row('Goal', esc(s.goal));
+  if (s.trigger) row('Trigger', esc(s.trigger));
+  if (pre.length) row(pre.length > 1 ? 'Preconditions' : 'Precondition', pre.length > 1 ? '<ul>' + pre.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : esc(pre[0]));
+  if (s.outcome) row('Outcome', esc(s.outcome));
+  return li.length ? '<ul class="usecase">' + li.join('') + '</ul>' : '';
+}
 function renderStepPanel() {
   var sc = SCEN[dyn.sc], d = dynSteps(), s = d.steps[dyn.step];
   var lvName = dyn.level === 'map' ? 'as opened on the map' : dyn.level === 'pins' ? 'your pinned elements' : 'L' + dyn.level + ' · ' + LEVEL_NAME[dyn.level].toLowerCase();
-  var html = sheetBtn() + '<span class="ptag">Dynamic diagram · drawn at ' + esc(lvName) + '</span><h2>' + esc(sc.name) + '</h2>' + (sc.desc ? '<p>' + esc(sc.desc) + '</p>' : '');
+  var html = sheetBtn() + '<span class="ptag">Dynamic diagram · drawn at ' + esc(lvName) + '</span><h2>' + esc(sc.name) + '</h2>' + (sc.desc ? '<p>' + esc(sc.desc) + '</p>' : '') + useCase(dyn.sc);
   if (!s) { panel.innerHTML = html + '<p>No interactions cross a box boundary at this level' + (NV ? ' for the selected ' + esc(VAR_LABEL.toLowerCase()) : '') + '. Pick a deeper level.</p>'; return; }
   html += '<h3>Step ' + s.n + ' of ' + d.steps.length + '</h3>' +
     '<p style="font-size:16px"><b>' + esc(dispName(s.a)) + '</b> ' + (s.ret ? '⇠ replies to' : '→') + ' <b>' + esc(dispName(s.b)) + '</b></p>' +
@@ -4416,6 +4952,11 @@ function exportAs(kind) {
     say('Saved ' + g.fileStem + '.jsonld · ' + g.tripleCount() + ' triples');
     return Promise.resolve(true);
   }
+  if (kind === 'ttl') {
+    saveFile(g.toTurtle(), 'text/turtle', g.fileStem + '.ttl');
+    say('Saved ' + g.fileStem + '.ttl · ' + g.tripleCount() + ' triples');
+    return Promise.resolve(true);
+  }
   say('Loading the rete builder…');
   return buildRete().then(function (bytes) {
     saveFile(bytes, 'application/octet-stream', g.fileStem + '.rete');
@@ -4516,7 +5057,7 @@ root.setAttribute('data-explorer', 'ready');
 window.ARCH_EXPLORER = { ready: true, errors: [], warnings: CHECK.warnings,
   counts: { nodes: NODES.length, edges: EDGES.length, scenarios: SCEN.length, levels: MAXL, variants: NV },
   layout: function () { return C.analyse(target, agg); },
-  rdf: { jsonld: function () { return JSON.stringify(rdf().toJsonLd(), null, 2); }, ntriples: function () { return rdf().toNTriples(); }, tripleCount: function () { return rdf().tripleCount(); },
+  rdf: { jsonld: function () { return JSON.stringify(rdf().toJsonLd(), null, 2); }, ntriples: function () { return rdf().toNTriples(); }, turtle: function () { return rdf().toTurtle(); }, tripleCount: function () { return rdf().tripleCount(); },
     buildRete: buildRete, download: exportAs },
   // the diagram on screen as an SVG string (what export → SVG saves), for tests and scripts
   viewSvg: function () { var v = viewSvg(); return v ? svgText(v, true) : null; },

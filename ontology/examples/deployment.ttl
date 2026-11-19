@@ -1,0 +1,115 @@
+# Worked example of an extension of the C4 architecture ontology: deployment facts and data classification.
+# Walked through end to end in ontology/EXTENDING.md ("Worked example").
+#
+# It follows the rules of EXTENDING.md:
+#   - its own namespace (here example.org: replace it with an IRI you control, e.g. a w3id.org redirect);
+#     nothing is added to c4:;
+#   - subclasses and new properties instead of changes to core terms;
+#   - every term has a label, a definition and a source;
+#   - few domain/range axioms, only where the conclusion is always right; the shapes in
+#     deployment-shapes.ttl do the checking;
+#   - an owl:versionIRI per release, and deprecation instead of deletion.
+
+@prefix dep:     <https://example.org/ontology/deployment#> .
+@prefix c4:      <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+<https://example.org/ontology/deployment>
+    a owl:Ontology ;
+    owl:imports <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> ;
+    owl:versionIRI <https://example.org/ontology/deployment/0.1.0> ;
+    owl:versionInfo "0.1.0" ;
+    dcterms:title "Deployment and data handling (example extension of the C4 architecture ontology)"@en ;
+    dcterms:description "How the containers of a C4 model are deployed (the unit that runs them, published ports, start-up order) and how sensitive the data in each data store is."@en ;
+    dcterms:creator "caviri" ;
+    dcterms:license <https://www.apache.org/licenses/LICENSE-2.0> ;
+    dcterms:created "2026-11-19"^^xsd:date ;
+    vann:preferredNamespacePrefix "dep" ;
+    vann:preferredNamespaceUri "https://example.org/ontology/deployment#" .
+
+dcterms:title       a owl:AnnotationProperty .
+dcterms:description a owl:AnnotationProperty .
+dcterms:creator     a owl:AnnotationProperty .
+dcterms:license     a owl:AnnotationProperty .
+dcterms:created     a owl:AnnotationProperty .
+dcterms:source      a owl:AnnotationProperty .
+skos:definition     a owl:AnnotationProperty .
+vann:preferredNamespacePrefix a owl:AnnotationProperty .
+vann:preferredNamespaceUri    a owl:AnnotationProperty .
+
+# ---- a subclass, rather than a change to c4:DataStore
+
+dep:ObjectStore a owl:Class ;
+    rdfs:subClassOf c4:DataStore ;
+    rdfs:label "Object store"@en ;
+    skos:definition "A data store that keeps files as objects in buckets behind an HTTP API, such as Amazon S3 or MinIO."@en ;
+    dcterms:source <https://c4model.com/abstractions/container> ;
+    rdfs:isDefinedBy <https://example.org/ontology/deployment> .
+
+# ---- deployment
+
+dep:serviceName a owl:DatatypeProperty ;
+    rdfs:label "service name"@en ;
+    skos:definition "The name of the deployable unit that runs a container: a Docker Compose service, a Kubernetes Deployment, a systemd unit."@en ;
+    dcterms:source <https://docs.docker.com/reference/compose-file/services/> ;
+    rdfs:domain c4:Container ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://example.org/ontology/deployment> .
+
+dep:hostPort a owl:DatatypeProperty ;
+    rdfs:label "host port"@en ;
+    skos:definition "A port on the host on which a container is reachable from outside its network. One value per published port."@en ;
+    dcterms:source <https://docs.docker.com/reference/compose-file/services/#ports> ;
+    rdfs:domain c4:Container ;
+    rdfs:range xsd:integer ;
+    rdfs:isDefinedBy <https://example.org/ontology/deployment> .
+
+# Not a subproperty of c4:uses: starting after another container is an order of start-up, not a runtime
+# interaction. Declaring it rdfs:subPropertyOf c4:uses would make every query over c4:uses, under inference,
+# count start-up order as a dependency.
+dep:startsAfter a owl:ObjectProperty ;
+    rdfs:label "starts after"@en ;
+    skos:definition "The container is only started once the object container has started (or become healthy, or completed)."@en ;
+    dcterms:source <https://docs.docker.com/reference/compose-file/services/#depends_on> ;
+    rdfs:domain c4:Container ;
+    rdfs:range c4:Container ;
+    rdfs:isDefinedBy <https://example.org/ontology/deployment> .
+
+dep:protocol a owl:DatatypeProperty ;
+    rdfs:label "protocol"@en ;
+    skos:definition "The wire protocol a relationship uses as deployed: HTTP, the S3 API, the Redis protocol, PostgreSQL's wire protocol."@en ;
+    rdfs:domain c4:Relationship ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://example.org/ontology/deployment> .
+
+# ---- data classification: a small controlled vocabulary
+
+dep:DataClassification a owl:Class ;
+    rdfs:label "Data classification"@en ;
+    skos:definition "How sensitive the data in a data store is: dep:Public, dep:Internal or dep:Confidential."@en ;
+    owl:oneOf ( dep:Public dep:Internal dep:Confidential ) ;
+    rdfs:isDefinedBy <https://example.org/ontology/deployment> .
+
+dep:classification a owl:ObjectProperty ;
+    rdfs:label "classification"@en ;
+    skos:definition "The classification of the most sensitive data a data store holds."@en ;
+    rdfs:domain c4:DataStore ;
+    rdfs:range dep:DataClassification ;
+    rdfs:isDefinedBy <https://example.org/ontology/deployment> .
+
+dep:Public a dep:DataClassification ;
+    rdfs:label "Public"@en ; skos:definition "May be published without harm."@en ;
+    rdfs:isDefinedBy <https://example.org/ontology/deployment> .
+
+dep:Internal a dep:DataClassification ;
+    rdfs:label "Internal"@en ; skos:definition "For the people who work with the system; disclosure is a nuisance, not a breach."@en ;
+    rdfs:isDefinedBy <https://example.org/ontology/deployment> .
+
+dep:Confidential a dep:DataClassification ;
+    rdfs:label "Confidential"@en ; skos:definition "Personal data or credentials: disclosure is a breach that must be reported or remedied."@en ;
+    rdfs:isDefinedBy <https://example.org/ontology/deployment> .

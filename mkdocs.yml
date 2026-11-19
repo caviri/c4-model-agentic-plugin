@@ -97,6 +97,11 @@ nav:
       - Architecture explorer: explorer.md
       - Project deck: deck.md
       - RDF export: rdf.md
+  - Ontology:
+      - ontology/index.md
+      - Core terms (c4:): ontology/c4.md
+      - View terms (c4v:): ontology/c4-view.md
+      - Extending the ontology: ontology/EXTENDING.md
   - Example:
       - example/index.md
       - Architecture explorer: example/explorer.md

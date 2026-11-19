@@ -57,6 +57,20 @@ matter most (the main user journey, the main background job, the one tricky fail
 and trace each end to end through real code: trigger → entrypoint → calls → data written → result.
 Note any state machine (statuses and transitions); it is usually the heart of the domain.
 
+Each flow is also a use case. Record, from evidence only: who starts it (the role check on the
+route), what they want, what triggers it, what must hold first (role checks, error answers such as
+"404 no pending tasks"), and what holds when it succeeds (the last writes). The explorer shows
+these with the scenario and writes them into its RDF graph.
+
+## Shared vocabulary
+
+The brief, the deck and the explorer use the terms of the plugin's C4 ontology,
+`${CLAUDE_PLUGIN_ROOT}/ontology/c4.ttl` (person, software system, external or sibling system,
+container, data store, component, code element, relationship, scenario and step, state and
+transition, use case: primary actor, goal, trigger, preconditions, outcome). Classify what you find
+with them, so it maps one to one onto the explorer's model and its RDF export.
+`${CLAUDE_PLUGIN_ROOT}/ontology/README.md` defines each one.
+
 ## 5. Write the brief
 
 Write `communications/project-brief.md` in the target project (or the location the user chose)

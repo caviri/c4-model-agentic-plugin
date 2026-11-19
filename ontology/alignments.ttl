@@ -1,0 +1,85 @@
+# Optional mappings from the C4 architecture ontology (c4.ttl) to other vocabularies.
+#
+# Load this file only if you want the cross-links; c4.ttl does not import it.
+#
+# Every mapping is a SKOS mapping property (skos:closeMatch, skos:relatedMatch, skos:broadMatch) or
+# rdfs:seeAlso, never owl:equivalentClass or owl:equivalentProperty. An equivalence would make a reasoner
+# merge the two terms and carry every axiom of one over to the other: schema:SoftwareApplication would
+# inherit the C4 disjointness axioms, and every schema.org application in a merged graph would become a
+# c4:SoftwareSystem. The SKOS mapping properties are annotations: they tell a reader (or a mapping tool)
+# that the terms are close, and change nothing else.
+#
+#   closeMatch   close enough to use one for the other in most applications, not formally the same
+#   broadMatch   the other term is broader
+#   relatedMatch related, but not interchangeable
+
+@prefix c4:      <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix schema:  <https://schema.org/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+
+<https://caviri.github.io/c4-model-agentic-plugin/ontology/alignments.ttl>
+    a owl:Ontology ;
+    dcterms:title "Alignments of the C4 architecture ontology"@en ;
+    dcterms:description "SKOS mappings from c4: terms to schema.org, Dublin Core, PROV-O and SKOS terms, plus pointers to the Structurizr DSL. Optional; nothing in c4.ttl depends on it."@en ;
+    dcterms:creator "caviri" ;
+    dcterms:license <https://www.apache.org/licenses/LICENSE-2.0> ;
+    owl:versionInfo "0.1.0" ;
+    rdfs:seeAlso <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+skos:closeMatch   a owl:AnnotationProperty .
+skos:broadMatch   a owl:AnnotationProperty .
+skos:relatedMatch a owl:AnnotationProperty .
+skos:scopeNote    a owl:AnnotationProperty .
+dcterms:title       a owl:AnnotationProperty .
+dcterms:description a owl:AnnotationProperty .
+dcterms:creator     a owl:AnnotationProperty .
+dcterms:license     a owl:AnnotationProperty .
+
+# ---- classes
+
+c4:SoftwareSystem
+    skos:closeMatch schema:SoftwareApplication ;
+    skos:scopeNote "schema:SoftwareApplication describes a product to install or use; a C4 software system is a unit of ownership and value made of containers."@en .
+
+c4:Container
+    skos:relatedMatch schema:SoftwareApplication ;
+    skos:scopeNote "A C4 container is often a separately deployed application, but a data store is a container too."@en .
+
+c4:CodeElement
+    skos:relatedMatch schema:SoftwareSourceCode .
+
+c4:Person
+    skos:relatedMatch prov:Agent , schema:Audience ;
+    skos:scopeNote "A C4 person is a role or persona that uses a system; prov:Agent is whatever bears responsibility for an activity, schema:Audience an intended group of users."@en .
+
+c4:Model
+    skos:broadMatch schema:CreativeWork .
+
+c4:Scenario
+    rdfs:seeAlso <https://docs.structurizr.com/dsl/language> ;
+    skos:scopeNote "The Structurizr DSL calls this a dynamic view."@en .
+
+# ---- properties
+
+c4:uses
+    skos:relatedMatch dcterms:requires ;
+    skos:scopeNote "dcterms:requires is a dependency between resources; c4:uses is a runtime interaction (a person uses a system without requiring it)."@en .
+
+c4:hasStep
+    skos:closeMatch schema:step .
+
+c4:summary
+    skos:closeMatch schema:disambiguatingDescription .
+
+c4:note
+    skos:closeMatch skos:note .
+
+c4:technology
+    skos:relatedMatch schema:programmingLanguage , schema:runtimePlatform .
+
+c4:primaryActor
+    skos:relatedMatch schema:agent .

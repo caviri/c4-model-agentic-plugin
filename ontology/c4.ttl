@@ -1,0 +1,402 @@
+# The C4 architecture ontology (core module) of c4-model-agentic-plugin.
+#
+# What a software architecture *is*, in the terms of the C4 model: people, software systems, containers,
+# components and code, the relationships between them, and dynamic diagrams (scenarios of ordered steps).
+# Two small extensions beyond core C4 are marked with skos:scopeNote: lifecycle states with their transitions,
+# and use-case metadata on scenarios.
+#
+# How the explorer *draws* an architecture (order, positions, colours, view defaults) is a separate module,
+# c4-view.ttl (prefix c4v:), so that this file stays about the architecture itself.
+#
+# Design rules, kept on purpose:
+#   - Domain and range axioms cause inference, not validation: a reasoner that sees `x c4:uses y` concludes
+#     that x and y are elements, it never reports an error. So there are few of them, only where the
+#     conclusion is always right. Checking a graph is the job of the SHACL shapes in c4-shapes.ttl.
+#   - Reused vocabularies keep their own meaning. rdfs:label, dcterms:title/description/identifier/isPartOf/
+#     hasPart/source/conformsTo and schema:position are declared below only so that OWL 2 DL tools load the
+#     file cleanly; nothing here changes what they mean.
+#   - Links to schema.org and similar vocabularies are mappings (skos:closeMatch and friends), never
+#     owl:equivalentClass, and they live in an optional file: alignments.ttl.
+#   - Superclasses are written out in the exported data (a data store is typed c4:Element, c4:Container and
+#     c4:DataStore), so SPARQL without inference and SHACL see the hierarchy below.
+
+@prefix c4:      <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix schema:  <https://schema.org/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+<https://caviri.github.io/c4-model-agentic-plugin/ontology/c4>
+    a owl:Ontology ;
+    dcterms:title "C4 architecture ontology"@en ;
+    dcterms:description """An OWL 2 vocabulary for software architecture models in the terms of the C4 model: people, software systems, containers, components and code elements, the relationships between them, and dynamic diagrams as scenarios of ordered steps. It also covers lifecycle states and transitions and use-case metadata, two extensions beyond core C4. The interactive architecture explorer of c4-model-agentic-plugin exports every model as an RDF graph in these terms; together with the view module (c4-view) the graph holds everything needed to redraw every diagram."""@en ;
+    dcterms:creator "caviri" ;
+    dcterms:license <https://www.apache.org/licenses/LICENSE-2.0> ;
+    dcterms:created "2026-11-19"^^xsd:date ;
+    dcterms:modified "2026-11-19"^^xsd:date ;
+    owl:versionInfo "0.1.0" ;
+    vann:preferredNamespacePrefix "c4" ;
+    vann:preferredNamespaceUri "https://caviri.github.io/c4-model-agentic-plugin/ontology/c4#" ;
+    rdfs:seeAlso <https://c4model.com/> , <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4/> ;
+    skos:note """The C4 model was created by Simon Brown (https://c4model.com/). This ontology is an independent formalisation of it for this plugin; it is not endorsed by Simon Brown or by c4model.com."""@en ;
+    skos:note """Pre-1.0: terms may still change. Changes are listed in the plugin's ontology README, with a rename table."""@en .
+
+#################################################################
+#  Reused terms, declared so that OWL 2 DL tools load the file
+#################################################################
+
+dcterms:title       a owl:AnnotationProperty .
+dcterms:description a owl:AnnotationProperty .
+dcterms:identifier  a owl:AnnotationProperty .
+dcterms:source      a owl:AnnotationProperty .
+dcterms:conformsTo  a owl:AnnotationProperty .
+dcterms:creator     a owl:AnnotationProperty .
+dcterms:license     a owl:AnnotationProperty .
+dcterms:created     a owl:AnnotationProperty .
+dcterms:modified    a owl:AnnotationProperty .
+dcterms:isPartOf    a owl:ObjectProperty .
+dcterms:hasPart     a owl:ObjectProperty .
+schema:position     a owl:DatatypeProperty .
+skos:definition     a owl:AnnotationProperty .
+skos:scopeNote      a owl:AnnotationProperty .
+skos:note           a owl:AnnotationProperty .
+skos:example        a owl:AnnotationProperty .
+vann:preferredNamespacePrefix a owl:AnnotationProperty .
+vann:preferredNamespaceUri    a owl:AnnotationProperty .
+
+#################################################################
+#  Static structure: elements
+#################################################################
+
+c4:Element a owl:Class ;
+    rdfs:label "Element"@en ;
+    skos:definition "Anything that appears as a box in a C4 diagram: a person, a software system, a container, a component, a code element, or a state of a lifecycle. Abstract: every element also has one of the more specific classes."@en ;
+    rdfs:comment "Exported elements carry dcterms:identifier (the model id), rdfs:label (the name), c4:level, and dcterms:isPartOf (the containing element, or the model for top-level boxes)."@en ;
+    dcterms:source <https://c4model.com/abstractions> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:Person a owl:Class ;
+    rdfs:subClassOf c4:Element ;
+    rdfs:label "Person"@en ;
+    skos:definition "A human user of the software systems being described: an actor, role or persona, or a named individual."@en ;
+    rdfs:comment "A role, not necessarily one human being: 'Reviewer' is a Person."@en ;
+    dcterms:source <https://c4model.com/abstractions> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:SoftwareSystem a owl:Class ;
+    rdfs:subClassOf c4:Element ;
+    rdfs:label "Software system"@en ;
+    skos:definition "The highest level of abstraction: something that delivers value to its users, made of one or more containers and usually owned by a single team."@en ;
+    dcterms:source <https://c4model.com/abstractions/software-system> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:ExternalSystem a owl:Class ;
+    rdfs:subClassOf c4:SoftwareSystem ;
+    owl:disjointWith c4:SiblingSystem ;
+    rdfs:label "External system"@en ;
+    skos:definition "A software system that the described system depends on or talks to but that its owners do not own or change, such as a payment provider or an identity provider."@en ;
+    dcterms:source <https://c4model.com/abstractions/software-system> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:SiblingSystem a owl:Class ;
+    rdfs:subClassOf c4:SoftwareSystem ;
+    rdfs:label "Sibling system"@en ;
+    skos:definition "A separate software system owned by the same organisation as the described one, outside its boundary."@en ;
+    dcterms:source <https://c4model.com/abstractions/software-system> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:Container a owl:Class ;
+    rdfs:subClassOf c4:Element ;
+    rdfs:label "Container"@en ;
+    skos:definition "An application or a data store inside a software system: something that must run for the system to work, such as a web application, an API service, a worker, a database or a queue. Not a Docker container."@en ;
+    dcterms:source <https://c4model.com/abstractions/container> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:DataStore a owl:Class ;
+    rdfs:subClassOf c4:Container ;
+    rdfs:label "Data store"@en ;
+    skos:definition "A container that stores data: a database, a file or object store, a cache, a queue or a search index."@en ;
+    rdfs:comment "In C4 a data store is a kind of container. The exporter types every data store as c4:Container too, so `?x a c4:Container` finds both; exclude data stores with FILTER NOT EXISTS { ?x a c4:DataStore }."@en ;
+    dcterms:source <https://c4model.com/abstractions/container> , <https://c4model.com/abstractions/queues-and-topics> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:Component a owl:Class ;
+    rdfs:subClassOf c4:Element ;
+    rdfs:label "Component"@en ;
+    skos:definition "A grouping of related functionality behind a well-defined interface inside a container, such as a module, a package or a service layer. Not separately deployable."@en ;
+    dcterms:source <https://c4model.com/abstractions/component> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:CodeElement a owl:Class ;
+    rdfs:subClassOf c4:Element ;
+    rdfs:label "Code element"@en ;
+    skos:definition "A code element that implements a component: a class, an interface, a function, an endpoint, a constant or a file."@en ;
+    dcterms:source <https://c4model.com/abstractions/code> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:State a owl:Class ;
+    rdfs:subClassOf c4:Element ;
+    rdfs:label "State"@en ;
+    skos:definition "One state of a lifecycle, such as the status of an order or of a task, drawn inside the element that owns the lifecycle."@en ;
+    skos:scopeNote "Extension beyond core C4. The C4 model has no states; the explorer draws lifecycles as state machines inside the owning box. A state is one level below its owner, never deeper than 4."@en ;
+    dcterms:source <https://caviri.github.io/c4-model-agentic-plugin/reference/explorer-data-model/> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( c4:Person c4:SoftwareSystem c4:Container c4:Component c4:CodeElement c4:State ) .
+
+#################################################################
+#  Relationships, the model, variants, dynamic diagrams
+#################################################################
+
+c4:Relationship a owl:Class ;
+    rdfs:label "Relationship"@en ;
+    skos:definition "A directed relationship between two elements, read as 'source uses target': calls, reads from, sends to. It has exactly one c4:source and one c4:target and a label saying what happens along it."@en ;
+    rdfs:comment "Every relationship is a resource of its own, so it can carry a label and other facts. The exporter also writes the shortcut triple `source c4:uses target` (or c4:transitionsTo between states)."@en ;
+    dcterms:source <https://c4model.com/diagrams/notation> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:Transition a owl:Class ;
+    rdfs:subClassOf c4:Relationship ;
+    rdfs:label "Transition"@en ;
+    skos:definition "A relationship from one state to another (or to itself): the move of a lifecycle caused by the event or action in its label."@en ;
+    skos:scopeNote "Extension beyond core C4, with c4:State."@en ;
+    dcterms:source <https://caviri.github.io/c4-model-agentic-plugin/reference/explorer-data-model/> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:Model a owl:Class ;
+    rdfs:label "Architecture model"@en ;
+    skos:definition "The architecture description of one project: the root resource of an exported graph. Top-level elements, scenarios and variants are dcterms:isPartOf it."@en ;
+    rdfs:comment "It links to this ontology with dcterms:conformsTo, and to the repository it describes with dcterms:source."@en ;
+    dcterms:source <https://caviri.github.io/c4-model-agentic-plugin/reference/explorer-data-model/> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:Variant a owl:Class ;
+    rdfs:label "Variant"@en ;
+    skos:definition "One value of a model's variant dimension: a configuration in which only some elements, relationships and steps exist, such as an edition, a runtime mode, a deployment target or a feature flag."@en ;
+    skos:scopeNote "Explorer concept, not part of core C4."@en ;
+    dcterms:source <https://caviri.github.io/c4-model-agentic-plugin/reference/explorer-data-model/> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:Scenario a owl:Class ;
+    rdfs:label "Scenario"@en ;
+    skos:definition "A C4 dynamic diagram: one runtime scenario, as an ordered list of steps between elements of the static model. Optionally also a use case, with a primary actor, a goal, a trigger, preconditions and an outcome."@en ;
+    rdfs:comment "The same scenario can be drawn as a collaboration diagram, a sequence diagram or a step table, at any level: steps are lifted to the chosen level."@en ;
+    dcterms:source <https://c4model.com/diagrams/dynamic> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:Step a owl:Class ;
+    rdfs:label "Step"@en ;
+    skos:definition "One numbered interaction of a scenario: a message from a source element to a target element, at a position (schema:position, from 1) in the scenario."@en ;
+    dcterms:source <https://c4model.com/diagrams/dynamic> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( c4:Element c4:Relationship c4:Model c4:Variant c4:Scenario c4:Step ) .
+
+#################################################################
+#  Object properties
+#################################################################
+
+c4:uses a owl:ObjectProperty ;
+    rdfs:label "uses"@en ;
+    skos:definition "Shortcut for a relationship: the subject element uses the object element (calls it, reads from it, sends to it). One triple per pair of elements, however many relationships connect them."@en ;
+    rdfs:comment "Written between the exact elements a relationship names, usually deep ones. To ask about a container, follow containment on both ends: ?a dcterms:isPartOf* ?container."@en ;
+    # safe: whatever uses or is used is an element
+    rdfs:domain c4:Element ;
+    rdfs:range c4:Element ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:transitionsTo a owl:ObjectProperty ;
+    rdfs:label "transitions to"@en ;
+    skos:definition "Shortcut for a transition: the lifecycle can move from the subject state to the object state."@en ;
+    skos:scopeNote "Extension beyond core C4, with c4:State."@en ;
+    rdfs:domain c4:State ;
+    rdfs:range c4:State ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:source a owl:ObjectProperty ;
+    rdfs:label "source"@en ;
+    skos:definition "The element a relationship or a step starts from: the caller, the sender, or for a reply step the one that answers."@en ;
+    rdfs:comment "Not dcterms:source, which says where the model comes from (its repository)."@en ;
+    # no domain: used by c4:Relationship and c4:Step; the SHACL shapes check the subjects
+    rdfs:range c4:Element ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:target a owl:ObjectProperty ;
+    rdfs:label "target"@en ;
+    skos:definition "The element a relationship or a step goes to: the one that is called, read or sent to."@en ;
+    # no domain: used by c4:Relationship and c4:Step
+    rdfs:range c4:Element ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:inVariant a owl:ObjectProperty ;
+    rdfs:label "in variant"@en ;
+    skos:definition "The variants in which an element, a relationship or a step exists. Without any c4:inVariant it exists in all of them."@en ;
+    # no domain: elements, relationships and steps
+    rdfs:range c4:Variant ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:hasStep a owl:ObjectProperty ;
+    rdfs:label "has step"@en ;
+    skos:definition "A step of the scenario. The order of the steps is their schema:position."@en ;
+    owl:inverseOf c4:inScenario ;
+    rdfs:domain c4:Scenario ;
+    rdfs:range c4:Step ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:inScenario a owl:ObjectProperty ;
+    rdfs:label "in scenario"@en ;
+    skos:definition "The scenario a step belongs to."@en ;
+    rdfs:domain c4:Step ;
+    rdfs:range c4:Scenario ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:primaryActor a owl:ObjectProperty ;
+    rdfs:label "primary actor"@en ;
+    skos:definition "The person whose goal the scenario, read as a use case, serves: usually the one who starts it."@en ;
+    skos:scopeNote "Use-case metadata, an extension beyond core C4 (after Cockburn's use-case template)."@en ;
+    rdfs:domain c4:Scenario ;
+    rdfs:range c4:Person ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+#################################################################
+#  Datatype properties
+#################################################################
+
+c4:level a owl:DatatypeProperty ;
+    rdfs:label "level"@en ;
+    skos:definition "The C4 level of an element: 1 system context (people and software systems), 2 containers, 3 components, 4 code. A state is one level below its owner, never deeper than 4."@en ;
+    rdfs:comment "Derived from the class when the graph is written. The data uses plain xsd:integer literals (so SPARQL patterns such as `c4:level 2` match); in OWL 2 the value 2 lies in the value space of xsd:positiveInteger, so the range holds. The SHACL shapes check the datatype and 1 to 4."@en ;
+    rdfs:domain c4:Element ;
+    rdfs:range xsd:positiveInteger ;
+    dcterms:source <https://c4model.com/diagrams> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:summary a owl:DatatypeProperty ;
+    rdfs:label "summary"@en ;
+    skos:definition "A five-word summary of an element, shown as the second line of its box."@en ;
+    skos:example "REST · auth · task rules" ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:tag a owl:DatatypeProperty ;
+    rdfs:label "tag"@en ;
+    skos:definition "The type line of an element in C4 notation: its kind and main technology or code construct."@en ;
+    skos:example "CONTAINER · FASTAPI" , "CLASS · STATE MACHINE" ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:note a owl:DatatypeProperty ;
+    rdfs:label "note"@en ;
+    skos:definition "One note about an element: a constraint, a gotcha or a configuration flag. One value per note."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:technology a owl:DatatypeProperty ;
+    rdfs:label "technology"@en ;
+    skos:definition "A technology an element is built with or runs on: a language, a framework, a product. One value per technology."@en ;
+    skos:example "Python 3.12" , "PostgreSQL 16" ;
+    rdfs:range xsd:string ;
+    dcterms:source <https://c4model.com/diagrams/notation> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:path a owl:DatatypeProperty ;
+    rdfs:label "source path"@en ;
+    skos:definition "Where the element lives in the repository: a path relative to its root, a trailing / for a directory, and . for the repository root itself."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:line a owl:DatatypeProperty ;
+    rdfs:label "source line"@en ;
+    skos:definition "The line in the file at c4:path where the element starts."@en ;
+    rdfs:comment "Plain xsd:integer literals in the data, as for c4:level."@en ;
+    rdfs:range xsd:positiveInteger ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:link a owl:DatatypeProperty ;
+    rdfs:label "relative link"@en ;
+    skos:definition "A link from an element to documentation, written relative to the page. An absolute link is rdfs:seeAlso instead."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:branch a owl:DatatypeProperty ;
+    rdfs:label "branch"@en ;
+    skos:definition "The branch of the repository (dcterms:source) that the model describes. Main when absent."@en ;
+    rdfs:domain c4:Model ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:summaryLabel a owl:DatatypeProperty ;
+    rdfs:label "summary label"@en ;
+    skos:definition "The label of the higher-level relationship this relationship belongs to: what an arrow says when it is drawn between closed ancestors of both ends."@en ;
+    skos:example "JSON over HTTPS" ;
+    rdfs:domain c4:Relationship ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:variantDimension a owl:DatatypeProperty ;
+    rdfs:label "variant dimension"@en ;
+    skos:definition "The name of what the model's variants vary: edition, deployment, runtime mode. Variant when absent."@en ;
+    rdfs:domain c4:Model ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:initial a owl:DatatypeProperty ;
+    rdfs:label "initial"@en ;
+    skos:definition "True for the state a lifecycle starts in. Written only when true."@en ;
+    skos:scopeNote "Extension beyond core C4, with c4:State."@en ;
+    rdfs:domain c4:State ;
+    rdfs:range xsd:boolean ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:final a owl:DatatypeProperty ;
+    rdfs:label "final"@en ;
+    skos:definition "True for a state a lifecycle ends in. Written only when true."@en ;
+    skos:scopeNote "Extension beyond core C4, with c4:State."@en ;
+    rdfs:domain c4:State ;
+    rdfs:range xsd:boolean ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:isReply a owl:DatatypeProperty ;
+    rdfs:label "is reply"@en ;
+    skos:definition "True for a step that answers an earlier one (a return message). Written only when true."@en ;
+    rdfs:domain c4:Step ;
+    rdfs:range xsd:boolean ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:goal a owl:DatatypeProperty ;
+    rdfs:label "goal"@en ;
+    skos:definition "What the primary actor wants to achieve with the scenario, read as a use case."@en ;
+    skos:scopeNote "Use-case metadata, an extension beyond core C4."@en ;
+    rdfs:domain c4:Scenario ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:trigger a owl:DatatypeProperty ;
+    rdfs:label "trigger"@en ;
+    skos:definition "The event that starts the scenario: an action of the actor, a schedule, a message."@en ;
+    skos:scopeNote "Use-case metadata, an extension beyond core C4."@en ;
+    rdfs:domain c4:Scenario ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:precondition a owl:DatatypeProperty ;
+    rdfs:label "precondition"@en ;
+    skos:definition "Something that must hold before the scenario can start. One value per precondition."@en ;
+    skos:scopeNote "Use-case metadata, an extension beyond core C4."@en ;
+    rdfs:domain c4:Scenario ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:outcome a owl:DatatypeProperty ;
+    rdfs:label "outcome"@en ;
+    skos:definition "What holds when the scenario has succeeded: its success guarantee."@en ;
+    skos:scopeNote "Use-case metadata, an extension beyond core C4."@en ;
+    rdfs:domain c4:Scenario ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .

@@ -91,8 +91,8 @@ in the colours on screen. `export ▾` → **The model** downloads the architect
 - **Delete** with the button or the Delete key; undo and redo with Ctrl+Z and Ctrl+Y.
 
 Every change is checked by the page's validator before it is made. The edits stay in the browser until you
-download them: `model.js` to rebuild from, the whole `page` with the new model inside, or the graph as JSON-LD or
-`.rete`. Try it on the [live example](example/explorer.md).
+download them: `model.js` to rebuild from, the whole `page` with the new model inside, or the graph as JSON-LD,
+Turtle (`.ttl`) or `.rete`. Try it on the [live example](example/explorer.md).
 
 ### Keyboard
 

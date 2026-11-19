@@ -331,6 +331,14 @@ window.MODEL = {
 
     { id: 'annotate', name: 'Annotate + submit',
       desc: 'An annotator claims the oldest pending task, draws boxes and submits it. Status: pending → in_progress → submitted.',
+      actor: 'annotator',
+      goal: 'Get the next image annotated with labelled boxes and handed over for review.',
+      trigger: 'The annotator opens /annotate, which asks the API for the next task.',
+      preconditions: [
+        'Signed in with the annotator role: POST /api/tasks/next and POST /api/tasks/{id}/submit require it.',
+        'A task is pending, or the annotator already has one in progress; otherwise the API answers 404 "no pending tasks".'
+      ],
+      outcome: 'The task is submitted with at least one box (an empty submit is refused with 422) and appears in the review queue.',
       steps: [
         { from: 'annotator', to: 'annotate-page', label: 'opens /annotate' },
         { from: 'annotate-page', to: 'client', label: 'claimNextTask()' },
@@ -395,6 +403,11 @@ window.MODEL = {
 
     { id: 'export', name: 'Export approved tasks (COCO)',
       desc: 'An admin requests an export. The API only queues it; the worker builds the file and the page polls until a download URL appears.',
+      actor: 'admin',
+      goal: 'Download every approved annotation as one COCO-style JSON file.',
+      trigger: 'The admin clicks "Export approved annotations" on the admin page.',
+      preconditions: 'Signed in with the admin role: POST /api/exports and GET /api/exports/{id} require it.',
+      outcome: 'The worker writes exports/export-<id>.coco.json to MinIO and marks the export done with its task count; the page shows a presigned download URL.',
       steps: [
         { from: 'admin', to: 'admin-page', label: 'Export approved annotations' },
         { from: 'admin-page', to: 'client', label: 'requestExport()' },
