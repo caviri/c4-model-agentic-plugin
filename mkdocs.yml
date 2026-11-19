@@ -98,6 +98,7 @@ nav:
       - Project deck: deck.md
       - RDF export: rdf.md
       - History and diffs: history.md
+      - ChatGPT and Claude (MCP): mcp.md
   - Ontology:
       - ontology/index.md
       - Core terms (c4:): ontology/c4.md

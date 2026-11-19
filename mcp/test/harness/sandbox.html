@@ -1,0 +1,28 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>sandbox proxy</title>
+<style>html, body { margin: 0; height: 100%; } iframe { display: block; width: 100%; height: 100%; border: 0; }</style>
+</head><body>
+<script>
+// The sandbox proxy of the MCP Apps spec ("Sandbox proxy" / "Double Sandboxed Iframe"), after ext-apps' basic-host:
+// its own origin, the CSP as an HTTP header (set by the test server from the view's _meta.ui.csp), the view written into
+// an inner sandboxed iframe that inherits it, and every message relayed except ui/notifications/sandbox-*.
+(function () {
+  var HOST = new URLSearchParams(location.search).get('host');
+  var inner = document.createElement('iframe');
+  inner.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
+  document.body.appendChild(inner);
+  window.addEventListener('message', function (e) {
+    if (e.source === window.parent) {
+      if (e.origin !== HOST) return;
+      if (e.data && e.data.method === 'ui/notifications/sandbox-resource-ready') {
+        var doc = inner.contentDocument; doc.open(); doc.write(e.data.params.html); doc.close();
+      } else if (inner.contentWindow) inner.contentWindow.postMessage(e.data, '*');
+    } else if (e.source === inner.contentWindow) {
+      if (e.data && typeof e.data.method === 'string' && e.data.method.indexOf('ui/notifications/sandbox-') === 0) return;
+      window.parent.postMessage(e.data, HOST);
+    }
+  });
+  window.parent.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/sandbox-proxy-ready', params: {} }, HOST);
+})();
+</script>
+</body></html>

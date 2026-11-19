@@ -1,0 +1,9 @@
+# BuildKit reads this file for mcp/Dockerfile (a Dockerfile-specific ignore file, next to it)
+**/node_modules
+**/.git
+mcp/test
+site
+docs
+examples/**/*.html
+examples/**/project-deck
+**/__pycache__

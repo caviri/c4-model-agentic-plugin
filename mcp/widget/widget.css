@@ -1,0 +1,21 @@
+/* Only inside a host (the bridge sets html.c4-widget): the explorer is a full-height app, so in an iframe that the host
+   sizes from what the view reports, it gets an explicit height (--c4w-h, set by the bridge from containerDimensions). */
+html.c4-widget, html.c4-widget body { height: var(--c4w-h, 600px); }
+html.c4-widget body { box-sizing: border-box; overflow: hidden;
+  padding: var(--c4w-inset-top, 0px) var(--c4w-inset-right, 0px) var(--c4w-inset-bottom, 0px) var(--c4w-inset-left, 0px); }
+html.c4-widget .app { height: 100%; }
+/* inline in the conversation (html.c4-inline): a compact toolbar so the map keeps most of the height. The secondary
+   toggles (labels, edges, size; also on the L, E keys) are left for the expanded view, the details sheet starts folded. */
+html.c4-inline .bar { gap: 8px 12px; padding-top: 8px; padding-bottom: 8px; }
+html.c4-inline .brand { width: auto; margin-right: 4px; }
+html.c4-inline .brand small { display: none; }
+html.c4-inline .brand b { font-size: 15px; white-space: nowrap; }
+html.c4-inline #btn-labels, html.c4-inline #btn-edges, html.c4-inline .sizes { display: none; }
+html.c4-inline .search input { width: 120px; }
+/* the bridge's own controls and messages */
+#c4w-expand[hidden] { display: none; }
+.c4w-note { margin: 6px 0 0; font: 11.5px var(--f-mono); color: var(--muted); }
+.c4w-error { position: fixed; inset: 0; z-index: 100; overflow: auto; background: var(--bg); color: var(--ink); padding: 28px max(20px, 6vw); font-family: var(--f-body); }
+.c4w-error h1 { font-family: var(--f-display); font-size: 21px; margin: 0 0 8px; }
+.c4w-error p { color: var(--muted); margin: 0 0 14px; }
+.c4w-error pre { font: 12.5px/1.5 var(--f-mono); white-space: pre-wrap; margin: 0; }

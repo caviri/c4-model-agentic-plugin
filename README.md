@@ -215,6 +215,25 @@ versions with provenance and shows how the architecture changed:
 Details: [`skills/architecture-history/`](skills/architecture-history/) and
 [History and diffs](https://caviri.github.io/c4-model-agentic-plugin/history/) in the documentation.
 
+## ChatGPT and Claude (MCP)
+
+Not using Claude Code? [`mcp/`](mcp/) is a remote **MCP server** that brings the same method to ChatGPT, Claude (web
+and desktop) or any MCP client. The assistant explores a public GitHub repository, writes the model, checks it with
+the explorer's own validator, the ontology's SHACL shapes and the real file paths, and **draws the explorer inline in
+the chat** as an interactive view (MCP Apps). It also exports Turtle, JSON-LD and `.rete`, and the standalone page.
+
+- Add it as a custom connector in Claude (Customize → Connectors) or as a custom MCP server in ChatGPT, with the
+  server's URL ending in `/mcp`. Locally: `node mcp/server.mjs --stdio`.
+- Stateless: models are never stored. Only public GitHub content is fetched, and only when the assistant asks.
+- Host it with [`mcp/Dockerfile`](mcp/Dockerfile) or as a Hugging Face Space ([`mcp/deploy/huggingface/`](mcp/deploy/huggingface/)).
+
+The explorer and the deck are also **WebMCP** pages: in a browser with `document.modelContext` (Chrome behind a flag
+or origin trial) an in-browser agent can read the model, open levels, select boxes, show scenarios or turn slides,
+and, in the explorer's edit mode, propose edits you confirm on the page. Elsewhere nothing changes.
+
+Details: [`mcp/README.md`](mcp/README.md) and
+[ChatGPT and Claude (MCP)](https://caviri.github.io/c4-model-agentic-plugin/mcp/) in the documentation.
+
 ## Example
 
 [`examples/image-annotation-tool/`](examples/image-annotation-tool/) is a small theoretical
@@ -242,6 +261,7 @@ skills/
   architecture-explorer/  explorer template, build and check scripts, references
   architecture-history/   versions, diffs and blame from git; the demonstration history
 ontology/                 the C4 ontology: core, view and history modules, SHACL shapes
+mcp/                      remote MCP server with an MCP Apps view (ChatGPT, Claude), Dockerfile, tests
 examples/
   image-annotation-tool/  test fixture and its generated output
 docs/img/                 screenshots
