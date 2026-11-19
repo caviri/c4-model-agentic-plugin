@@ -81,6 +81,7 @@ Present only when `MODEL.scenarios` is non-empty; no model fields are needed. An
 | Delete, Ctrl+Z, Ctrl+Y | In edit mode: delete the selected box, undo, redo. Alt+drag connects two boxes |
 | `Esc` | Clear the selection |
 | `←` `→` `space` | Previous step, next step, play (Dynamic) |
+| `[` `]`, `C` | With a history embedded: previous / next version, compare mode on or off |
 | `Tab`, `Enter`, `Space` on a box | Focus, select, open or close |
 
 ### Colour themes
@@ -152,8 +153,26 @@ The URL hash mirrors what is on screen and is read at load, so any state can be 
 | `seqstep=api:3` | Message picked in that box's sequence, numbered from 1 |
 | `zoom=api` | Read only: fit the camera to that box instead of the whole map |
 | `pins=a,b,c` | Read only: use these pins for this visit |
+| `ver=4d60afd` / `cmp=a889a40` | Only with a history embedded (see "Versions and compare mode"): the version drawn, and the version it is compared with |
 
 Example: `index.html#open=api&zoom=api&theme=dark`.
+
+### Versions and compare mode
+
+Only when the page was built with `--history <history.json>` (written by the architecture-history skill's
+`arch-history.mjs timeline`). A **History** bar appears under the toolbar with one dot per version. Clicking a dot,
+◀ ▶ or `[` `]` runs the page again on that version's model, keeping the camera and the open boxes; ▶ play steps through
+the versions. `⇄ compare` (or `C`) draws the later version with added boxes and arrows in green, removed ones as red
+dashed ghosts brought back from the earlier version, changed ones in amber, and a dotted amber border on a closed box
+with changes inside; the colours are each theme's `--green`, `--rose` and `--orange`. Click a dot to move the later end,
+Shift + click (or the "from" list) to move the earlier one. The details panel lists the changes of the version or the
+comparison with the fields that changed and who changed them in which commit; a selected box shows its old and new
+text. `✎ edit` is hidden while another version or a comparison is shown, and the bar is disabled while editing.
+
+The code is the `history` script of the template (the timeline bar, the panel sections, the restarts), the comparison
+code the build embeds with the versions (`history-core.js` of the architecture-history skill, between the
+`/* BEGIN HISTORY */` and `/* END HISTORY */` markers), and a few hooks in the engine (`HU`). Without a history the
+bar stays hidden and nothing else changes.
 
 ### Sizes
 

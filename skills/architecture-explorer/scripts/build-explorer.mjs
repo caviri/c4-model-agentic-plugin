@@ -9,6 +9,8 @@
 //   a graph instead (recognised by its extension, or forced with --from-rdf) recreates the MODEL from the RDF first,
 //              with model-from-rdf.mjs: the graph holds everything the page draws
 //   --root     passed on to check-model.mjs: verifies every `path` / `line` against the repository
+//   --history  <history.json> from the architecture-history skill (arch-history.mjs timeline): embeds the versions, so the
+//              page gets its timeline bar and compare mode (with that skill's history-core.js, the comparison code)
 // Exit code: 0 = written and valid, 1 = written but the model has errors, 2 = nothing written.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
@@ -22,9 +24,10 @@ const args = process.argv.slice(2);
 const flag = (name) => { const i = args.indexOf(name); return i >= 0 ? args.splice(i, 2)[1] : null; };
 const template = flag('--template') || resolve(here, '../templates/explorer.html');
 const root = flag('--root');
+const historyFile = flag('--history');
 const strict = args.includes('--strict'), noRdf = args.includes('--no-rdf');
 const [modelFile, outFile] = args.filter((a) => !a.startsWith('--'));
-if (!modelFile || !outFile) { console.error('Usage: node build-explorer.mjs <model.js | graph.nt|ttl|jsonld|rete> <out.html> [--template explorer.html] [--root repo] [--strict] [--no-rdf] [--from-rdf]'); process.exit(2); }
+if (!modelFile || !outFile) { console.error('Usage: node build-explorer.mjs <model.js | graph.nt|ttl|jsonld|rete> <out.html> [--template explorer.html] [--root repo] [--strict] [--no-rdf] [--from-rdf] [--history history.json]'); process.exit(2); }
 const fromRdf = args.includes('--from-rdf') || /\.(nt|nq|ttl|jsonld|rete)$/i.test(modelFile);
 
 let html, model;
@@ -45,9 +48,25 @@ if (/<\/script/i.test(model)) { console.error('The model contains "</script", wh
 if (!/window\.MODEL\s*=/.test(model)) { console.error('The model file must assign window.MODEL = { ... };'); process.exit(2); }
 model = model.replace(/^\/\* BEGIN MODEL \*\/\s*/, '').replace(/\s*\/\* END MODEL \*\/$/, '');
 
+// ---- versions for the timeline bar and compare mode (architecture-history skill)
+let page = html.replace(block, () => '/* BEGIN MODEL */\n' + model + '\n/* END MODEL */');
+if (historyFile) {
+  const hblock = /\/\* BEGIN HISTORY \*\/[\s\S]*?\/\* END HISTORY \*\//;
+  const coreFile = resolve(here, '../../architecture-history/scripts/history-core.js');
+  let hist, core;
+  try { hist = JSON.parse(readFileSync(historyFile, 'utf8')); core = readFileSync(coreFile, 'utf8').trim(); }
+  catch (e) { console.error('Cannot read the history: ' + e.message); process.exit(2); }
+  if (hist.format !== 'c4-architecture-history' || !Array.isArray(hist.versions)) { console.error(historyFile + ' is not a history.json written by arch-history.mjs timeline'); process.exit(2); }
+  if (!hblock.test(page)) { console.error('Template has no /* BEGIN HISTORY */ … /* END HISTORY */ block: ' + template); process.exit(2); }
+  // "</" would end the script block; U+2028 and U+2029 are line breaks to older script parsers: all three written as escapes
+  const BS = String.fromCharCode(92), LS = String.fromCharCode(0x2028), PS = String.fromCharCode(0x2029);
+  const data = JSON.stringify(hist).split('</').join('<' + BS + '/').split(LS).join(BS + 'u2028').split(PS).join(BS + 'u2029');
+  page = page.replace(hblock, () => '/* BEGIN HISTORY */\nwindow.ARCH_HISTORY = ' + data + ';\n' + core + '\n/* END HISTORY */');
+  console.log('HISTORY  ' + hist.versions.length + ' versions embedded from ' + historyFile + ' (' + hist.resolution + (hist.demo ? ', DEMONSTRATION DATA' : '') + ', ' + Math.round(data.length / 1024) + ' KB)');
+}
 const outDir = dirname(resolve(outFile));
 mkdirSync(outDir, { recursive: true });
-writeFileSync(outFile, html.replace(block, () => '/* BEGIN MODEL */\n' + model + '\n/* END MODEL */'));
+writeFileSync(outFile, page);
 console.log('WROTE    ' + outFile);
 
 const check = spawnSync(process.execPath, [resolve(here, 'check-model.mjs'), outFile].concat(root ? ['--root', root] : [], strict ? ['--strict'] : []), { stdio: 'inherit' });

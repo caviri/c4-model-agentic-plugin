@@ -188,6 +188,33 @@ The explorer also downloads the graph as **Turtle** (`architecture.ttl`, written
 `build-explorer.mjs` rebuilds a page from a graph file. [`ontology/README.md`](ontology/README.md) explains the
 ontology; the C4 model itself is Simon Brown's, and this is an independent formalisation of it.
 
+## History and diffs
+
+Committed with the code, the explorer's `model.js` has a history. The **architecture-history** skill turns it into
+versions with provenance and shows how the architecture changed:
+
+```text
+> /c4-model-agentic-plugin:architecture-history                         # timeline of this branch, one version per merge
+> /c4-model-agentic-plugin:architecture-history timeline tags           # one version per release
+> /c4-model-agentic-plugin:architecture-history diff main feature/x     # two branches
+> /c4-model-agentic-plugin:architecture-history pr 42                   # a pull request's architecture impact
+```
+
+- **In the explorer** (`build-explorer.mjs --history history.json`): a timeline bar to step through or play the
+  versions, and a compare mode that draws added boxes and arrows in green, removed ones as red ghosts and changed ones
+  in amber, with every change listed with its author and commit. `#ver=` and `#cmp=` in the URL.
+- **Reports**: Markdown diffs for two refs or a pull request, a timeline, and blame for every element.
+- **Dataset**: `history.trig` (RDF 1.2), `history.nq`, `history.rete`. Each version is a named graph; PROV-O says who
+  made it, when, and in which commit, merge, release or pull request; every added or removed triple has a reifier
+  naming the commit and author. Terms: [`ontology/c4-history.ttl`](ontology/c4-history.ttl) (`c4h:`), checked by
+  [`c4-history-shapes.ttl`](ontology/c4-history-shapes.ttl).
+- **Refs without a model, or with an outdated one**, are listed with the files that changed and the boxes they map
+  to; the skill regenerates those models incrementally in a worktree outside your checkout.
+- Authors are exported by **name only**; `--emails` adds addresses.
+
+Details: [`skills/architecture-history/`](skills/architecture-history/) and
+[History and diffs](https://caviri.github.io/c4-model-agentic-plugin/history/) in the documentation.
+
 ## Example
 
 [`examples/image-annotation-tool/`](examples/image-annotation-tool/) is a small theoretical
@@ -208,11 +235,13 @@ claude --plugin-dir ../..
 
 ```
 .claude-plugin/           plugin and marketplace manifests
-commands/                 /explain-project
+commands/                 /explain-project, /architecture-history
 skills/
   explore-project/        how to explore, what to ask, the brief template
   project-deck/           deck template, build and diagram scripts, guides
   architecture-explorer/  explorer template, build and check scripts, references
+  architecture-history/   versions, diffs and blame from git; the demonstration history
+ontology/                 the C4 ontology: core, view and history modules, SHACL shapes
 examples/
   image-annotation-tool/  test fixture and its generated output
 docs/img/                 screenshots
@@ -223,6 +252,7 @@ docs/img/                 screenshots
 | `explore-project` | exploration playbook, question bank, brief template |
 | `project-deck` | deck structure, animated versus static, code slides, diagrams and images |
 | `architecture-explorer` | data model, features and layout, RDF graph |
+| `architecture-history` | workflows, history graph |
 
 ## Background: the C4 model
 

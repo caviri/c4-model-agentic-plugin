@@ -12,3 +12,4 @@ Document the project in the current working directory. Request: `$ARGUMENTS` (em
    - `explorer` → the `architecture-explorer` skill
    - `both` or nothing → both, deck first. They are independent once the brief exists, so they may be delegated to two subagents in parallel; give each the path to the brief.
 4. Report the output paths and what was verified (opened, built, checked) versus not.
+5. Suggest next steps. When the explorer was generated: commit `communications/architecture-explorer/model.js` with the code, so its history can be followed; if it already has committed versions (`git log --oneline -- communications/architecture-explorer/model.js`), offer `/c4-model-agentic-plugin:architecture-history` for a timeline of the architecture and a compare mode in the explorer, `… diff A B` to compare two branches, or `… pr N` for a pull request's architecture impact.

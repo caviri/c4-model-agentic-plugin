@@ -10,6 +10,7 @@ also the most complete description of what the plugin does and why, so they are 
 | Skill | Guides |
 |---|---|
 | `architecture-explorer` | [Data model](explorer-data-model.md) · [Features and layout](explorer-features.md) · [RDF graph](explorer-rdf-graph.md) |
+| `architecture-history` | [Workflows](history-workflows.md) · [History graph](history-graph.md) |
 | `project-deck` | [Structure](deck-structure.md) · [Animated or static](deck-animations.md) · [Code slides](deck-code-slides.md) · [Diagrams and images](deck-diagrams.md) |
 | `explore-project` | [Playbook](explore-playbook.md) · [Question bank](explore-questions.md) · [Brief template](explore-brief-template.md) |
 

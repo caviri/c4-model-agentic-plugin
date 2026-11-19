@@ -95,7 +95,8 @@ def term_reference(path):
 
     kinds = [(OWL.Class, "Classes", "class"), (OWL.ObjectProperty, "Object properties", "object property"),
              (OWL.DatatypeProperty, "Datatype properties", "datatype property"),
-             (OWL.AnnotationProperty, "Annotation properties", "annotation property")]
+             (OWL.AnnotationProperty, "Annotation properties", "annotation property"),
+             (OWL.NamedIndividual, "Individuals", "individual")]
     out = [f"Namespace `{prefix}:` = `{ns}` · ontology `{onto}` · version {g.value(onto, OWL.versionInfo)} · "
            f"download [{Path(path).name}]({Path(path).name})", ""]
     sections = []

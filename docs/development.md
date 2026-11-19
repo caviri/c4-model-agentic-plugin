@@ -8,12 +8,13 @@ description: Repository layout, testing changes against the example, and buildin
 
 ```
 .claude-plugin/           plugin and marketplace manifests
-commands/                 /explain-project
+commands/                 /explain-project, /architecture-history
 skills/
   explore-project/        how to explore, what to ask, the brief template
   project-deck/           deck template, build and diagram scripts, guides
   architecture-explorer/  explorer template, build and check scripts, references
-ontology/                 the C4 ontology (c4.ttl, c4-view.ttl), SHACL shapes, alignments, guides, example extension
+  architecture-history/   arch-history.mjs (versions, diffs, blame), history-core.js, the demonstration history
+ontology/                 the C4 ontology (c4.ttl, c4-view.ttl, c4-history.ttl), SHACL shapes, alignments, guides, example extension
 examples/
   image-annotation-tool/  test fixture and its generated output
 docs/                     this site (MkDocs Material); docs/img holds the screenshots used here and in the README
@@ -31,16 +32,24 @@ claude --plugin-dir ../..
 > /c4-model-agentic-plugin:explain-project
 ```
 
-For explorer template changes, a rebuild of the existing model is enough:
+For explorer template changes, a rebuild of the existing model is enough. The example page has the model's real git
+history embedded, so rebuild the history first (it reads `git log`, it does not change the repository):
 
 ```sh
+node skills/architecture-history/scripts/arch-history.mjs timeline \
+  --project examples/image-annotation-tool --resolution all
 node skills/architecture-explorer/scripts/build-explorer.mjs \
   examples/image-annotation-tool/communications/architecture-explorer/model.js \
   examples/image-annotation-tool/communications/architecture-explorer/index.html \
-  --root examples/image-annotation-tool
+  --root examples/image-annotation-tool \
+  --history examples/image-annotation-tool/communications/architecture-history/history.json
 node skills/architecture-explorer/scripts/screenshot.mjs \
   examples/image-annotation-tool/communications/architecture-explorer/index.html shots
 ```
+
+The example's own history is short. To try the history features on merges, pull requests, releases, a stale model
+and a branch comparison, build the demonstration repository (fictional authors) in a new directory outside this one:
+`node skills/architecture-history/scripts/make-demo-history.mjs <dir>`, then run `arch-history.mjs` there with `--demo`.
 
 `check-model.mjs` can also check the template on its own (`node skills/architecture-explorer/scripts/check-model.mjs
 skills/architecture-explorer/templates/explorer.html`): it should report only the placeholder-model warning.

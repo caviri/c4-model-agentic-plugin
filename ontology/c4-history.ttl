@@ -1,0 +1,612 @@
+# The C4 history ontology (history module) of c4-model-agentic-plugin.
+#
+# Versions of an architecture over time, with provenance: which architecture a git commit, merge, release or
+# pull request held, who changed what and when, and what changed between any two versions, down to single
+# triples. Built on PROV-O (http://www.w3.org/ns/prov#); the architecture itself is in the terms of the core
+# module (c4.ttl, c4:) and the view module (c4-view.ttl, c4v:).
+#
+# How a history dataset is laid out (RDF 1.2, TriG or N-Quads):
+#   - A version is a named graph holding the whole architecture at one commit. The graph name is the
+#     version IRI, a c4h:Version (a prov:Entity).
+#   - The default graph describes the versions, the activities that generated them (commits, merges,
+#     releases, pull requests, squashes, regenerations) and the agents those are attributed to.
+#   - A changeset between two versions is a named graph too (its name is the c4h:ChangeSet IRI). Every
+#     triple added or removed is the object of an RDF 1.2 reifier: r rdf:reifies <<( s p o )>>, typed
+#     c4h:Addition or c4h:Removal, carrying the version and the activity that caused it and the agent it
+#     is attributed to. The reified triple is not asserted there: a removed triple stays removed. Next to
+#     the reifiers, one c4h:ElementChange per box, arrow, scenario or variant summarises the same change for
+#     people: added, removed, or modified with the fields that changed.
+#   - A blame graph links each triple of one version to the version and author that introduced it.
+#
+# Design rules, the same as the core module's:
+#   - Domain and range axioms are few and always safe; checking a dataset is the job of the SHACL shapes in
+#     c4-history-shapes.ttl. They avoid sh:or, sh:not and sh:xone, which some engines skip.
+#   - PROV-O keeps its own meaning. The PROV-O terms used are declared below only so that OWL 2 DL tools
+#     load this file without importing PROV-O.
+#   - Agents are named, never identified by e-mail address unless the producer opted in (see c4h:includesEmails).
+
+@prefix c4h:     <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history#> .
+@prefix c4:      <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix foaf:    <http://xmlns.com/foaf/0.1/> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+<https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history>
+    a owl:Ontology ;
+    dcterms:title "C4 history ontology"@en ;
+    dcterms:description """History module of the C4 architecture ontology: versions of an architecture as named graphs, the git activities that generated them and the agents they are attributed to (PROV-O), changesets that describe every added or removed triple with an RDF 1.2 reifier, element-level change summaries, and blame. The architecture-history skill of c4-model-agentic-plugin produces such datasets from the git history of an explorer's model.js."""@en ;
+    dcterms:creator "caviri" ;
+    dcterms:license <https://www.apache.org/licenses/LICENSE-2.0> ;
+    dcterms:created "2026-11-19"^^xsd:date ;
+    dcterms:modified "2026-11-19"^^xsd:date ;
+    owl:versionInfo "0.1.0" ;
+    vann:preferredNamespacePrefix "c4h" ;
+    vann:preferredNamespaceUri "https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history#" ;
+    rdfs:seeAlso <http://www.w3.org/ns/prov#> , <https://www.w3.org/TR/rdf12-concepts/> , <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> ;
+    skos:note """Requires RDF 1.2 for changesets and blame (triple terms and rdf:reifies). Version graphs and the default graph are plain RDF 1.1."""@en ;
+    skos:note """Pre-1.0: terms may still change."""@en .
+
+#################################################################
+#  Reused terms, declared so that OWL 2 DL tools load the file
+#################################################################
+
+dcterms:title       a owl:AnnotationProperty .
+dcterms:description a owl:AnnotationProperty .
+dcterms:creator     a owl:AnnotationProperty .
+dcterms:license     a owl:AnnotationProperty .
+dcterms:created     a owl:AnnotationProperty .
+dcterms:modified    a owl:AnnotationProperty .
+dcterms:conformsTo  a owl:AnnotationProperty .
+skos:definition     a owl:AnnotationProperty .
+skos:scopeNote      a owl:AnnotationProperty .
+skos:note           a owl:AnnotationProperty .
+skos:example        a owl:AnnotationProperty .
+vann:preferredNamespacePrefix a owl:AnnotationProperty .
+vann:preferredNamespaceUri    a owl:AnnotationProperty .
+foaf:name           a owl:DatatypeProperty .
+foaf:mbox           a owl:ObjectProperty .
+
+prov:Entity     a owl:Class .
+prov:Activity   a owl:Class .
+prov:Agent      a owl:Class .
+prov:SoftwareAgent a owl:Class ; rdfs:subClassOf prov:Agent .
+prov:Collection a owl:Class ; rdfs:subClassOf prov:Entity .
+prov:wasRevisionOf     a owl:ObjectProperty .
+prov:wasDerivedFrom    a owl:ObjectProperty .
+prov:wasGeneratedBy    a owl:ObjectProperty .
+prov:wasAttributedTo   a owl:ObjectProperty .
+prov:wasAssociatedWith a owl:ObjectProperty .
+prov:wasInformedBy     a owl:ObjectProperty .
+prov:hadMember         a owl:ObjectProperty .
+prov:generatedAtTime   a owl:DatatypeProperty .
+prov:endedAtTime       a owl:DatatypeProperty .
+
+#################################################################
+#  Versions
+#################################################################
+
+c4h:History a owl:Class ;
+    rdfs:subClassOf prov:Collection ;
+    rdfs:label "History"@en ;
+    skos:definition "A dataset of versions of one architecture model: its members (prov:hadMember) are the versions, in the order of their c4h:sequenceNumber, and it links the changesets between consecutive versions."@en ;
+    rdfs:comment "Says how it was made: c4h:modelPath, c4h:resolution, c4h:range, c4h:sourceRepository, c4h:includesEmails, and c4h:demo when its authors are fictional."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:Version a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Version"@en ;
+    skos:definition "The whole architecture as recorded at one git commit. Its IRI is also the name of the named graph that holds that architecture, in the terms of the core and view modules."@en ;
+    rdfs:comment "Described in the default graph: prov:wasRevisionOf the previous version, prov:generatedAtTime, prov:wasGeneratedBy the commit, merge, release, pull request or squash that produced it, prov:wasAttributedTo the agents whose changes it holds, and the git details (c4h:commitSha, c4h:modelCommit, c4h:ref, c4h:tag, c4h:pullRequest, c4h:modelPath, c4h:modelOrigin)."@en ;
+    skos:example ":version:1e415ac8… a c4h:Version ; prov:wasRevisionOf :version:888fcad… ; prov:wasGeneratedBy :commit:1e415ac8… ."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:SquashedVersion a owl:Class ;
+    rdfs:subClassOf c4h:Version ;
+    rdfs:label "Squashed version"@en ;
+    skos:definition "A version that stands for a range of commits (base..head) at once: it holds the architecture at the head, is a revision of the version at the base, and lists every model commit of the range with c4h:coversCommit. Its changeset holds the net change of the range."@en ;
+    rdfs:comment "Used to describe a release as one step. The reifiers of its changeset still name, per triple, the commit inside the range that made the change."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:ModelOrigin a owl:Class ;
+    rdfs:label "Model origin"@en ;
+    skos:definition "Where the model of a version comes from: committed with the code, regenerated afterwards for a commit that had none or an outdated one, or taken from uncommitted changes in a working tree."@en ;
+    owl:oneOf ( c4h:Committed c4h:Regenerated c4h:WorkingTree ) ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:Committed a owl:NamedIndividual, c4h:ModelOrigin ;
+    rdfs:label "committed"@en ;
+    skos:definition "The model file was part of the commit, as its author wrote it."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:Regenerated a owl:NamedIndividual, c4h:ModelOrigin ;
+    rdfs:label "regenerated"@en ;
+    skos:definition "The model was produced after the fact for a commit whose own model was missing or older than its code, by updating a copy of an earlier model for the files that changed. The version is attributed to whoever regenerated it, not to the commit's author, and is prov:wasDerivedFrom the version it started from."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:WorkingTree a owl:NamedIndividual, c4h:ModelOrigin ;
+    rdfs:label "working tree"@en ;
+    skos:definition "The model was read from uncommitted changes in a working tree; it has no commit, and its author is not recorded."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+#################################################################
+#  Activities that generate versions
+#################################################################
+
+c4h:Commit a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Commit"@en ;
+    skos:definition "A git commit: the activity that recorded a tree, with its author, committer, time, message and parents."@en ;
+    rdfs:comment "c4h:sha, c4h:parentSha, c4h:message, c4h:author, c4h:committer, c4h:authoredAtTime, prov:endedAtTime (commit time), rdfs:seeAlso its web page when the repository is hosted."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:Merge a owl:Class ;
+    rdfs:subClassOf c4h:Commit ;
+    rdfs:label "Merge"@en ;
+    skos:definition "A commit with more than one parent. At merge resolution, every version of a branch's first-parent line is generated by a merge or a direct commit."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:PullRequest a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Pull request"@en ;
+    skos:definition "A pull request (or merge request): the review and merge of a branch, identified by its number, with its title, author, state and merge commit."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:Release a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Release"@en ;
+    skos:definition "The tagging of a commit as a release. At tag resolution every version is generated by one."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:Squash a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Squash"@en ;
+    skos:definition "Collapsing a range of commits into one squashed version. prov:wasInformedBy each commit of the range."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:Regeneration a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Regeneration"@en ;
+    skos:definition "Producing the model of a commit after the fact, from an earlier model and the files that changed since (c4h:baseSha, c4h:changedFile)."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:WorkingTreeEdit a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Working tree edit"@en ;
+    skos:definition "Uncommitted changes to the model in a working tree."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+#################################################################
+#  Changes
+#################################################################
+
+c4h:ChangeSet a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Changeset"@en ;
+    skos:definition "Everything that changed from one version to another: a named graph, whose name is this changeset's IRI, holding one reifier per added or removed triple and one element change per box, arrow, scenario or variant that changed."@en ;
+    rdfs:comment "c4h:fromVersion, c4h:toVersion, c4h:additionCount, c4h:removalCount, c4h:elementChangeCount; for two branches also c4h:mergeBase, c4h:fromRef and c4h:toRef."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:TripleChange a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Triple change"@en ;
+    skos:definition "A reifier (RDF 1.2) of one triple that a changeset adds or removes: r rdf:reifies <<( s p o )>>. It says which changeset it belongs to, the version it was changed in, the activity that made the change and the agents it is attributed to."@en ;
+    rdfs:comment "Abstract: every triple change is a c4h:Addition or a c4h:Removal, and exporters type it with that class only."@en ;
+    skos:example ":change:3f2a… rdf:reifies <<( :api rdfs:label \"API service\" )>> ; a c4h:Addition ; c4h:changedIn :version:1e41… ; prov:wasAttributedTo :agent:caviri ."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:Addition a owl:Class ;
+    rdfs:subClassOf c4h:TripleChange ;
+    owl:disjointWith c4h:Removal ;
+    rdfs:label "Addition"@en ;
+    skos:definition "A triple that the later version of a changeset has and the earlier one has not."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:Removal a owl:Class ;
+    rdfs:subClassOf c4h:TripleChange ;
+    rdfs:label "Removal"@en ;
+    skos:definition "A triple that the earlier version of a changeset has and the later one has not."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:ElementChange a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Element change"@en ;
+    skos:definition "A summary, for people, of how one box, state, arrow, transition, scenario, variant or model setting changed in a changeset. Abstract: one of c4h:ElementAddition, c4h:ElementRemoval, c4h:ElementModification."@en ;
+    rdfs:comment "c4h:element (the element's IRI in the version graphs), c4h:elementKind, c4h:elementKey, and for a modification c4h:changedField and c4h:changedProperty."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:ElementAddition a owl:Class ;
+    rdfs:subClassOf c4h:ElementChange ;
+    owl:disjointWith c4h:ElementRemoval , c4h:ElementModification ;
+    rdfs:label "Element addition"@en ;
+    skos:definition "An element that the later version has and the earlier one has not."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:ElementRemoval a owl:Class ;
+    rdfs:subClassOf c4h:ElementChange ;
+    owl:disjointWith c4h:ElementModification ;
+    rdfs:label "Element removal"@en ;
+    skos:definition "An element that the earlier version has and the later one has not."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:ElementModification a owl:Class ;
+    rdfs:subClassOf c4h:ElementChange ;
+    rdfs:label "Element modification"@en ;
+    skos:definition "An element that both versions have, with at least one field that differs."@en ;
+    rdfs:comment "Moving an element or an edge within model.js is not a modification: declaration order is not compared."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:Blame a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Blame"@en ;
+    skos:definition "For one version, where each of its triples comes from: a named graph, whose name is this blame's IRI, holding one c4h:TripleOrigin per triple."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:TripleOrigin a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Triple origin"@en ;
+    skos:definition "A reifier (RDF 1.2) of one triple of a version, saying in which version, by which activity and by whom that triple was introduced."@en ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+#################################################################
+#  Object properties
+#################################################################
+
+c4h:modelOrigin a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "model origin"@en ;
+    skos:definition "Where the model of the version comes from."@en ;
+    rdfs:domain c4h:Version ;
+    rdfs:range c4h:ModelOrigin ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:modelCommit a owl:ObjectProperty ;
+    rdfs:label "model commit"@en ;
+    skos:definition "The commit that last changed the model file at or before the version's commit. The same as the version's own commit when that commit changed the model."@en ;
+    rdfs:comment "A version taken at a release tag or a branch tip often has an older model commit: the code may have moved on since (see the skill's stale-model check)."@en ;
+    rdfs:domain c4h:Version ;
+    rdfs:range c4h:Commit ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:coversCommit a owl:ObjectProperty ;
+    rdfs:label "covers commit"@en ;
+    skos:definition "A commit of the range that a squashed version stands for and that changed the model."@en ;
+    rdfs:domain c4h:SquashedVersion ;
+    rdfs:range c4h:Commit ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:pullRequest a owl:ObjectProperty ;
+    rdfs:label "pull request"@en ;
+    skos:definition "The pull request whose merge, or whose head, the version is."@en ;
+    rdfs:domain c4h:Version ;
+    rdfs:range c4h:PullRequest ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:author a owl:ObjectProperty ;
+    rdfs:subPropertyOf prov:wasAssociatedWith ;
+    rdfs:label "author"@en ;
+    skos:definition "The agent who wrote the changes of a commit (git author)."@en ;
+    rdfs:domain c4h:Commit ;
+    rdfs:range prov:Agent ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:committer a owl:ObjectProperty ;
+    rdfs:subPropertyOf prov:wasAssociatedWith ;
+    rdfs:label "committer"@en ;
+    skos:definition "The agent who recorded a commit (git committer), often the author, or whoever merged or rebased it."@en ;
+    rdfs:domain c4h:Commit ;
+    rdfs:range prov:Agent ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:mergeCommit a owl:ObjectProperty ;
+    rdfs:label "merge commit"@en ;
+    skos:definition "The commit that merged a pull request."@en ;
+    rdfs:domain c4h:PullRequest ;
+    rdfs:range c4h:Commit ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:taggedCommit a owl:ObjectProperty ;
+    rdfs:label "tagged commit"@en ;
+    skos:definition "The commit a release tag points at."@en ;
+    rdfs:domain c4h:Release ;
+    rdfs:range c4h:Commit ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:hasChangeSet a owl:ObjectProperty ;
+    rdfs:label "has changeset"@en ;
+    skos:definition "A changeset between two consecutive versions of the history."@en ;
+    rdfs:domain c4h:History ;
+    rdfs:range c4h:ChangeSet ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:sourceRepository a owl:ObjectProperty ;
+    rdfs:label "source repository"@en ;
+    skos:definition "Web page of the git repository the history was read from, when it is hosted."@en ;
+    rdfs:domain c4h:History ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:fromVersion a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "from version"@en ;
+    skos:definition "The earlier version of a changeset: removals are triples it has."@en ;
+    rdfs:domain c4h:ChangeSet ;
+    rdfs:range c4h:Version ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:toVersion a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "to version"@en ;
+    skos:definition "The later version of a changeset: additions are triples it has."@en ;
+    rdfs:domain c4h:ChangeSet ;
+    rdfs:range c4h:Version ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:inChangeSet a owl:ObjectProperty ;
+    rdfs:label "in changeset"@en ;
+    skos:definition "The changeset a triple change or an element change belongs to."@en ;
+    rdfs:range c4h:ChangeSet ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:changedIn a owl:ObjectProperty ;
+    rdfs:label "changed in"@en ;
+    skos:definition "The version of the history that holds the change: the changeset's later version."@en ;
+    rdfs:comment "Which commit made the change is prov:wasGeneratedBy: for a changeset that spans several commits (a merge, a release, a squash, two branches) it names the commit inside the span."@en ;
+    rdfs:range c4h:Version ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:element a owl:ObjectProperty ;
+    rdfs:label "element"@en ;
+    skos:definition "The resource an element change is about, by its IRI in the version graphs: an element, a relationship, a scenario, a variant, or the model for a model setting."@en ;
+    rdfs:domain c4h:ElementChange ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:changedProperty a owl:ObjectProperty ;
+    rdfs:label "changed property"@en ;
+    skos:definition "A property of which the element has a triple added or removed in the changeset."@en ;
+    rdfs:domain c4h:ElementChange ;
+    rdfs:range rdf:Property ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:blameOf a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "blame of"@en ;
+    skos:definition "The version whose triples a blame explains."@en ;
+    rdfs:domain c4h:Blame ;
+    rdfs:range c4h:Version ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:inBlame a owl:ObjectProperty ;
+    rdfs:label "in blame"@en ;
+    skos:definition "The blame a triple origin belongs to."@en ;
+    rdfs:domain c4h:TripleOrigin ;
+    rdfs:range c4h:Blame ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:introducedIn a owl:ObjectProperty ;
+    rdfs:label "introduced in"@en ;
+    skos:definition "The version in which the triple first appeared, without being removed since."@en ;
+    rdfs:domain c4h:TripleOrigin ;
+    rdfs:range c4h:Version ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+#################################################################
+#  Datatype properties
+#################################################################
+
+c4h:sequenceNumber a owl:DatatypeProperty ;
+    rdfs:label "sequence number"@en ;
+    skos:definition "Position of the version in its history, from 1 (oldest)."@en ;
+    rdfs:domain c4h:Version ; rdfs:range xsd:integer ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:commitSha a owl:DatatypeProperty ;
+    rdfs:label "commit SHA"@en ;
+    skos:definition "Full SHA of the commit whose tree the version was read from. Absent for a working-tree version."@en ;
+    rdfs:domain c4h:Version ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:sha a owl:DatatypeProperty ;
+    rdfs:label "SHA"@en ;
+    skos:definition "Full SHA of a commit."@en ;
+    rdfs:domain c4h:Commit ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:parentSha a owl:DatatypeProperty ;
+    rdfs:label "parent SHA"@en ;
+    skos:definition "Full SHA of a parent of a commit, one triple per parent."@en ;
+    rdfs:domain c4h:Commit ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:message a owl:DatatypeProperty ;
+    rdfs:label "message"@en ;
+    skos:definition "The full commit message; its first line is also the commit's rdfs:label."@en ;
+    rdfs:domain c4h:Commit ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:authoredAtTime a owl:DatatypeProperty ;
+    rdfs:label "authored at time"@en ;
+    skos:definition "When the changes of a commit were written (git author date). prov:endedAtTime is when it was recorded (committer date)."@en ;
+    rdfs:domain c4h:Commit ; rdfs:range xsd:dateTime ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:ref a owl:DatatypeProperty ;
+    rdfs:label "ref"@en ;
+    skos:definition "Name of a branch or remote branch that pointed at the version's commit when the history was built."@en ;
+    rdfs:domain c4h:Version ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:tag a owl:DatatypeProperty ;
+    rdfs:label "tag"@en ;
+    skos:definition "Name of a git tag on the version's commit, or the tag of a release."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:modelPath a owl:DatatypeProperty ;
+    rdfs:label "model path"@en ;
+    skos:definition "Repository-relative path of the file the model was read from (model.js, the MODEL block of an index.html, or a regenerated model)."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:tripleCount a owl:DatatypeProperty ;
+    rdfs:label "triple count"@en ;
+    skos:definition "Number of triples in the version's named graph."@en ;
+    rdfs:domain c4h:Version ; rdfs:range xsd:integer ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:rangeBase a owl:DatatypeProperty ;
+    rdfs:label "range base"@en ;
+    skos:definition "SHA of the commit a squashed version's range starts after (base of base..head)."@en ;
+    rdfs:domain c4h:SquashedVersion ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:rangeHead a owl:DatatypeProperty ;
+    rdfs:label "range head"@en ;
+    skos:definition "SHA of the last commit of a squashed version's range (head of base..head)."@en ;
+    rdfs:domain c4h:SquashedVersion ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:baseSha a owl:DatatypeProperty ;
+    rdfs:label "base SHA"@en ;
+    skos:definition "SHA of the commit an activity started from: the base of a squash, or the commit whose model a regeneration updated."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:headSha a owl:DatatypeProperty ;
+    rdfs:label "head SHA"@en ;
+    skos:definition "SHA of the last commit of a squash, or of the head of a pull request."@en ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:changedFile a owl:DatatypeProperty ;
+    rdfs:label "changed file"@en ;
+    skos:definition "A repository path whose change a regeneration took into account."@en ;
+    rdfs:domain c4h:Regeneration ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:prNumber a owl:DatatypeProperty ;
+    rdfs:label "pull request number"@en ;
+    skos:definition "Number of a pull request in its repository."@en ;
+    rdfs:domain c4h:PullRequest ; rdfs:range xsd:integer ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:prUrl a owl:DatatypeProperty ;
+    rdfs:label "pull request URL"@en ;
+    skos:definition "Web address of a pull request."@en ;
+    rdfs:domain c4h:PullRequest ; rdfs:range xsd:anyURI ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:prState a owl:DatatypeProperty ;
+    rdfs:label "pull request state"@en ;
+    skos:definition "State of a pull request when the history was built: OPEN, CLOSED or MERGED."@en ;
+    rdfs:domain c4h:PullRequest ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:headRef a owl:DatatypeProperty ;
+    rdfs:label "head ref"@en ;
+    skos:definition "Branch a pull request merges from."@en ;
+    rdfs:domain c4h:PullRequest ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:baseRef a owl:DatatypeProperty ;
+    rdfs:label "base ref"@en ;
+    skos:definition "Branch a pull request merges into."@en ;
+    rdfs:domain c4h:PullRequest ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:additionCount a owl:DatatypeProperty ;
+    rdfs:label "addition count"@en ;
+    skos:definition "Number of triples a changeset adds."@en ;
+    rdfs:domain c4h:ChangeSet ; rdfs:range xsd:integer ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:removalCount a owl:DatatypeProperty ;
+    rdfs:label "removal count"@en ;
+    skos:definition "Number of triples a changeset removes."@en ;
+    rdfs:domain c4h:ChangeSet ; rdfs:range xsd:integer ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:elementChangeCount a owl:DatatypeProperty ;
+    rdfs:label "element change count"@en ;
+    skos:definition "Number of element changes in a changeset."@en ;
+    rdfs:domain c4h:ChangeSet ; rdfs:range xsd:integer ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:mergeBase a owl:DatatypeProperty ;
+    rdfs:label "merge base"@en ;
+    skos:definition "SHA of the commit where the two versions of a changeset diverged, when neither is an ancestor of the other."@en ;
+    rdfs:domain c4h:ChangeSet ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:fromRef a owl:DatatypeProperty ;
+    rdfs:label "from ref"@en ;
+    skos:definition "The ref name the earlier version of a comparison was asked for by."@en ;
+    rdfs:domain c4h:ChangeSet ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:toRef a owl:DatatypeProperty ;
+    rdfs:label "to ref"@en ;
+    skos:definition "The ref name the later version of a comparison was asked for by."@en ;
+    rdfs:domain c4h:ChangeSet ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:fromSide a owl:DatatypeProperty ;
+    rdfs:label "from side"@en ;
+    skos:definition "True on a triple change of a comparison between two branches when the activity it names was on the earlier version's side: the change is the reverse of what that activity did."@en ;
+    rdfs:range xsd:boolean ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:elementKind a owl:DatatypeProperty ;
+    rdfs:label "element kind"@en ;
+    skos:definition "What an element change is about: box, state, arrow, transition, scenario, variant or setting."@en ;
+    rdfs:domain c4h:ElementChange ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:elementKey a owl:DatatypeProperty ;
+    rdfs:label "element key"@en ;
+    skos:definition "The element's key in the model: a node or scenario id, \"from→to\" (plus \" #k\" for the k-th edge between the same two nodes) for an edge, or a field path such as project.intro for a setting."@en ;
+    rdfs:domain c4h:ElementChange ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:changedField a owl:DatatypeProperty ;
+    rdfs:label "changed field"@en ;
+    skos:definition "Name of a model field that differs between the two versions, such as desc, name, parent or steps."@en ;
+    rdfs:domain c4h:ElementChange ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:possibleRenameOf a owl:DatatypeProperty ;
+    rdfs:label "possible rename of"@en ;
+    skos:definition "On an element addition: the id of a removed element of the same type, name and parent, which this one most likely replaces under a new id."@en ;
+    rdfs:domain c4h:ElementAddition ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:resolution a owl:DatatypeProperty ;
+    rdfs:label "resolution"@en ;
+    skos:definition "Which commits became versions: all (every commit that changed the model), merges (the first-parent line of a branch), tags, prs, refs (named explicitly) or squash."@en ;
+    rdfs:domain c4h:History ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:range a owl:DatatypeProperty ;
+    rdfs:label "range"@en ;
+    skos:definition "The git range A..B a history was limited to."@en ;
+    rdfs:domain c4h:History ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:includesEmails a owl:DatatypeProperty ;
+    rdfs:label "includes e-mail addresses"@en ;
+    skos:definition "Whether the agents of the dataset carry e-mail addresses (foaf:mbox). False by default: names only."@en ;
+    rdfs:comment "Commit e-mail addresses are personal data that git exposes to anyone with the repository, but a published graph copies them to new places and makes them easy to harvest. Producers export them only when asked."@en ;
+    rdfs:domain c4h:History ; rdfs:range xsd:boolean ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:demo a owl:DatatypeProperty ;
+    rdfs:label "demonstration data"@en ;
+    skos:definition "True when the history is demonstration data: real commits of a made-up repository, with fictional authors."@en ;
+    rdfs:domain c4h:History ; rdfs:range xsd:boolean ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+c4h:fictional a owl:DatatypeProperty ;
+    rdfs:label "fictional"@en ;
+    skos:definition "True on an agent that does not exist: a made-up author of demonstration data."@en ;
+    rdfs:domain prov:Agent ; rdfs:range xsd:boolean ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .

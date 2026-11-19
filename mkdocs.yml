@@ -97,10 +97,12 @@ nav:
       - Architecture explorer: explorer.md
       - Project deck: deck.md
       - RDF export: rdf.md
+      - History and diffs: history.md
   - Ontology:
       - ontology/index.md
       - Core terms (c4:): ontology/c4.md
       - View terms (c4v:): ontology/c4-view.md
+      - History terms (c4h:): ontology/c4-history.md
       - Extending the ontology: ontology/EXTENDING.md
   - Example:
       - example/index.md
@@ -113,6 +115,9 @@ nav:
           - Data model: reference/explorer-data-model.md
           - Features and layout: reference/explorer-features.md
           - RDF graph: reference/explorer-rdf-graph.md
+      - History:
+          - Workflows: reference/history-workflows.md
+          - History graph: reference/history-graph.md
       - Deck:
           - Structure: reference/deck-structure.md
           - Animated or static: reference/deck-animations.md

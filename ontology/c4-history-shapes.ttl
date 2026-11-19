@@ -1,0 +1,202 @@
+# SHACL shapes for architecture history datasets in the terms of the C4 history ontology (c4-history.ttl).
+#
+# A history dataset keeps its versions in named graphs; these shapes check everything else: the default graph
+# (history, versions, activities, agents) merged with the changeset and blame graphs. The architecture-history
+# skill does that merge itself:
+#   node skills/architecture-history/scripts/arch-history.mjs validate communications/architecture-history/history.nq
+# With another engine, load the default graph and the changeset/blame graphs into one data graph first.
+# The version graphs themselves are architectures: check them with c4-shapes.ttl, one graph at a time.
+#
+# Only SHACL Core, and no logical constraints (sh:or, sh:and, sh:not, sh:xone): some engines, rete-graph 0.7.4
+# among them, skip those silently. "Exactly one of these classes" is written with sh:qualifiedValueShape.
+# What SHACL cannot see across graphs (an addition's triple is in the later version's graph and not in the
+# earlier one's) is checked by a SPARQL query in the skill's references/history-graph.md.
+#
+# Sections: history and versions · activities and agents · changesets · blame.
+
+@prefix c4hs:    <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history-shapes.ttl#> .
+@prefix c4h:     <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix foaf:    <http://xmlns.com/foaf/0.1/> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history-shapes.ttl>
+    a owl:Ontology ;
+    dcterms:title "SHACL shapes for the C4 history ontology"@en ;
+    dcterms:description "Constraints that every architecture history dataset meets outside its version graphs: the history, its versions and their provenance, git activities, agents, changesets with their RDF 1.2 reifiers, element changes, and blame."@en ;
+    dcterms:creator "caviri" ;
+    dcterms:license <https://www.apache.org/licenses/LICENSE-2.0> ;
+    owl:versionInfo "0.1.0" ;
+    rdfs:seeAlso <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> .
+
+#################################################################
+#  History and versions
+#################################################################
+
+c4hs:HistoryShape a sh:NodeShape ;
+    sh:targetClass c4h:History ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dcterms:conformsTo ; sh:hasValue <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-history> ] ;
+    sh:property [ sh:path c4h:modelPath ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4h:resolution ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "all" "merges" "tags" "prs" "refs" "squash" ) ] ;
+    sh:property [ sh:path c4h:range ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4h:sourceRepository ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path c4h:includesEmails ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+                  sh:message "A history says whether its agents carry e-mail addresses (c4h:includesEmails)." ] ;
+    sh:property [ sh:path c4h:demo ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path prov:generatedAtTime ; sh:maxCount 1 ; sh:datatype xsd:dateTime ] ;
+    sh:property [ sh:path prov:hadMember ; sh:minCount 1 ; sh:class c4h:Version ; sh:message "A history has at least one member, and its members are versions." ] ;
+    sh:property [ sh:path c4h:hasChangeSet ; sh:class c4h:ChangeSet ] .
+
+c4hs:VersionShape a sh:NodeShape ;
+    sh:targetClass c4h:Version ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4h:modelPath ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "A version says which file its model was read from (c4h:modelPath)." ] ;
+    sh:property [ sh:path c4h:modelOrigin ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( c4h:Committed c4h:Regenerated c4h:WorkingTree ) ] ;
+    sh:property [ sh:path c4h:commitSha ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:pattern "^[0-9a-f]{40}([0-9a-f]{24})?$" ] ;
+    sh:property [ sh:path c4h:modelCommit ; sh:maxCount 1 ; sh:class c4h:Commit ] ;
+    sh:property [ sh:path prov:generatedAtTime ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ;
+                  sh:message "A version has exactly one prov:generatedAtTime (xsd:dateTime)." ] ;
+    sh:property [ sh:path prov:wasGeneratedBy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class prov:Activity ;
+                  sh:message "A version was generated by exactly one activity: a commit, merge, release, pull request, squash, regeneration or working-tree edit." ] ;
+    sh:property [ sh:path prov:wasAttributedTo ; sh:minCount 1 ; sh:class prov:Agent ; sh:message "A version is attributed to at least one agent." ] ;
+    sh:property [ sh:path prov:wasRevisionOf ; sh:class c4h:Version ] ;
+    sh:property [ sh:path prov:wasDerivedFrom ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path c4h:ref ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4h:tag ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4h:pullRequest ; sh:maxCount 1 ; sh:class c4h:PullRequest ] ;
+    sh:property [ sh:path c4h:tripleCount ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 0 ] ;
+    sh:property [ sh:path c4h:sequenceNumber ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ] .
+
+c4hs:SquashedVersionShape a sh:NodeShape ;
+    sh:targetClass c4h:SquashedVersion ;
+    sh:property [ sh:path c4h:rangeBase ; sh:minCount 1 ; sh:maxCount 1 ; sh:pattern "^[0-9a-f]{40}([0-9a-f]{24})?$" ] ;
+    sh:property [ sh:path c4h:rangeHead ; sh:minCount 1 ; sh:maxCount 1 ; sh:pattern "^[0-9a-f]{40}([0-9a-f]{24})?$" ] ;
+    sh:property [ sh:path c4h:coversCommit ; sh:minCount 1 ; sh:class c4h:Commit ;
+                  sh:message "A squashed version lists the commits it covers (c4h:coversCommit)." ] ;
+    sh:property [ sh:path prov:wasRevisionOf ; sh:minCount 1 ; sh:message "A squashed version is a revision of the version at the base of its range." ] .
+
+#################################################################
+#  Activities and agents
+#################################################################
+
+c4hs:ActivityShape a sh:NodeShape ;
+    sh:targetClass prov:Activity ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path prov:wasAssociatedWith ; sh:minCount 1 ; sh:class prov:Agent ; sh:message "Every activity is associated with at least one agent." ] ;
+    sh:property [ sh:path prov:endedAtTime ; sh:maxCount 1 ; sh:datatype xsd:dateTime ] ;
+    sh:property [ sh:path rdfs:seeAlso ; sh:nodeKind sh:IRI ] .
+
+c4hs:CommitShape a sh:NodeShape ;
+    sh:targetClass c4h:Commit ;
+    sh:property [ sh:path c4h:sha ; sh:minCount 1 ; sh:maxCount 1 ; sh:pattern "^[0-9a-f]{40}([0-9a-f]{24})?$" ] ;
+    sh:property [ sh:path c4h:parentSha ; sh:pattern "^[0-9a-f]{40}([0-9a-f]{24})?$" ] ;
+    sh:property [ sh:path c4h:message ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4h:author ; sh:minCount 1 ; sh:maxCount 1 ; sh:class prov:Agent ] ;
+    sh:property [ sh:path c4h:committer ; sh:minCount 1 ; sh:maxCount 1 ; sh:class prov:Agent ] ;
+    sh:property [ sh:path prov:endedAtTime ; sh:minCount 1 ; sh:datatype xsd:dateTime ; sh:message "A commit has its commit time (prov:endedAtTime)." ] ;
+    sh:property [ sh:path c4h:authoredAtTime ; sh:maxCount 1 ; sh:datatype xsd:dateTime ] .
+
+c4hs:MergeShape a sh:NodeShape ;
+    sh:targetClass c4h:Merge ;
+    sh:property [ sh:path c4h:parentSha ; sh:minCount 2 ; sh:message "A merge has at least two parents." ] .
+
+c4hs:PullRequestShape a sh:NodeShape ;
+    sh:targetClass c4h:PullRequest ;
+    sh:property [ sh:path c4h:prNumber ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ] ;
+    sh:property [ sh:path c4h:prUrl ; sh:maxCount 1 ; sh:datatype xsd:anyURI ] ;
+    sh:property [ sh:path c4h:prState ; sh:maxCount 1 ; sh:in ( "OPEN" "CLOSED" "MERGED" ) ] ;
+    sh:property [ sh:path c4h:headRef ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4h:baseRef ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4h:mergeCommit ; sh:maxCount 1 ; sh:class c4h:Commit ] .
+
+c4hs:ReleaseShape a sh:NodeShape ;
+    sh:targetClass c4h:Release ;
+    sh:property [ sh:path c4h:tag ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4h:taggedCommit ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4h:Commit ] .
+
+c4hs:SquashShape a sh:NodeShape ;
+    sh:targetClass c4h:Squash ;
+    sh:property [ sh:path c4h:baseSha ; sh:minCount 1 ; sh:maxCount 1 ; sh:pattern "^[0-9a-f]{40}([0-9a-f]{24})?$" ] ;
+    sh:property [ sh:path c4h:headSha ; sh:minCount 1 ; sh:maxCount 1 ; sh:pattern "^[0-9a-f]{40}([0-9a-f]{24})?$" ] ;
+    sh:property [ sh:path prov:wasInformedBy ; sh:minCount 1 ; sh:class c4h:Commit ] .
+
+c4hs:RegenerationShape a sh:NodeShape ;
+    sh:targetClass c4h:Regeneration ;
+    sh:property [ sh:path c4h:baseSha ; sh:maxCount 1 ; sh:pattern "^[0-9a-f]{40}([0-9a-f]{24})?$" ] ;
+    sh:property [ sh:path c4h:changedFile ; sh:datatype xsd:string ] .
+
+c4hs:AgentShape a sh:NodeShape ;
+    sh:targetClass prov:Agent ;
+    sh:property [ sh:path foaf:name ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:message "An agent has exactly one name (foaf:name)." ] ;
+    sh:property [ sh:path foaf:mbox ; sh:nodeKind sh:IRI ; sh:pattern "^mailto:" ] ;
+    sh:property [ sh:path c4h:fictional ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+#################################################################
+#  Changesets
+#################################################################
+
+c4hs:ChangeSetShape a sh:NodeShape ;
+    sh:targetClass c4h:ChangeSet ;
+    sh:property [ sh:path c4h:fromVersion ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4h:Version ; sh:message "A changeset has exactly one earlier version (c4h:fromVersion)." ] ;
+    sh:property [ sh:path c4h:toVersion ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4h:Version ; sh:message "A changeset has exactly one later version (c4h:toVersion)." ] ;
+    sh:property [ sh:path c4h:additionCount ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 0 ] ;
+    sh:property [ sh:path c4h:removalCount ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 0 ] ;
+    sh:property [ sh:path c4h:elementChangeCount ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 0 ] ;
+    sh:property [ sh:path c4h:mergeBase ; sh:maxCount 1 ; sh:pattern "^[0-9a-f]{40}([0-9a-f]{24})?$" ] ;
+    sh:property [ sh:path c4h:fromRef ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4h:toRef ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+# a reifier of one added or removed triple: exactly one of c4h:Addition, c4h:Removal, and its provenance
+c4hs:TripleChangeShape a sh:NodeShape ;
+    sh:targetClass c4h:Addition , c4h:Removal , c4h:TripleChange ;
+    sh:property [ sh:path rdf:reifies ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "A triple change reifies exactly one triple (rdf:reifies <<( s p o )>>)." ] ;
+    sh:property [ sh:path rdf:type ; sh:qualifiedValueShape [ sh:in ( c4h:Addition c4h:Removal ) ] ; sh:qualifiedMinCount 1 ; sh:qualifiedMaxCount 1 ;
+                  sh:message "A triple change is either a c4h:Addition or a c4h:Removal, not both." ] ;
+    sh:property [ sh:path c4h:inChangeSet ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4h:ChangeSet ] ;
+    sh:property [ sh:path c4h:changedIn ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4h:Version ; sh:message "A triple change names the version it was changed in (c4h:changedIn)." ] ;
+    sh:property [ sh:path prov:wasGeneratedBy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class prov:Activity ; sh:message "A triple change names the activity that caused it (prov:wasGeneratedBy)." ] ;
+    sh:property [ sh:path prov:wasAttributedTo ; sh:minCount 1 ; sh:class prov:Agent ; sh:message "A triple change is attributed to at least one agent (prov:wasAttributedTo)." ] ;
+    sh:property [ sh:path prov:generatedAtTime ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ] ;
+    sh:property [ sh:path c4h:fromSide ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+c4hs:ElementChangeShape a sh:NodeShape ;
+    sh:targetClass c4h:ElementAddition , c4h:ElementRemoval , c4h:ElementModification , c4h:ElementChange ;
+    sh:property [ sh:path rdf:type ; sh:qualifiedValueShape [ sh:in ( c4h:ElementAddition c4h:ElementRemoval c4h:ElementModification ) ] ;
+                  sh:qualifiedMinCount 1 ; sh:qualifiedMaxCount 1 ; sh:message "An element change is exactly one of addition, removal, modification." ] ;
+    sh:property [ sh:path c4h:inChangeSet ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4h:ChangeSet ] ;
+    sh:property [ sh:path c4h:element ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path c4h:elementKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "box" "state" "arrow" "transition" "scenario" "variant" "setting" ) ] ;
+    sh:property [ sh:path c4h:elementKey ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4h:changedField ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path c4h:changedProperty ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path c4h:changedIn ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4h:Version ] ;
+    sh:property [ sh:path prov:wasGeneratedBy ; sh:minCount 1 ; sh:class prov:Activity ] ;
+    sh:property [ sh:path prov:wasAttributedTo ; sh:minCount 1 ; sh:class prov:Agent ] .
+
+c4hs:ElementModificationShape a sh:NodeShape ;
+    sh:targetClass c4h:ElementModification ;
+    sh:property [ sh:path c4h:changedField ; sh:minCount 1 ; sh:message "A modification names at least one changed field." ] .
+
+#################################################################
+#  Blame
+#################################################################
+
+c4hs:BlameShape a sh:NodeShape ;
+    sh:targetClass c4h:Blame ;
+    sh:property [ sh:path c4h:blameOf ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4h:Version ] .
+
+c4hs:TripleOriginShape a sh:NodeShape ;
+    sh:targetClass c4h:TripleOrigin ;
+    sh:property [ sh:path rdf:reifies ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path c4h:inBlame ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4h:Blame ] ;
+    sh:property [ sh:path c4h:introducedIn ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4h:Version ] ;
+    sh:property [ sh:path prov:wasGeneratedBy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class prov:Activity ] ;
+    sh:property [ sh:path prov:wasAttributedTo ; sh:minCount 1 ; sh:class prov:Agent ] ;
+    sh:property [ sh:path prov:generatedAtTime ; sh:maxCount 1 ; sh:datatype xsd:dateTime ] .

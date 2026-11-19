@@ -94,6 +94,13 @@ Every change is checked by the page's validator before it is made. The edits sta
 download them: `model.js` to rebuild from, the whole `page` with the new model inside, or the graph as JSON-LD,
 Turtle (`.ttl`) or `.rete`. Try it on the [live example](example/explorer.md).
 
+### Versions and compare mode
+
+Built with the history of its model (`--history`, from the `architecture-history` skill), the page gets a timeline
+bar: step through the versions or play them, and compare two, with added boxes and arrows in green, removed ones as
+red ghosts and changed ones in amber, each change listed with who made it and when. See
+[History and diffs](history.md).
+
 ### Keyboard
 
 | Key | Action |
