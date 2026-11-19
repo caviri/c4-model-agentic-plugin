@@ -62,6 +62,7 @@ command yourself, and report the exact output of anything that fails.
    |---|---|---|
    | `python3 --version` (on Windows `python --version` or `py --version`) | building the slide deck | yes, Python 3 |
    | `node --version` | building and validating the architecture explorer | optional, Node.js 18+ |
+   | `git --version` | the architecture history (with Node.js) | optional |
    | Chrome or Edge installed | letting Claude screenshot and check its own output | optional |
 
 6. **Tell the user how to start.** The plugin loads in a new Claude Code session, so they
@@ -74,7 +75,9 @@ command yourself, and report the exact output of anything that fails.
    Variants: `/c4-model-agentic-plugin:explain-project deck` for only the slides,
    `/c4-model-agentic-plugin:explain-project explorer` for only the architecture map, and free
    text after either to set the audience or focus. Plain requests such as "build an
-   architecture explorer for this repo" also work.
+   architecture explorer for this repo" also work. Once the explorer's `model.js` is
+   committed, `/c4-model-agentic-plugin:architecture-history` shows how the architecture
+   changed over time.
 
 Rules while installing: do not run scripts from the plugin's repository, do not modify the
 user's project, and do not change other plugins or settings.
@@ -131,7 +134,11 @@ claude plugin marketplace remove c4-model-agentic-plugin
 - Python 3 to build the slide deck (standard library only).
 - Node.js 18+ to build and validate the architecture explorer. Optional: without it, Claude
   pastes the model into the template by hand.
+- git and Node.js 18+ for the architecture history.
 - Chrome or Edge, optional, so Claude can screenshot its own output and fix layout problems.
+
+Not using Claude Code? The plugin's [MCP server](mcp/README.md) brings the architecture
+explorer to ChatGPT, Claude (web and desktop) and other MCP clients.
 
 More: the [README](README.md) and the
 [documentation site](https://caviri.github.io/c4-model-agentic-plugin/).

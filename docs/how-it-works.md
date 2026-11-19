@@ -1,10 +1,10 @@
 ---
-description: The command, the three skills, and the project brief that connects them.
+description: The two commands, the four skills, and the project brief that connects them.
 ---
 
 # How it works
 
-The plugin is one command and three skills. The command decides what to produce; the skills do the work, and each
+The plugin is two commands and four skills. A command decides what to produce; the skills do the work, and each
 one is a set of instructions, templates and scripts that Claude follows.
 
 ```mermaid
@@ -14,7 +14,10 @@ flowchart LR
   brief --> deck["project-deck"]
   brief --> explorer["architecture-explorer"]
   deck --> d["project-deck/index.html"]
-  explorer --> e["architecture-explorer/index.html<br/>+ model.js + architecture.jsonld"]
+  explorer --> e["architecture-explorer/index.html<br/>+ model.js + architecture.ttl / .jsonld"]
+  hcmd["/architecture-history"] --> hist["architecture-history"]
+  e -. "model.js in git" .-> hist
+  hist --> h["history.trig, reports<br/>+ explorer with versions"]
 ```
 
 ## 1. Explore: `explore-project`
@@ -47,17 +50,32 @@ fact), then copies the slide patterns it needs from the template, draws figures 
 and builds one HTML file. See [Project deck](deck.md).
 
 **The explorer.** Claude writes the architecture as one data block, `window.MODEL`: nodes, relationships,
-scenarios and state machines. The build script puts it into the explorer template and validates it. See
-[Architecture explorer](explorer.md).
+scenarios with their use cases, state machines and, where they help, pictures. The build script puts it into the
+explorer template, validates it, and writes the same model as an RDF graph in the terms of the plugin's
+[ontology](ontology/index.md). See [Architecture explorer](explorer.md) and [RDF export](rdf.md).
 
 ## 3. Check
 
 Neither output is reported as done until Claude has looked at it:
 
-- the explorer build checks the model, every source path and line number, and the layout (arrows that bend around
-  boxes, cross, or pass behind them);
+- the explorer build checks the model, every source path and line number, every image file, and the layout (arrows
+  that bend around boxes, cross, or pass behind them);
 - the deck build reports text that does not fit, arrows through boxes and labels that overrun;
 - both are opened in headless Chrome or Edge and screenshotted at the states that matter, and Claude reads the
   screenshots.
 
 Anything it could not verify is listed in its final report.
+
+## 4. Later: `architecture-history`
+
+Committed with the code, `model.js` has a history. `/c4-model-agentic-plugin:architecture-history` reads it with git,
+without changing your checkout, and writes the versions as an RDF 1.2 dataset with PROV-O provenance, Markdown diffs
+between commits, branches or pull requests, and blame; then it rebuilds the explorer with a history bar and a compare
+mode. A model that is missing or out of date at a commit you need is regenerated in a worktree outside your checkout.
+See [History and diffs](history.md).
+
+## Outside Claude Code
+
+The [MCP server](mcp.md) in `mcp/` gives ChatGPT, Claude and other MCP clients the same method for a public GitHub
+repository: the explorer's own validator, the ontology's shapes and the real file paths check the model, and the
+explorer is drawn inside the chat.

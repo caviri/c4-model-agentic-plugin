@@ -68,7 +68,7 @@ validator in the template.
 | `validate_model` | `model`, `repo?`, `ref?`, `root?`, `shacl?`, `layout?` | `VALID`/`INVALID`, errors and warnings; `structuredContent`: counts, SHACL results, layout, paths. |
 | `export_rdf` | `model`, `format`: `ttl` · `jsonld` · `nt` · `rete` | Text for the text formats; `rete` as an embedded resource (`blob`, base64). |
 | `model_from_rdf` | `text`, `format`: `nt` · `ttl` · `jsonld` · `rete` (base64) | The MODEL as JSON text and in `structuredContent.model`. |
-| `show_explorer` | `model`, `view?` (`level`, `open`, `select`, `tab`, `scenario`, `style`, `theme`), `history?` | A text summary; `structuredContent` with the model (≤100 K characters); `_meta.ui.resourceUri` on the tool. |
+| `show_explorer` | `model`, `view?` (`level`, `open`, `select`, `tab`, `scenario`, `style`, `theme`, `flows`), `history?` | A text summary; `structuredContent` with the model (≤100 K characters); `_meta.ui.resourceUri` on the tool. |
 | `build_explorer_page` | `model`, `history?` | The standalone page as an embedded `text/html` resource. |
 | `list_elements` | `model`, `level?`, `type?`, `parent?`, `limit?` | JSON: id, type, level, name, parent. |
 | `get_element` | `model`, `id` | JSON: details, parent, children, uses / used by (including what is inside it), source, scenarios. |
@@ -101,7 +101,7 @@ Packages: `@modelcontextprotocol/sdk` 1.32.2 (server, low-level `Server` for han
   links removed, a one-box "waiting" model in the MODEL block, `history-core.js` in the HISTORY block, the widget CSS,
   and after the engine the ext-apps `app-with-deps` bundle (rewritten from an ES module into a classic script that
   sets `window.McpExtApps`; the server checks that it parses) and `widget/bridge.js`. The result is checked for any
-  external `src`/`href`. About 760 KB.
+  external `src`/`href`. About 960 KB.
 - **Bridge** (`widget/bridge.js`): `new App({ name, version }, { availableDisplayModes: ['inline','fullscreen'],
   tools: { listChanged: true } }, { autoResize: false })`, handlers registered before `connect()`.
   `ontoolinput` draws the model from the arguments as soon as they arrive; `ontoolresult` draws
@@ -182,14 +182,15 @@ C4_MCP_OFFLINE=1 npm test    # skips the live GitHub test
 ```
 
 - `test/server.test.mjs`: the SDK client over stdio and over HTTP: every tool with the example model, the exports
-  parsed back to all 2,243 triples, `model_from_rdf` round trips in four formats to `normalizeModel`, a broken model,
+  parsed back to every one of its triples, `model_from_rdf` round trips in four formats to `normalizeModel`, a broken model,
   `build_explorer_page` through `check-model.mjs`, live GitHub reads and the path check, HTTP behaviour (405, CORS,
   `Host`, rate limit, bearer token).
 - `test/widget.test.mjs`: the view in headless Chrome inside a host built on ext-apps' `AppBridge` and
   `PostMessageTransport`, with the spec's sandbox proxy on another origin and the CSP from the resource's metadata:
   the example from a real `show_explorer` result, 64 boxes, no console errors, app tools, full screen, a sequence
   diagram, downloads through the host (Turtle and a server-built `.rete` that reopen with every triple), the host
-  theme, a broken model, standalone mode. Screenshots in `test/output/`.
+  theme, images (data URIs drawn, web and relative ones as cards, the image viewer) and flows painted on the map
+  with no external request, a broken model, standalone mode. Screenshots in `test/output/`.
 - `test/webmcp.test.mjs`: Chrome's own WebMCP (`--enable-blink-features=WebMCP`) on the example explorer (tools,
   results, edit confirmation, history), the same page without WebMCP compared with the page without the tools block
   (same DOM, identical screenshot), the example deck built with the WebMCP block, and the deck build unchanged apart

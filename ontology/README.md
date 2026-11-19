@@ -13,6 +13,8 @@ The C4 model is Simon Brown's work. This ontology is an independent formalisatio
 | [`c4.ttl`](c4.ttl) | **Core**: the architecture. OWL 2 | `https://caviri.github.io/c4-model-agentic-plugin/ontology/c4`, terms `c4:` = `…/ontology/c4#` |
 | [`c4-view.ttl`](c4-view.ttl) | **View**: how the explorer draws it. OWL 2, imports the core | `…/ontology/c4-view`, terms `c4v:` = `…/ontology/c4-view#` |
 | [`c4-shapes.ttl`](c4-shapes.ttl) | SHACL shapes every exported graph meets | `…/ontology/c4-shapes.ttl` |
+| [`c4-history.ttl`](c4-history.ttl) | **History**: versions of an architecture as named graphs, with PROV-O provenance and RDF 1.2 changesets. OWL 2 | `…/ontology/c4-history`, terms `c4h:` = `…/ontology/c4-history#` |
+| [`c4-history-shapes.ttl`](c4-history-shapes.ttl) | SHACL shapes every history dataset meets | `…/ontology/c4-history-shapes.ttl` |
 | [`alignments.ttl`](alignments.ttl) | optional SKOS mappings to schema.org, Dublin Core, PROV-O | `…/ontology/alignments.ttl` |
 | [`EXTENDING.md`](EXTENDING.md) | how to add terms of your own, with a worked example | |
 | [`examples/deployment.ttl`](examples/deployment.ttl), [`examples/deployment-shapes.ttl`](examples/deployment-shapes.ttl) | that example: deployment facts and data classification | `https://example.org/ontology/deployment` |
@@ -21,7 +23,7 @@ All of them are published with the documentation site under <https://caviri.gith
 
 ## Core and view
 
-The ontology has two modules, in the spirit of BPMN's separation of model and Diagram Interchange:
+An architecture is described in two modules, in the spirit of BPMN's separation of model and Diagram Interchange (a third, `c4h:`, describes how it changes over time):
 
 - **`c4:` (core)** says what the architecture *is*: elements, relationships, scenarios and their steps, states, use cases, sources in the repository. This is what you query, merge with other graphs, or reason over.
 - **`c4v:` (view)** says how the explorer *shows* it: the order of every list, grid positions inside a box, colours and dashed lines, which boxes the map opens with, the pinned board, the legend, level names, toolbar texts, link templates. Every `c4v:` property is an OWL annotation property, so a reasoner draws no conclusions from it.

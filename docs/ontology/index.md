@@ -17,4 +17,4 @@ skill builds such datasets from git.
 ---
 
 !!! info "Source"
-    This page is [`ontology/README.md`](https://github.com/caviri/c4-model-agentic-plugin/blob/main/ontology/README.md) in the repository. Every term is documented in the [core term reference](c4.md) and the [view term reference](c4-view.md), generated from the Turtle files.
+    This page is [`ontology/README.md`](https://github.com/caviri/c4-model-agentic-plugin/blob/main/ontology/README.md) in the repository. Every term is documented in the [core term reference](c4.md), the [view term reference](c4-view.md) and the [history term reference](c4-history.md), generated from the Turtle files.

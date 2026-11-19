@@ -1,7 +1,8 @@
 site_name: c4-model-agentic-plugin
 site_description: >-
   A Claude Code plugin that explores any codebase and generates a reveal.js explainer deck and an
-  interactive C4 architecture explorer with an RDF export.
+  interactive C4 architecture explorer, with an RDF export in a published C4 ontology, the architecture's
+  history from git, and an MCP server for ChatGPT and Claude.
 site_url: https://caviri.github.io/c4-model-agentic-plugin/
 repo_url: https://github.com/caviri/c4-model-agentic-plugin
 repo_name: caviri/c4-model-agentic-plugin

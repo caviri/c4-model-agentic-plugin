@@ -10,7 +10,7 @@ a public GitHub repository, writes the architecture model, validates it against 
 ontology's SHACL shapes, exports it as RDF, and **draws the explorer inline in the chat** as an
 [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) view.
 
-![The explorer drawn in a chat by show_explorer: the example at level 2, inline, with the details sheet folded](img/mcp-widget.png){ .shot }
+![The explorer drawn in a chat by show_explorer: the example at level 2, inline, with a compact toolbar (expand, flows, theme, edit, export) and the details sheet folded](img/mcp-widget.png){ .shot }
 
 *The view in a test host that speaks the MCP Apps protocol (ext-apps AppBridge, sandbox proxy, the spec's CSP).
 In ChatGPT and Claude it appears under the assistant's message; ⤢ expand opens it full screen or in Claude's side panel.*
@@ -90,7 +90,7 @@ you describe in the chat instead of a repository.
 | `export_rdf` | `ttl`, `jsonld`, `nt` as text; `rete` as an embedded binary resource. |
 | `model_from_rdf` | A graph (`nt`, `ttl`, `jsonld`, or `.rete` as base64) back to the MODEL. |
 | `show_explorer` | The interactive view; `view` picks the level, open boxes, selection, tab, scenario, style, theme and `flows` (scenario ids painted on the map); `history` adds the timeline. |
-| `build_explorer_page` | The standalone page as an embedded `text/html` resource (about 400 KB). |
+| `build_explorer_page` | The standalone page as an embedded `text/html` resource (about 600 KB, more with embedded images). |
 | `list_elements`, `get_element`, `query_sparql` | The explorer's own [agent tools](#webmcp-agents-in-the-browser) that read a model, with the model as an argument. |
 
 Resources: the method, `data-model.md`, `rdf-graph.md`, `features.md`, the explore-project skill files, `c4.ttl`,
@@ -166,7 +166,7 @@ Where a chat has no MCP Apps support, `show_explorer` still answers with a text 
 
 Claude passes a tool result inline up to about 150,000 characters; above that (with code execution on) it stores the
 result as a file, and a view would not receive it. `show_explorer` stays well under that for models of a few hundred
-boxes. `build_explorer_page` returns about 400 KB, so in Claude it usually lands as a file to download.
+boxes. `build_explorer_page` returns about 600 KB, so in Claude it usually lands as a file to download.
 
 ## Host it
 

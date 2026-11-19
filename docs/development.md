@@ -15,10 +15,12 @@ skills/
   architecture-explorer/  explorer template, build and check scripts, references
   architecture-history/   arch-history.mjs (versions, diffs, blame), history-core.js, the demonstration history
 ontology/                 the C4 ontology (c4.ttl, c4-view.ttl, c4-history.ttl), SHACL shapes, alignments, guides, example extension
+mcp/                      the remote MCP server and its MCP Apps view, Dockerfile, Hugging Face Space, tests
 examples/
   image-annotation-tool/  test fixture and its generated output
-docs/                     this site (MkDocs Material); docs/img holds the screenshots used here and in the README
+docs/                     this site (MkDocs Material); docs/landing is the home page, docs/img the screenshots used here and in the README
 mkdocs.yml                site configuration
+INSTALL.md                install steps for people and for agents
 ```
 
 ## Test a change against the example
@@ -67,10 +69,31 @@ node skills/architecture-explorer/scripts/check-roundtrip.mjs \
 and that the exported graph still passes the shapes:
 `pyshacl -s ontology/c4-shapes.ttl -df turtle examples/image-annotation-tool/communications/architecture-explorer/architecture.ttl`.
 
+The MCP server reads the template at startup, so a template change also deserves its tests (Node 20+, Chrome or Edge):
+`cd mcp && npm ci && npm test` (`C4_MCP_OFFLINE=1` skips the live GitHub test). They write screenshots of the view to
+`mcp/test/output/`; see [`mcp/README.md`](https://github.com/caviri/c4-model-agentic-plugin/blob/main/mcp/README.md).
+
+## Screenshots in these docs
+
+The images in `docs/img/` are taken with `screenshot.mjs` at 1500 × 900 in the light theme, from URL states, and
+saved as 256-colour PNGs to keep them small:
+
+- the explorer ones from the example's model, built without `--history` (so the panel shows the introduction), for
+  example `"level=2&theme=light"`, `"level=2&flows=annotate,review&theme=light"` or
+  `"view=dynamic&scenario=annotate&style=seq&at=2&step=1&theme=light"`. A menu, the image viewer or edit mode is
+  opened by a copy of the page, in a temporary folder, with a short script that clicks the button (or calls
+  `ARCH_EXPLORER.api.openImages`) once `data-explorer="ready"`;
+- the history ones from the demonstration repository (fictional authors), built with `--refs` set to the five versions
+  of the merge line and `--pr 3`, for example `"level=1&ver=<#3>&cmp=<v1.0>&theme=light"` and
+  `"level=2&ver=<#3>&hist=open&hx=<#3>&theme=light"`, where `<#3>` and `<v1.0>` stand for the short SHAs of the pull
+  request and the release (they change whenever the example's model does);
+- `mcp-widget.png` is `mcp/test/output/widget-01-inline-map-level2.png` from the MCP tests;
+- the deck ones from the example deck.
+
 ## Build these docs
 
 The site is [MkDocs](https://www.mkdocs.org/) with the [Material](https://squidfunk.github.io/mkdocs-material/)
-theme. Two things keep it from duplicating the repository:
+theme. Three things keep it from duplicating the repository:
 
 - **Reference pages include the skills' guides** with `pymdownx.snippets` (`--8<-- "skills/..."`), so they are
   edited in one place.

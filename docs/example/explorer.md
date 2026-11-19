@@ -17,5 +17,6 @@ theme_sync: true
 # Example: architecture explorer
 
 The architecture explorer the plugin generated for the Image Annotation Tool example: system context, containers,
-components and code as boxes that open in place, scenarios as collaboration and sequence diagrams, a task lifecycle
-as a state machine, and an RDF export.
+components and code as boxes that open in place, scenarios as collaboration and sequence diagrams and as flows on the
+map, a task lifecycle as a state machine, illustrative wireframes of three pages, the model's three committed
+versions, and an RDF export.

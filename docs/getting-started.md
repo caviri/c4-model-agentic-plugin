@@ -6,7 +6,17 @@ description: Install the plugin, run it on a project, and find the generated dec
 
 ## Install
 
-In Claude Code, add the marketplace and install the plugin:
+Let your agent do it: paste this into Claude Code.
+
+```text
+Install the Claude Code plugin c4-model-agentic-plugin for me.
+Read https://raw.githubusercontent.com/caviri/c4-model-agentic-plugin/main/INSTALL.md
+and follow its "Steps for the agent" section exactly. When you are done, tell me
+what you ran, what you checked, and how I start using the plugin.
+```
+
+[`INSTALL.md`](https://github.com/caviri/c4-model-agentic-plugin/blob/main/INSTALL.md) has the agent's steps, team
+installs, updating and removing. Or add the marketplace and install the plugin yourself, in Claude Code:
 
 ```
 /plugin marketplace add caviri/c4-model-agentic-plugin
@@ -26,7 +36,10 @@ claude --plugin-dir ./c4-model-agentic-plugin
 |---|---|---|
 | Python 3 | Building the deck (standard library only) | For the deck |
 | Node.js 18+ | Building and validating the explorer | No: without it, Claude pastes the model into the template by hand |
+| Node.js 18+ and git | The [architecture history](history.md) | For the history |
 | Chrome or Edge | Screenshots, so Claude can look at its own output and fix layout problems | No, but recommended |
+
+Not using Claude Code? The [MCP server](mcp.md) brings the explorer to ChatGPT and Claude.
 
 ## Run it
 
@@ -61,11 +74,26 @@ communications/
     index.html              the explorer
     model.js                the architecture model it was built from
     architecture.jsonld     the same model as an RDF graph
+    architecture.ttl        the same graph in Turtle
     architecture.rete       written when the rete CLI or npm package is available
+    img/                    pictures the model shows, if any
 ```
 
 Open either `index.html` directly from disk. The [example](example/index.md) shows what each one looks like for a
 small project.
+
+## Follow the architecture over time
+
+Commit `communications/architecture-explorer/model.js` with the code. Once it has a few versions:
+
+```
+/c4-model-agentic-plugin:architecture-history
+/c4-model-agentic-plugin:architecture-history diff main feature/x
+/c4-model-agentic-plugin:architecture-history pr 42
+```
+
+These write a timeline, diffs and a pull request's architecture impact, and rebuild the explorer with a history bar
+and a compare mode. See [History and diffs](history.md).
 
 ## Update the output later
 
@@ -81,8 +109,10 @@ Both pages are built from sources kept next to them, so you can edit and rebuild
       communications/architecture-explorer/index.html --root .
     ```
 
-    The build validates the model, checks every source path, reports arrows that bend or cross, and writes
-    `architecture.jsonld`. See the [data model](reference/explorer-data-model.md).
+    The build validates the model, checks every source path and image, reports arrows that bend or cross, and
+    writes `architecture.jsonld` and `architecture.ttl`. See the [data model](reference/explorer-data-model.md).
+    You can also edit the model in the page itself (`✎ edit`) and download the new `model.js`; see
+    [Edit the model in the page](explorer.md#edit-the-model-in-the-page).
 
 === "Deck"
 
@@ -105,5 +135,6 @@ Pages, for example, commit the folder and point Pages at it, or copy the two `in
 Pages site. These docs do the same with the [example](example/index.md).
 
 The explorer loads its web fonts from Google Fonts and needs nothing else from the network, except for the
-`.rete` download (see [RDF export](rdf.md)). The deck loads reveal.js from a CDN unless it was built with
-`--inline-js`.
+`.rete` download (see [RDF export](rdf.md)) and pictures given as web addresses. Pictures given as files sit in
+`img/` next to the page: publish that folder too, or build with `--embed-images` to put them inside the page. The
+deck loads reveal.js from a CDN unless it was built with `--inline-js`.

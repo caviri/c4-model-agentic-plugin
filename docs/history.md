@@ -7,14 +7,15 @@ description: The architecture over time - versions with provenance from git, dif
 An explorer model committed with the code has a history. The `architecture-history` skill reads it with git and
 turns it into **versions with provenance**: which architecture each commit, merge, release or pull request held, who
 changed what and when, and what changed between any two versions, from boxes and arrows down to single RDF triples.
-The explorer page gets a **history bar** to step through the versions, a **version list** with the details of each
-one, and a **compare mode** that draws the differences.
+The explorer page gets a **history bar** along the bottom to step through the versions, a **version list** with the
+details of each one, and a **compare mode** that draws the differences at every level.
 
-![Compare mode: the later version drawn with added boxes and arrows in green, a removed function as a red ghost, the panel listing each change with its author and commit, and the history bar along the bottom](img/history-compare.png){ .shot }
+![Compare mode at the system context: the new Mail server in green, the Reviewer in amber, and the software system with a dotted outline and a +2 −2 badge for the changes inside it; the panel lists every change with its author and commit, above the history bar with its DEMO DATA badge](img/history-rollup.png){ .shot }
 
-*Compare mode on demonstration data (fictional authors): a pull request adds a mail server and a notification
-component (green) and drops a helper function from the model (red ghost); the panel lists every change with who and
-when, and a click on one goes to it.*
+*Compare mode on demonstration data (fictional authors and invented dates): a pull request adds a mail server and a
+notification component, and drops a helper function from the model. At L1 the component and the function are hidden
+inside the software system, so the system carries their counts (`+2 −2`: boxes and arrows inside it); the panel lists
+every change with who made it and when, and a click on one goes to it.*
 
 ## Try it
 
@@ -45,7 +46,7 @@ node skills/architecture-explorer/scripts/build-explorer.mjs \
   --root . --history communications/architecture-history/history.json
 ```
 
-![The version list of the demonstration history, opened upward from the history bar: one card per version with its kind, date, authors, message, pull request and changes, one of them unfolded with its full message, git details and change list](img/history-version.png){ .shot }
+![The version list of the demonstration history, opened upward from the history bar: the pull request #3 card unfolded, with its kind, date, author, change counts, where they are, the full commit message, git details and the list of changes](img/history-version.png){ .shot }
 
 *The version list on demonstration data (fictional authors and invented dates, as its banner says).*
 
@@ -58,8 +59,8 @@ node skills/architecture-explorer/scripts/build-explorer.mjs \
   Each card has the tag, pull request or short SHA, the kind (commit, merge, tag, pull request, squash), the date, the
   authors, the first line of the commit message, the pull request, whether the model was committed or regenerated, and
   what changed since the version before (`+` / `−` / `~` boxes, arrows, scenarios, and the RDF triples added and
-  removed), and **where**: the same counts per container (`where API service +12 ~1 · Worker ~1`). Unfold a card for the full message, the SHA, parents, branches, the pull request's branches and the list
-  of changes. Each card can be **shown**, **compared** with the version on screen (or set as end A or B of a
+  removed), and **where**: the same counts per container (`where API service +12 ~1 · Worker ~1`). Unfold a card for
+  the full message, the SHA, parents, branches, the pull request's branches and the list of changes. Each card can be **shown**, **compared** with the version on screen (or set as end A or B of a
   comparison), its **SHA copied**, and its **commit** or **pull request** opened on GitHub, GitLab or Bitbucket when
   the repository is known. `Esc` closes it; `#hist=open` in the URL opens it.
 - **Compare mode** (`⇄ compare` or `C`): the later version is drawn with **added** boxes and arrows in green,
@@ -83,6 +84,12 @@ node skills/architecture-explorer/scripts/build-explorer.mjs \
   list with that card unfolded, together with the usual state (`open=`, `level=`, `sel=` …). The colours come from
   each theme's tones.
 - You edit the page's own model only: **✎ edit** is hidden while an older version or a comparison is shown.
+
+![The same comparison one level down, with the API service open and selected: the new Notifications component in green, the closed Task state machine with a −2 badge, and the panel's Changes inside list grouped by child](img/history-compare.png){ .shot }
+
+*The same comparison with the API service open and selected (demonstration data): the new component is green, the
+closed Task state machine carries `−2` for the function and the arrow removed inside it, and the panel lists the
+changes inside the API service by child, each a button that goes to it.*
 
 ## What to build the history from
 
@@ -157,9 +164,10 @@ messages the dataset and the page carry. Credentials in a remote URL are never e
 
 ## Real history and demonstration data
 
-The example in this repository is real: its model has two committed versions (the first model, then use-case fields on
-two scenarios), and the published explorer has that history embedded. To show merges, pull requests, releases, a
-stale model and a branch comparison, `skills/architecture-history/scripts/make-demo-history.mjs` replays a made-up
-evolution of the same project into a new repository, with fictional authors and invented dates. A history built from
-it with `--demo` says so in the dataset (`c4h:demo`, `c4h:fictional`), the reports and the page. The screenshots on
-this page come from that demonstration repository.
+The example in this repository is real: its model has three committed versions (the first model; use-case fields on
+two scenarios; then three illustrative wireframes and a flow colour), and the published explorer has that history
+embedded. To show merges, pull requests, releases, a stale model and a branch comparison,
+`skills/architecture-history/scripts/make-demo-history.mjs` replays a made-up evolution of the same project into a
+new repository, with fictional authors and invented dates. A history built from it with `--demo` says so in the
+dataset (`c4h:demo`, `c4h:fictional`), the reports and the page. The screenshots on this page come from that
+demonstration repository.

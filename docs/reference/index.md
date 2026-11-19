@@ -15,4 +15,6 @@ also the most complete description of what the plugin does and why, so they are 
 | `explore-project` | [Playbook](explore-playbook.md) · [Question bank](explore-questions.md) · [Brief template](explore-brief-template.md) |
 
 The skills themselves (`SKILL.md`, templates and scripts) are in
-[`skills/`](https://github.com/caviri/c4-model-agentic-plugin/tree/main/skills) on GitHub.
+[`skills/`](https://github.com/caviri/c4-model-agentic-plugin/tree/main/skills) on GitHub. The ontology's terms,
+shapes and extension guide are under [Ontology](../ontology/index.md); the MCP server's tools, view and deployment are
+in [`mcp/README.md`](https://github.com/caviri/c4-model-agentic-plugin/blob/main/mcp/README.md).

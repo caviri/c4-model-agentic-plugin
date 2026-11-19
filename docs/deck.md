@@ -30,11 +30,17 @@ Every deck has speaker notes, a reading view that shows the slides as one scroll
 
 | Key | Action |
 |---|---|
-| ++right++ / ++left++ | Next / previous chapter |
+| ++right++ / ++left++ | Next / previous step or slide (chapters run left to right) |
 | ++down++ / ++up++ | Details within a chapter |
+| ++esc++ or ++o++ | Overview of all slides |
 | ++"?"++ | Keys panel |
 | ++v++ | Reading view |
+| ++f++ | Full screen |
 | ++s++ | Speaker notes |
+
+In a browser that offers [WebMCP](mcp.md#webmcp-agents-in-the-browser), a deck built from the current template also
+lets an agent in the browser read its outline and slide text and turn the slides. (The example deck was built before
+that block existed.)
 
 ## Source and rebuild
 

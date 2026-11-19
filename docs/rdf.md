@@ -5,11 +5,11 @@ description: The architecture model as an RDF graph in the terms of the plugin's
 # RDF export
 
 The architecture model behind the explorer is also an RDF graph: every element, relationship, use case, scenario
-step and state transition is a resource you can query. The terms come from the plugin's own
+step, state transition and image is a resource you can query. The terms come from the plugin's own
 [C4 architecture ontology](ontology/index.md), and the graph is complete: a page recreated from it draws exactly
 the same diagrams.
 
-![Export menu](img/explorer-export.png){ .shot }
+![The export menu: the view on screen as SVG, PNG or HTML, the model as JSON-LD, Turtle or a rete graph](img/explorer-export.png){ .shot }
 
 ## Downloads
 
@@ -29,6 +29,10 @@ the `rete` CLI or the `rete-graph` npm package is installed. Otherwise:
 rete build architecture.ttl -o architecture.rete --card --title "My project architecture"
 ```
 
+Elsewhere: the [MCP server](mcp.md) exports Turtle, JSON-LD, N-Triples and `.rete` and runs SPARQL over a model
+(`export_rdf`, `query_sparql`), and the [architecture history](history.md) writes every version of a model as a named
+graph in one RDF 1.2 dataset (TriG, N-Quads, `.rete`).
+
 ## Back from the graph
 
 `build-explorer.mjs` accepts a graph in place of `model.js` and rebuilds the page from it, and `model-from-rdf.mjs`
@@ -45,8 +49,8 @@ on GitHub, or use the export menu in the [live explorer](example/explorer.md).
 
 ## Vocabulary, shapes and queries
 
-- The [ontology](ontology/index.md): core terms (`c4:`), view terms (`c4v:`), SHACL shapes, and how to
-  [extend it](ontology/EXTENDING.md) with terms of your own.
+- The [ontology](ontology/index.md): core terms (`c4:`), view terms (`c4v:`), history terms (`c4h:`), SHACL shapes,
+  and how to [extend it](ontology/EXTENDING.md) with terms of your own, which a model carries through its `rdf` hook.
 - The [RDF graph reference](reference/explorer-rdf-graph.md): the IRIs, the mapping from each model field, the
   extension hook, validation, recreating a page, and tested SPARQL queries (containers and their technologies,
   everything that depends on one element, what an element uses, the steps of a scenario, use cases, state
