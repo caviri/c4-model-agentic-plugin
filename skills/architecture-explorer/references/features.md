@@ -12,15 +12,22 @@ The explorer is one HTML file made of five script blocks: `model` (the data), `v
 - **Arrow style.** `edges` in the toolbar (`E`) switches between right-angled arrows that run in the gutters on separate lanes (default) and straight ones. See "Arrow styles".
 - **Arrow routing (straight style).** An arrow is a straight line between box centres unless a closed box lies on it; then it bends around the corners of the boxes in the way, with rounded bends. See "How layout is decided".
 - **Lifecycles.** Boxes of type `state` are drawn as pills (dot = initial, double border = final), their transitions as arrows, a self-transition as a loop.
-- **Selection.** Clicking a box selects it: its arrows stay bright, the rest fade, and the panel shows its details. Clicking empty canvas or `Esc` clears it.
+- **Selection.** Clicking a box selects it and the panel shows its details. Clicking empty canvas or `Esc` clears it.
+  - **Several boxes.** Ctrl + click (⌘ + click on macOS, where Ctrl + click opens the context menu; Shift + click works everywhere) adds a box to the selection or takes it out; a plain click selects only that box again. From the keyboard: Ctrl / ⌘ / Shift + `Enter` on a focused box. Works on the Map and the Pinned board; the Dynamic view keeps a single selection. The panel then lists the selected boxes (click one to centre it, `×` to take it out), the relationships between them, and what they use and are used by together; `P` or "Pin all" pins every selected box (or unpins them all when all are pinned).
+  - **What stays bright.** The selected boxes, everything inside them, and every box at the other end of one of their visible (possibly merged) arrows keep full strength, with the union taken for several selected boxes. Their arrows are drawn thicker and their labels in full (a folded label is revealed). Every other box, arrow and label fades. An open box around a bright box fades only a little, so its frame and title still give context. Fading is opacity only, so it reads the same in light and dark themes; a theme can tune it with `--dim-node` (default .3), `--dim-frame` (.85) and `--dim-edge` (.16).
 - **Pan and zoom.** Drag to pan, wheel or pinch to zoom at the pointer, `+` / `−` / fit buttons, `F` to fit. Below 34% zoom, sub-lines, arrow labels and variant dots hide to keep the overview legible.
 - **Minimap** (bottom left, hidden on phones) shows all visible boxes and the viewport; click to jump.
 - **Breadcrumb** (top left) lists what is open, or what is selected.
-- **Arrow labels** toggle with the `labels` button or `L`. A label is one line up to 16 characters, else two lines of up to 20, and is slid along its arrow to avoid boxes and other labels.
+- **Arrow labels** toggle with the `labels` button or `L`. A label is one line up to 16 characters, else two lines of up to 20, and is slid along its arrow to avoid boxes, the header (title strip and buttons) of open boxes, and other labels.
+  - **Placement order.** Labels of the selected box's arrows are placed first and are always drawn in full. The others follow, the most constrained first (fewest spots clear of boxes), so long arrows with many possible spots give way to short ones.
+  - **Decluttering.** A label that would still overlap another label, a box or an open box's header is not drawn in full. Its arrow carries a small `···` marker instead (in the arrow's colour, on a free spot of the arrow). The full label appears there, above everything else, while the pointer is on the arrow or the marker; clicking or tapping either keeps it shown until the next click elsewhere; selecting either end box shows it in full. A label is never hidden without a marker. Markers follow the `labels` toggle and the low-zoom rule.
+  - Busy gutters are widened before anything is folded (see "How layout is decided", step 3), so markers are the exception. `check-model.mjs` counts them per group.
 
 ### Details panel
 
 Right column on desktop, bottom sheet under 820 px (with a collapse toggle). For the selected box: ancestor breadcrumb (clickable), level and tag, name, `sub`, `desc`, `notes`, action buttons (open/close, show on map, pin), technology chips, variant chips, source path and link, children, and **Uses / Used by** lists (**Transitions to / Reached from** for a state). Those lists include the relationships of everything inside the box and say which inner element each comes from; every entry navigates to the other end.
+
+With several boxes selected: the selected boxes (each entry centres its box, `×` takes it out), **Pin all / Unpin all**, **Show all on map**, **Clear selection**, **Between them** (relationships from inside one selected box to inside another), and **Together they use / Together they are used by** (relationships with one end inside the selection and the other outside it, naming the inner element).
 
 With nothing selected the panel shows `project.intro`, node counts per level, the key reference, a legend built from the kinds actually used, and an explanation of the variant filter.
 
@@ -67,16 +74,63 @@ Present only when `MODEL.scenarios` is non-empty; no model fields are needed. An
 | `/` | Search |
 | `F`, `+`, `−` | Fit, zoom in, zoom out |
 | `M`, `B`, `D` | Map, Pinned board, Dynamic |
-| `P` | Pin or unpin the selected box |
+| `P` | Pin or unpin the selected box (every selected box) |
+| Ctrl / ⌘ / Shift + click, or + `Enter` on a focused box | Add the box to the selection, or take it out |
 | `S` | Sequence inside the selected box, or its boxes again (Map) · all scenarios (Dynamic) |
-| `L`, `E`, `T` | Arrow labels, arrow style (right-angled / straight), colour theme |
+| `L`, `E`, `T` | Arrow labels, arrow style (right-angled / straight), next colour theme (the `theme ▾` menu lists them all) |
 | `Esc` | Clear the selection |
 | `←` `→` `space` | Previous step, next step, play (Dynamic) |
 | `Tab`, `Enter`, `Space` on a box | Focus, select, open or close |
 
-### Theming and persistence
+### Colour themes
 
-Light and dark palettes are CSS custom properties on `:root`. `theme: auto` follows the operating system; the button (`T`) cycles auto → light → dark and remembers the choice in `localStorage`.
+The `theme ▾` menu offers `auto` (light, or dark when the operating system is in dark mode) and six fixed themes:
+
+| Theme | Look |
+|---|---|
+| `light` | Cool grey canvas, navy accent. What `auto` shows by default. |
+| `dark` | Deep navy, soft colours. What `auto` shows when the OS is dark. |
+| `contrast` | High contrast, black on white. Every text pair is at least 5.8:1 (WCAG AA), arrows at least 8.7:1, box borders at least 5:1. |
+| `paper` | Warm cream with sepia ink; light enough to print. |
+| `blueprint` | Deep blue with pale line work and a visible grid. |
+| `graphite` | Neutral charcoal with a slate accent and muted tones. |
+
+A theme colours the whole page: map, minimap, pinned board, Dynamic tab, sequence inside a box, details panel, menus, scenario picker and the model-error screen.
+
+**Choosing.** The menu shows a swatch for each theme drawn in that theme's own colours; inside it `↑` `↓` `Home` `End` move, `Enter` picks, `Esc` closes. `T` steps to the next theme in the same order without opening the menu.
+
+**Which theme the page opens in.** The first of these that is set wins:
+
+1. `#theme=<name>` in the URL. Applies to this visit and is not saved.
+2. The reader's last pick from the menu or `T`, remembered per browser in `localStorage`. Without storage (private mode, blocked site data) the page still works; the pick then lasts for the visit.
+3. The model's `view.theme` (data-model.md).
+4. `auto`.
+
+A pick is written to the URL as `theme=<name>` whenever it differs from the model's default (`view.theme`, else `auto`), so a copied link opens in the theme its sender saw.
+
+**Tokens.** Each theme is one CSS block near the top of `<style>` that sets every colour token below; all other rules take their colours from these tokens only.
+
+| Token | Used for |
+|---|---|
+| `--bg` | Canvas, arrow-label backgrounds, and the text colour on accent and tone fills (people, badges, pressed buttons) |
+| `--surface` | Toolbar, panel, closed boxes, menus, dialog |
+| `--ink` | Main text |
+| `--muted` | Secondary text, tags, sub-lines, arrow labels, ordinary arrows |
+| `--line` | Borders, rules, lifelines, component and code box borders |
+| `--accent`, `--accent-soft` | People, system and container borders, selection, entry-point arrows, badges, links; system and `highlight` fill |
+| `--ext`, `--code-bg` | Border and fill of external systems and stores; source path background |
+| `--b1`, `--b2`, `--b3` | Fill of open boxes by nesting depth |
+| `--teal`, `--orange`, `--green`, `--violet`, `--rose` and each `-soft` | The five `kind` tones: stroke and text, and fill |
+| `--grid`, `--shadow`, `--backdrop` | Canvas dots, box and menu shadows, the scenario dialog's backdrop |
+| `--dim-node`, `--dim-frame`, `--dim-edge` | Not colours: the opacity a selection gives unconnected boxes, the open boxes around connected ones, and unrelated arrows (`contrast` fades less) |
+| `--arrow-w`, `--arrow-w-hot`, `--arrow-hit` | Not colours: arrow width, width when highlighted or hovered, and the invisible hover target (`contrast` draws thicker arrows) |
+
+**Adding a theme** takes two edits:
+
+1. In `<style>`, copy a `[data-theme="…"]` block (`paper` for a light theme, `blueprint` for a dark one), rename it `[data-theme="mytheme"]` and change the values. Set every token in the table plus `color-scheme: light` or `dark`. Keep `--bg` readable on `--accent` and on each tone (it is the text drawn on those fills), and `--muted` and each tone readable on `--bg`, `--surface`, `--code-bg`, `--accent-soft`, `--b1`–`--b3` and the `-soft` fills.
+2. In the `validator` script, add `{ id: 'mytheme', note: 'a few words for the menu' }` to `window.ARCH_THEMES`. Its place in the list is its place in the menu and in the `T` cycle.
+
+The menu, `T`, `#theme=`, the stored pick and the validation of `view.theme` all read that list, so nothing else changes. The block selector is `[data-theme="…"]` rather than `:root[…]` so that the swatches in the menu, which carry `data-theme`, draw in the theme's colours.
 
 ### URL state
 
@@ -86,11 +140,11 @@ The URL hash mirrors what is on screen and is read at load, so any state can be 
 |---|---|
 | `level=3` | Map opened to that level |
 | `open=api,orders` | Exactly these boxes open (their ancestors too). Written instead of `level` when the open set is not a whole level. |
-| `sel=place-order` | Selected box; its ancestors are opened |
+| `sel=place-order` or `sel=a,b,c` | Selected box, or several (the last one listed is the primary); their ancestors are opened |
 | `variant=cloud` | Variant filter, by variant id |
 | `labels=0` | Arrow labels off |
 | `edges=straight` / `edges=orthogonal` | Arrow style, when different from the model's `view.edges` |
-| `theme=dark` / `light` | Theme for this visit (not saved) |
+| `theme=paper` | Colour theme for this visit: `auto` or a theme name (see "Colour themes"). Written when it differs from the model's `view.theme` (else `auto`); a theme read from the URL is not saved. |
 | `view=pins` / `view=dynamic` | The other two views (`#pins` and `#dynamic` alone also work) |
 | `scenario=checkout` `at=3` `style=seq` `step=4` | Dynamic view: scenario id, level (`1`–`4`, `map`, `pins`), style (`collab`, `seq`, `list`), step number from 1 |
 | `seq=api:checkout,worker` | Boxes showing the sequence inside, each with a scenario id (default: the first scenario through that box). Their ancestors open. |
@@ -114,7 +168,7 @@ For automated checks the page sets `data-explorer="ready"` or `"error"` on `<htm
 
 | Script | What it does |
 |---|---|
-| `check-model.mjs index.html` | Syntax of every script, the validator, and a LAYOUT report: for each group of boxes (that box open, the rest closed) the arrows that bend around a box (`bend`), the arrows that could not be routed and still run behind a box (`BEHIND`, a warning), and crossings (`cross`). The report is for the model's arrow style (`view.edges`, default orthogonal); with orthogonal arrows `bend` lines are replaced by `OVERLAP` (two unrelated arrows left on the same line because a gutter is full). `--edges straight` or `--edges orthogonal` reports on the other style, `--verbose` lists everything, `--no-layout` skips it. |
+| `check-model.mjs index.html` | Syntax of every script, the validator, and a LAYOUT report: for each group of boxes (that box open, the rest closed) the arrows that bend around a box (`bend`), the arrows that could not be routed and still run behind a box (`BEHIND`, a warning), crossings (`cross`), and the number of label collisions: labels that could not be placed clear of other labels, boxes and open-box headers and are drawn as markers (information, not a warning; `--verbose` lists each as `label "…" on A → B  would overlap …`). The report is for the model's arrow style (`view.edges`, default orthogonal); with orthogonal arrows `bend` lines are replaced by `OVERLAP` (two unrelated arrows left on the same line because a gutter is full). `--edges straight` or `--edges orthogonal` reports on the other style, `--verbose` lists everything, `--no-layout` skips it. |
 | `check-model.mjs index.html --root <repo>` | Also checks that every `path` exists in the repository, that directories end in `/`, and that each `line` is inside its file. |
 | `screenshot.mjs index.html [outDir] [state …]` | PNGs of the page in the given URL states with headless Chrome or Edge, after confirming the page booted. Finds the browser itself; `--browser <path>` or `CHROME_PATH` overrides. |
 | `build-explorer.mjs model.js index.html` | Template + model → page, runs the check, writes `architecture.jsonld` and, when `rete` is available, `architecture.rete`. |
@@ -135,7 +189,13 @@ For automated checks the page sets `data-explorer="ready"` or `"error"` on `<htm
    | `ext` | 224 × 96 |
    | `state` | 200 × 68 |
 
-3. Column width is the widest box in the column, row height the tallest in the row. Gaps: 112 px between columns, 76 px between rows; at the top level 90 px between boxes and 110 px between rows. An open box is its children's grid plus an 84 px header and 30 px padding (60 px title strip, then room for one arrow lane above the first row).
+3. Column width is the widest box in the column, row height the tallest in the row. Gaps (gutters): 112 px between columns, 76 px between rows; at the top level 90 px between boxes and 110 px between rows. These are the sizes of quiet gutters; a busy gutter gets more room, each one on its own:
+   - **Lanes.** If n right-angled arrows run side by side along a gutter (the most at any point of it), it is at least 2 · 18 + (n − 1) · 9 px wide, so every arrow keeps its own lane.
+   - **Labels.** A label centred in a gutter that cannot be placed in full widens that gutter to fit the label across it, and each such label adds 22 px to a row gutter or 28 px to a column gutter per round.
+   - The layout is laid out, routed and labelled, the gutters that need it grow, and it is laid out again, until nothing changes (5 rounds at most; a gutter grows by 200 px at most). Growth that did not reduce the labels stuck in that gutter is taken back, and those labels become markers instead.
+   - Quiet gutters keep their size, so small diagrams do not spread out. Gutters are sized for the current arrow style and open boxes, so opening a box or switching the style can move boxes; it animates like any other layout change. Label visibility (`labels`, zoom) does not change the layout.
+
+   An open box is its children's grid plus an 84 px header and 30 px padding (60 px title strip, then room for one arrow lane above the first row).
 4. Opening a box pushes its siblings apart rather than overlaying them. Sizes are computed bottom-up, positions top-down.
 5. Top level: the row holding the system is centred; boxes in the other rows slide sideways to line up with what they talk to.
 6. Arrows are drawn in one of two styles (next section). In both, routes are computed once per layout change, are stored relative to boxes rather than as coordinates, and so follow the boxes while the layout animates. If a box is completely walled in, the arrow falls back to a straight line and `check-model.mjs` reports it as `BEHIND`.
@@ -150,7 +210,7 @@ Set the default with `view.edges` in the model (`'orthogonal'` if omitted). The 
 - Arrows that use the same side of a box get separate ports spread along it, ordered by where their other end is.
 - The path runs in the gutters: on lines 18 px outside the boxes, found as the shortest route with few bends. It never crosses a closed box, and it keeps off the 60 px title strip of open boxes.
 - Stretches of different arrows that fall on the same gutter line are moved onto parallel lanes 9 px apart, staying at least 6 px from any box. When a gutter is full, arrows that share an end box may share a lane (they read as one trunk); unrelated arrows are only stacked if nothing else is left, and `check-model.mjs` reports that as `OVERLAP`.
-- A label sits on a segment of its own arrow, the roomiest one first, and slides along it to avoid boxes, titles and other labels.
+- A label sits on a segment of its own arrow, the roomiest one first, and slides along it to avoid boxes, titles and other labels. If no spot is free it is folded into a marker (see "Arrow labels").
 
 **`straight`**. Centre to centre, clipped at the box edge. If a closed box lies on the line, the arrow takes the shortest path around box corners (14 px clearance) with rounded bends. A pair of arrows running both ways is drawn as two parallel lines.
 
@@ -163,12 +223,12 @@ When to pick which:
 | Following one arrow by eye | Follow the lane; select a box to highlight its arrows | Direct line, easy when few |
 | Crossings | Right-angle crossings in the gutters, usually no fewer in number | Diagonal crossings anywhere |
 
-Limits of the orthogonal style: a gutter holds about six lanes between rows and about ten between columns, so a group with more parallel arrows than that will stack some; boxes stacked exactly above each other with several arrows between them get small jogs where ports do not line up; in a very busy gutter labels can still touch each other; long-distance arrows take visible detours along the gutters. More room comes from fewer boxes per row (`at`), not from a setting.
+Limits of the orthogonal style: a gutter widens for its lanes and labels, but by 200 px at most, so a group with far more parallel arrows than that will stack some; boxes stacked exactly above each other with several arrows between them get small jogs where ports do not line up; where many arrows leave one side of a box, their ports are close together and some of their labels fold into markers; long-distance arrows take visible detours along the gutters. More room comes from fewer boxes per row (`at`), not from a setting.
 
 What this means for placing boxes:
 
 - **Adjacency rule.** In both styles the shortest, cleanest arrows are between neighbouring cells. With `straight`, an arrow is straight when nothing sits between its two ends: same row with no box between them, same column with no box between them, or a diagonal that misses the other boxes. Neighbouring cells are always straight. Everything else bends, which is legible but busier.
-- **Label room.** The 112 px gap between two horizontal neighbours holds a label of 14 to 16 characters on a line. Vertical neighbours have room for any label. Long labels on short horizontal arrows are the usual cause of overlap: shorten the label, or stack the two boxes vertically.
+- **Label room.** The 112 px gap between two horizontal neighbours holds a label of 14 to 16 characters on a line; a longer one widens that gap (and the whole column gutter) to fit. Vertical neighbours have room for any label. Long labels on short horizontal arrows are still the usual cause of wide gutters and markers: shorten the label, or stack the two boxes vertically.
 - **Entry on top, stores at the bottom.** Automatic layout already pulls boxes reached from outside the group to the top row and boxes that only reach out to the bottom row.
 - **Cross-cutting hubs** (auth, ORM/session, logging, a shared client) are used by most siblings. Three ways to handle one, in order of preference:
   1. Draw it and let the arrows route. Put the hub in the middle of the bottom row (or the middle column), so that most users are in the row above it and reach it with straight or one-bend arrows. Give the edges into it the same short label so the diagram reads as a fan.
@@ -195,12 +255,13 @@ Small edits outside the MODEL block (keep them minimal and say so in your report
 | To | Edit |
 |---|---|
 | Work fully offline, no font request | Delete the three Google Fonts `<link>` lines in `<head>`; system fonts take over |
-| Change brand colours | The custom properties in the three `:root` blocks (light, dark-by-media-query, dark-by-attribute); keep the dark blocks identical to each other |
-| Force a theme | `<html lang="en" data-theme="dark">` and delete the `#btn-theme` button |
+| Change brand colours | The tokens in the theme blocks at the top of `<style>`: `:root` (light), the dark block under `prefers-color-scheme` and `[data-theme="dark"]` (keep those two identical), and one `[data-theme]` block per other theme. See "Colour themes". |
+| Add a colour theme | One `[data-theme="name"]` CSS block and one entry in `ARCH_THEMES` in the validator script. See "Colour themes". |
+| Force a theme | Set `view.theme` in the model and delete the `<div class="themes">` element (button and menu). The page then ignores `#theme=`, stored picks and `T`. |
 | Hide the minimap or hint | Delete `#minimap` / `.hint` in the markup, or add `display: none` |
 | Start with labels off | Remove `class="labels"` from `#map` and set `aria-pressed="false"` on `#btn-labels`, and `showLabels = false` in the engine |
-| Change box sizes or spacing | `SIZE`, `HEAD`, `PAD`, `GX`, `GY`, `RGX`, `RGY` in the `core` script; keep `BOXW` in the validator in step |
-| Add a colour tone | Add `--name` / `--name-soft` to all three `:root` blocks, a `.tone-name` rule, and the name to both `TONES` arrays (validator and core) |
+| Change box sizes or spacing | `SIZE`, `HEAD`, `PAD`, `GX`, `GY`, `RGX`, `RGY` in the `core` script; keep `BOXW` in the validator in step. How far busy gutters grow: `GROW`, `GMAX`, `GROUNDS` (set `GROUNDS = 0` for fixed gaps) |
+| Add a colour tone | Add `--name` / `--name-soft` to every theme block (light, both dark blocks, and each `[data-theme]` block), a `.tone-name` rule, and the name to both `TONES` arrays (validator and core) |
 | Add a node type | Add it to `LEVEL` and `BOXW` in the validator, to `BASE_LEVEL`, `DEFAULT_KIND`, `DEFAULT_TAG`, `SIZE` in the core, and to `CLASS` and `BASE_LEVEL` in the `rdf` script |
 | Add a field to the details panel | Carry it through the `NODES = MODEL.nodes.map(...)` normaliser in the core and print it in `renderPanel()`; escape with `esc()`. Add it to the `rdf` script if it should be exported. |
 | Remove the export menu | Delete the `<div class="export">` element; the page then never contacts the CDN |

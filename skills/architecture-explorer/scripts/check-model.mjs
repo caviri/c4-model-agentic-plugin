@@ -3,7 +3,8 @@
 //   1. every inline <script> parses and the MODEL block evaluates,
 //   2. the MODEL passes the validator embedded in the same file (the one the page runs at boot),
 //   3. LAYOUT report: runs the page's own layout and arrow routing and lists, per group of boxes,
-//      arrows that had to bend around a box, arrows that still run behind a box, and crossings,
+//      arrows that had to bend around a box, arrows that still run behind a box, and crossings, and counts
+//      label collisions: arrow labels the page cannot place in full and draws as a marker (listed with --verbose),
 //   4. with --root <repo>: every node `path` exists in the repository and every `line` is inside the file.
 // Usage: node check-model.mjs path/to/index.html [--root path/to/repo] [--strict] [--no-layout] [--verbose]
 //   --strict     treat warnings (including arrows left behind boxes) as failures
@@ -76,7 +77,8 @@ if (root && M && Array.isArray(M.nodes)) {
 let behindTotal = 0;
 if (C && !noLayout) {
   const nm = (n) => n.name, arrow = (x) => nm(x.a) + ' → ' + nm(x.b);
-  const seen = new Set(); let bends = 0, crosses = 0, overlaps = 0;
+  const seen = new Set(); let bends = 0, crosses = 0, overlaps = 0, folded = 0;
+  const hitName = (h) => h.what === 'label' ? 'label "' + h.x.text + '"' : h.what === 'title' ? 'the header of "' + nm(h.n) + '"' : 'box "' + nm(h.n) + '"';
   if (edgesOpt) C.setEdgeStyle(edgesOpt);
   const style = C.edgeStyle();
   const groups = [{ label: '(top level)', node: null, open: [], size: C.ROOTS.length }].concat(
@@ -94,11 +96,15 @@ if (C && !noLayout) {
     for (const b of A.behind) if (once('b' + b.x.key)) { behindTotal++; lines.push('  BEHIND  ' + arrow(b.x) + '  still passes behind ' + b.boxes.map((n) => '"' + nm(n) + '"').join(', ')); }
     for (const [p, q] of A.crossings) if (once('c' + p.key + '|' + q.key)) { crosses++; lines.push('  cross   ' + arrow(p) + '  ×  ' + arrow(q)); }
     for (const [p, q] of (A.overlaps || []).filter(([p, q]) => touches(p) && touches(q))) if (once('o' + p.key + '|' + q.key)) { overlaps++; lines.push('  OVERLAP ' + arrow(p) + '  lies on  ' + arrow(q)); }
+    // labels that would overlap a label, a box or an open box's header: the page draws a marker on the arrow instead
+    const labelLines = [];
+    for (const l of (A.labels || []).filter((l) => touches(l.x))) if (once('l' + l.x.key)) { folded++; labelLines.push('  label   "' + l.x.text + '" on ' + arrow(l.x) + '  would overlap ' + l.hits.map(hitName).join(', ')); }
     const count = (tag) => lines.filter((l) => l.startsWith('  ' + tag)).length;
-    info.push('LAYOUT   ' + g.label + ': ' + g.size + ' boxes' + (lines.length ? ', ' + (style === 'straight' ? count('bend') + ' bent, ' : count('OVERLAP') + ' overlapping, ') + count('cross') + ' crossings, ' + count('BEHIND') + ' behind' : ', clean'));
+    info.push('LAYOUT   ' + g.label + ': ' + g.size + ' boxes' + (lines.length || labelLines.length ? ', ' + (style === 'straight' ? count('bend') + ' bent, ' : count('OVERLAP') + ' overlapping, ') + count('cross') + ' crossings, ' + count('BEHIND') + ' behind, ' + labelLines.length + ' label collisions' : ', clean'));
     info.push(...(verbose || lines.length <= 10 ? lines : lines.slice(0, 10).concat(['  … ' + (lines.length - 10) + ' more (run with --verbose)'])));
+    if (verbose) info.push(...labelLines);
   }
-  info.push('LAYOUT   total (' + style + ' arrows): ' + (style === 'straight' ? bends + ' bent around a box, ' : overlaps + ' lying on another arrow, ') + crosses + ' crossings, ' + behindTotal + ' left behind a box' +
+  info.push('LAYOUT   total (' + style + ' arrows): ' + (style === 'straight' ? bends + ' bent around a box, ' : overlaps + ' lying on another arrow, ') + crosses + ' crossings, ' + behindTotal + ' left behind a box, ' + folded + ' label collisions (drawn as markers)' +
     (bends + crosses ?'  (to straighten: put the two ends in neighbouring cells with at: [col, row] on every box of that group)' : ''));
   if (behindTotal) warnings.push(behindTotal + ' arrow(s) could not be routed around a box (see BEHIND lines): move one end next to the other with "at".');
 }

@@ -174,34 +174,88 @@ window.MODEL = {
 <style>
 /* Layout: full-height map app. Toolbar on top, pannable canvas in the middle, details panel on the right
    (bottom sheet on phones). Boxes open in place: system → containers → components → code. */
-:root {
+/* Colour themes. Each block sets every colour token; the rules below take their colours only from these tokens.
+   light is the default on :root; with no data-theme (auto) the media query switches to dark when the OS asks for it;
+   the engine sets data-theme on <html> for every other choice. The blocks also match any element with data-theme
+   (the theme menu's swatches). To add a theme: copy a [data-theme] block, rename it, and add { id, note } to ARCH_THEMES
+   in the validator script. Token roles: bg canvas and label backs · surface panels and closed boxes · ink text ·
+   muted secondary text and arrows · line borders and rules · accent people, containers, selection, entry arrows
+   (bg is the text colour on it) · ext external and store borders · code-bg external and store fills, code paths ·
+   b1-b3 open boxes by depth · teal … rose the kind tones, each with a -soft fill · grid canvas dots · shadow ·
+   backdrop behind the scenario dialog. Not colours, but set per theme too: dim-node / dim-frame / dim-edge, the opacity
+   of what a selection fades, and arrow-w / arrow-w-hot / arrow-hit, the arrow widths (normal, highlighted, hover target). */
+:root, [data-theme="light"] {
   --bg: #f4f6f9; --surface: #ffffff; --ink: #142231; --muted: #5a6878; --line: #d3dbe4;
   --accent: #1d4f7a; --accent-soft: #e2edf7;
   --teal: #0e7490; --teal-soft: #def1f5; --orange: #c2410c; --orange-soft: #fdece2; --green: #3f7d20; --green-soft: #e7f2df;
   --violet: #6d4bb5; --violet-soft: #ece6f8; --rose: #b4325f; --rose-soft: #fbe4ec;
   --ext: #6b7785; --code-bg: #edf1f5; --shadow: rgba(20, 34, 49, 0.08);
-  --b1: #e9eff5; --b2: #e1e9f1; --b3: #d8e2ec; --grid: rgba(29, 79, 122, 0.07);
+  --b1: #e9eff5; --b2: #e1e9f1; --b3: #d8e2ec; --grid: rgba(29, 79, 122, 0.07); --backdrop: rgba(10, 18, 26, 0.45); color-scheme: light;
+  --dim-node: .3; --dim-frame: .85; --dim-edge: .16; --arrow-w: 1.6px; --arrow-w-hot: 2.4px; --arrow-hit: 12px;
   --f-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
   --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme]) {
     --bg: #0e151d; --surface: #16212d; --ink: #e5ebf1; --muted: #9aa8b7; --line: #2a3847;
     --accent: #8fb8de; --accent-soft: #1b3045;
     --teal: #4fc3d9; --teal-soft: #12333b; --orange: #f39a62; --orange-soft: #3a2418; --green: #8cc66a; --green-soft: #1f3319;
     --violet: #b49cf0; --violet-soft: #2a2145; --rose: #f08bb0; --rose-soft: #3b1a28;
     --ext: #8995a3; --code-bg: #1b2734; --shadow: rgba(0, 0, 0, 0.35);
-    --b1: #121c26; --b2: #17232f; --b3: #1c2a38; --grid: rgba(143, 184, 222, 0.06); color-scheme: dark;
+    --b1: #121c26; --b2: #17232f; --b3: #1c2a38; --grid: rgba(143, 184, 222, 0.06); --backdrop: rgba(10, 18, 26, 0.45); color-scheme: dark;
+    --dim-node: .3; --dim-frame: .85; --dim-edge: .16; --arrow-w: 1.6px; --arrow-w-hot: 2.4px; --arrow-hit: 12px;
   }
 }
-:root[data-theme="dark"] {
+[data-theme="dark"] {
   --bg: #0e151d; --surface: #16212d; --ink: #e5ebf1; --muted: #9aa8b7; --line: #2a3847;
   --accent: #8fb8de; --accent-soft: #1b3045;
   --teal: #4fc3d9; --teal-soft: #12333b; --orange: #f39a62; --orange-soft: #3a2418; --green: #8cc66a; --green-soft: #1f3319;
   --violet: #b49cf0; --violet-soft: #2a2145; --rose: #f08bb0; --rose-soft: #3b1a28;
   --ext: #8995a3; --code-bg: #1b2734; --shadow: rgba(0, 0, 0, 0.35);
-  --b1: #121c26; --b2: #17232f; --b3: #1c2a38; --grid: rgba(143, 184, 222, 0.06); color-scheme: dark;
+  --b1: #121c26; --b2: #17232f; --b3: #1c2a38; --grid: rgba(143, 184, 222, 0.06); --backdrop: rgba(10, 18, 26, 0.45); color-scheme: dark;
+  --dim-node: .3; --dim-frame: .85; --dim-edge: .16; --arrow-w: 1.6px; --arrow-w-hot: 2.4px; --arrow-hit: 12px;
+}
+/* high contrast: black on white; all text pairs at least 5.8:1 (WCAG AA), borders and arrows at least 5:1;
+   thicker arrows, and a selection fades the rest less so it stays readable */
+[data-theme="contrast"] {
+  --bg: #ffffff; --surface: #ffffff; --ink: #000000; --muted: #3a3a3a; --line: #6e6e6e;
+  --accent: #0a3a8c; --accent-soft: #dde6f8;
+  --teal: #00585f; --teal-soft: #d8eef0; --orange: #943300; --orange-soft: #fbe4d5; --green: #1c5a00; --green-soft: #dfeed4;
+  --violet: #4c2696; --violet-soft: #e9e0f8; --rose: #950c43; --rose-soft: #f9dce6;
+  --ext: #474747; --code-bg: #efefef; --shadow: rgba(0, 0, 0, 0.16);
+  --b1: #f5f5f5; --b2: #ebebeb; --b3: #e1e1e1; --grid: rgba(0, 0, 0, 0.14); --backdrop: rgba(0, 0, 0, 0.6); color-scheme: light;
+  --dim-node: .45; --dim-frame: .9; --dim-edge: .3; --arrow-w: 2px; --arrow-w-hot: 3px; --arrow-hit: 14px;
+}
+/* paper: warm cream and sepia ink, light enough to print */
+[data-theme="paper"] {
+  --bg: #f6f0e4; --surface: #fffcf5; --ink: #2b2017; --muted: #625444; --line: #d6c9b2;
+  --accent: #7b3a17; --accent-soft: #f1e0cf;
+  --teal: #1f6564; --teal-soft: #dde9e2; --orange: #8a4a00; --orange-soft: #f6e4c8; --green: #42621a; --green-soft: #e3e9d0;
+  --violet: #5c4489; --violet-soft: #e8e0ea; --rose: #9c2f4e; --rose-soft: #f3dcd9;
+  --ext: #7a6b58; --code-bg: #eee5d4; --shadow: rgba(70, 45, 20, 0.10);
+  --b1: #efe7d8; --b2: #e9e0ce; --b3: #e2d8c4; --grid: rgba(123, 88, 45, 0.10); --backdrop: rgba(43, 32, 23, 0.45); color-scheme: light;
+  --dim-node: .3; --dim-frame: .85; --dim-edge: .16; --arrow-w: 1.6px; --arrow-w-hot: 2.4px; --arrow-hit: 12px;
+}
+/* blueprint: deep blue with pale line work */
+[data-theme="blueprint"] {
+  --bg: #0c2a4d; --surface: #11355e; --ink: #eef5ff; --muted: #a9c6e4; --line: #5784b5;
+  --accent: #c3e4ff; --accent-soft: #1b4a7c;
+  --teal: #72e2d4; --teal-soft: #124a5e; --orange: #ffbb7c; --orange-soft: #3e3c4f; --green: #b4e68e; --green-soft: #26484f;
+  --violet: #d0bcff; --violet-soft: #2d3c72; --rose: #ffaacb; --rose-soft: #413b62;
+  --ext: #93b4d6; --code-bg: #153d6a; --shadow: rgba(0, 8, 22, 0.45);
+  --b1: #0f3157; --b2: #133962; --b3: #17416d; --grid: rgba(170, 210, 255, 0.17); --backdrop: rgba(2, 10, 24, 0.6); color-scheme: dark;
+  --dim-node: .3; --dim-frame: .85; --dim-edge: .16; --arrow-w: 1.6px; --arrow-w-hot: 2.4px; --arrow-hit: 12px;
+}
+/* graphite: neutral charcoal, slate accent, muted tones */
+[data-theme="graphite"] {
+  --bg: #1d1f22; --surface: #26292d; --ink: #e5e6e8; --muted: #a3a8ae; --line: #454a51;
+  --accent: #a6b8cb; --accent-soft: #2f363f;
+  --teal: #8bbcb6; --teal-soft: #283432; --orange: #d7a37d; --orange-soft: #362d27; --green: #a7c28f; --green-soft: #2c3328;
+  --violet: #b6a9d6; --violet-soft: #302e38; --rose: #d6a0b3; --rose-soft: #362c30;
+  --ext: #8d9299; --code-bg: #2a2d31; --shadow: rgba(0, 0, 0, 0.4);
+  --b1: #222427; --b2: #272a2e; --b3: #2c3035; --grid: rgba(200, 205, 212, 0.06); --backdrop: rgba(0, 0, 0, 0.55); color-scheme: dark;
+  --dim-node: .3; --dim-frame: .85; --dim-edge: .16; --arrow-w: 1.6px; --arrow-w-hot: 2.4px; --arrow-hit: 12px;
 }
 .tone-teal { --tone: var(--teal); --tone-soft: var(--teal-soft); }
 .tone-orange { --tone: var(--orange); --tone-soft: var(--orange-soft); }
@@ -254,8 +308,14 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 
 /* ---------- SVG ---------- */
 .bgdot { fill: var(--grid); }
-.nd { cursor: pointer; }
+.nd { cursor: pointer; transition: opacity .25s; }
 .nd:focus { outline: none; }
+/* with a selection (map and board): boxes it is not connected to fade (--dim-node); an open box around a connected one
+   fades only a little, so its frame and title still give context (--dim-frame); unrelated arrows and labels fade (--dim-edge).
+   Opacity, not colour, so it reads the same in every theme; a theme may set the three variables. The variant filter's
+   fade (.mx-*, appended later at the same specificity) wins where both apply. */
+.has-sel .nd-dim { opacity: var(--dim-node, .3); }
+.has-sel .nd-ctx { opacity: var(--dim-frame, .85); }
 .box { stroke-width: 1.5; transition: opacity .25s; }
 .sh { fill: var(--shadow); }
 .k-person .box { fill: var(--accent); stroke: var(--accent); }
@@ -292,17 +352,31 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .modes .on { fill: var(--tone); }
 .modes .off { fill: none; opacity: .5; }
 .lowzoom .t-sub, .lowzoom .elab, .lowzoom .modes { display: none; }
-.e { fill: none; stroke: var(--muted); stroke-width: 1.6; transition: opacity .25s; }
+/* arrow widths: --arrow-w normal, --arrow-w-hot selected or hovered, --arrow-hit hover / click target (unset: the fallbacks) */
+.e { fill: none; stroke: var(--muted); stroke-width: var(--arrow-w, 1.6px); transition: opacity .25s; }
 .e.k-tone { stroke: var(--tone); } .e.k-accent { stroke: var(--accent); }
 .e.dash { stroke-dasharray: 6 5; }
 .mk { fill: var(--muted); } .mk.k-tone { fill: var(--tone); } .mk.k-accent { fill: var(--accent); }
 .elab rect { fill: var(--bg); stroke: var(--line); }
-.elab text { font-family: var(--f-mono); font-size: 11px; fill: var(--muted); }
+.elab text { font-family: var(--f-mono); font-size: 11px; fill: var(--muted); }   /* the core sizes labels for this font: LBL in the core script */
 .elab.k-tone text { fill: var(--tone); } .elab.k-accent text { fill: var(--accent); }
-.has-sel .e:not(.hot), .has-sel .elab:not(.hot) { opacity: .16; }
-.e.hot { stroke-width: 2.4; }
+.has-sel .e:not(.hot), .has-sel .elab:not(.hot) { opacity: var(--dim-edge, .16); }
+.e.hot { stroke-width: var(--arrow-w-hot, 2.4px); }
 .elab.hot rect { stroke: var(--muted); }
 #map:not(.labels) .elab { display: none; }
+/* folded labels: a marker on the arrow; the full label shows on hover or click of the arrow or marker, or when an end box is selected */
+.ehit { fill: none; stroke: transparent; stroke-width: var(--arrow-hit, 12px); pointer-events: stroke; cursor: pointer; }
+#map:not(.labels) .ehit, .lowzoom .ehit { pointer-events: none; }
+.elab { cursor: pointer; }
+.elab > .emark, .elab.folded > rect, .elab.folded > text, .elab.folded.reveal > .emark { display: none; }
+.elab.folded > .emark, .elab.folded.reveal > rect, .elab.folded.reveal > text { display: inline; }
+.emark rect { stroke: var(--muted); stroke-width: 1.2; }
+.emark circle { fill: var(--muted); }
+.elab.k-tone .emark rect { stroke: var(--tone); } .elab.k-tone .emark circle { fill: var(--tone); }
+.elab.k-accent .emark rect { stroke: var(--accent); } .elab.k-accent .emark circle { fill: var(--accent); }
+.elab.reveal > rect { stroke: var(--ink); stroke-width: 1.2; }
+.e.hover { stroke-width: var(--arrow-w-hot, 2.4px); }
+.has-sel .e.hover, .has-sel .elab.reveal { opacity: 1; }
 /* sequence inside a box (map): lifelines for its parts, dashed cards for what is outside it */
 .seq-rule { stroke: var(--line); stroke-width: 1; }
 .seq-kick { font-family: var(--f-mono); font-size: 10px; letter-spacing: .13em; fill: var(--muted); }
@@ -348,6 +422,10 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .rel button small { grid-column: 2; font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
 .rel button i { font-style: normal; color: var(--muted); }
 .rel button.mx { opacity: .45; }
+/* several selected: one row per box, the × takes it out of the selection */
+.selrow { display: grid; grid-template-columns: 1fr auto; gap: 4px; }
+.rel .selrow i { color: var(--accent); }
+.rel button.unsel { display: block; padding: 7px 12px; text-align: center; color: var(--muted); font: 15px var(--f-mono); }
 .kids { display: flex; flex-wrap: wrap; gap: 6px; }
 .kids button { font: 12.5px var(--f-mono); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 4px 8px; cursor: pointer; color: var(--ink); }
 .kids button:hover { border-color: var(--accent); }
@@ -363,14 +441,25 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .stats b { display: block; font-family: var(--f-display); font-size: 20px; font-variant-numeric: tabular-nums; }
 .stats small { font-family: var(--f-mono); font-size: 10px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
 .sheet-toggle { display: none; }
-.export { position: relative; }
-#export-menu { position: absolute; top: calc(100% + 4px); right: 0; width: 290px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 30px var(--shadow); padding: 4px; z-index: 20; }
-#export-menu button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 7px 8px; border-radius: 7px; cursor: pointer; color: var(--ink); font: 500 13px var(--f-body); }
-#export-menu button:hover, #export-menu button:focus-visible { background: var(--accent-soft); outline: none; }
-#export-menu small { display: block; color: var(--muted); font: 11px var(--f-mono); margin-top: 2px; }
+.export, .themes { position: relative; }
+#export-menu, #theme-menu { position: absolute; top: calc(100% + 4px); right: 0; width: 290px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 30px var(--shadow); padding: 4px; z-index: 20; }
+#export-menu button, #theme-menu button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 7px 8px; border-radius: 7px; cursor: pointer; color: var(--ink); font: 500 13px var(--f-body); }
+#export-menu button:hover, #export-menu button:focus-visible, #theme-menu button:hover, #theme-menu button:focus-visible { background: var(--accent-soft); outline: none; }
+#export-menu small, #theme-menu small { display: block; color: var(--muted); font: 11px var(--f-mono); margin-top: 2px; }
 #export-msg { margin: 0; padding: 0 8px; font: 11.5px/1.45 var(--f-mono); color: var(--muted); overflow-wrap: anywhere; }
 #export-msg:not(:empty) { padding: 6px 8px 8px; border-top: 1px solid var(--line); margin-top: 4px; }
 #export-msg.bad { color: var(--orange); }
+/* theme menu: one row per theme with a swatch drawn in that theme's own tokens (the swatch carries data-theme) */
+#theme-menu { width: 264px; max-width: calc(100vw - 32px); }
+#theme-menu button { display: grid; grid-template-columns: 40px minmax(0, 1fr) 14px; gap: 0 10px; align-items: center; }
+#theme-menu button[aria-checked="true"]::after { content: "✓"; color: var(--accent); font: 600 13px var(--f-mono); }
+#theme-menu button:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+.sw { display: flex; gap: 3px; align-items: center; justify-content: center; height: 24px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); overflow: hidden; }
+.sw i, .sw b::after { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.sw i + i { background: var(--teal); } .sw i + i + i { background: var(--rose); }
+.sw-auto { gap: 0; }
+.sw-auto b { flex: 1; align-self: stretch; display: grid; place-items: center; background: var(--bg); }
+.sw-auto b::after { content: ""; }
 
 /* ---------- views ---------- */
 .view { position: absolute; inset: 0; display: flex; flex-direction: column; }
@@ -436,7 +525,7 @@ table.steps tr.cur td { background: var(--accent-soft); }
 /* ---------- scenario picker (Dynamic) ---------- */
 #sc-modal { padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font-family: var(--f-body);
   width: min(720px, calc(100vw - 32px)); max-height: min(82vh, 780px); box-shadow: 0 24px 60px var(--shadow); }
-#sc-modal::backdrop { background: rgba(10, 18, 26, .45); }
+#sc-modal::backdrop { background: var(--backdrop, rgba(10, 18, 26, .45)); }   /* the fallback is for browsers whose ::backdrop does not inherit tokens */
 .scm { padding: 18px 20px 20px; }
 .scm-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin: 0; }
 .scm-head h2 { font-family: var(--f-display); font-size: 22px; margin: 2px 0 0; }
@@ -498,7 +587,8 @@ table.steps tr.cur td { background: var(--accent-soft); }
       <div class="search"><input id="q" type="search" placeholder="Find a box ( / )" autocomplete="off" aria-label="Find an element"><div id="search-hits" hidden></div></div>
       <button type="button" class="btn" id="btn-labels" aria-pressed="true" title="Arrow labels (L)">labels</button>
       <button type="button" class="btn" id="btn-edges" title="Arrow style: right-angled or straight (E)">edges</button>
-      <button type="button" class="btn" id="btn-theme" title="Colour theme: auto, light, dark (T)">theme: auto</button>
+      <div class="themes"><button type="button" class="btn" id="btn-theme" aria-haspopup="menu" aria-expanded="false" aria-controls="theme-menu" title="Colour theme (T cycles through them)">theme: auto ▾</button>
+        <div id="theme-menu" role="menu" aria-label="Colour theme" hidden></div></div>
       <div class="export"><button type="button" class="btn" id="btn-export" aria-haspopup="true" aria-expanded="false" title="Download the model as an RDF graph">export ▾</button>
         <div id="export-menu" hidden>
           <button type="button" data-export="jsonld">JSON-LD<small>the architecture as an RDF graph (.jsonld)</small></button>
@@ -559,6 +649,16 @@ table.steps tr.cur td { background: var(--accent-soft); }
      ===================================================================== -->
 <script id="validator">
 /* BEGIN VALIDATOR */
+/* Colour themes, in menu order. Each id needs a [data-theme="id"] block in the <style> above that sets every colour token.
+   `auto` (light, or dark when the OS asks for it) is always offered first and is not listed here. */
+window.ARCH_THEMES = [
+  { id: 'light', note: 'cool grey and navy' },
+  { id: 'dark', note: 'deep navy, soft colours' },
+  { id: 'contrast', note: 'high contrast, black on white' },
+  { id: 'paper', note: 'warm cream, prints well' },
+  { id: 'blueprint', note: 'deep blue, pale line work' },
+  { id: 'graphite', note: 'charcoal and slate, muted' }
+];
 /* Checks a MODEL against the schema. Returns { errors: [...], warnings: [...] }.
    Runs in the browser at boot and in scripts/check-model.mjs, so it must stay free of DOM access. */
 window.validateArchModel = function (M) {
@@ -703,6 +803,8 @@ window.validateArchModel = function (M) {
     else {
       if (M.view.startLevel !== undefined && [1, 2, 3, 4].indexOf(M.view.startLevel) < 0) E.push('view.startLevel must be 1, 2, 3 or 4.');
       if (M.view.edges !== undefined && ['orthogonal', 'straight'].indexOf(M.view.edges) < 0) E.push('view.edges must be "orthogonal" or "straight".');
+      var themeIds = ['auto'].concat((window.ARCH_THEMES || []).map(function (t) { return t.id; }));
+      if (M.view.theme !== undefined && themeIds.indexOf(M.view.theme) < 0) E.push('view.theme must be one of ' + themeIds.map(function (t) { return '"' + t + '"'; }).join(', ') + '.');
       if (M.view.open !== undefined) {
         if (!Array.isArray(M.view.open)) E.push('view.open must be an array of node ids.');
         else M.view.open.forEach(function (id) { if (!byId[id]) E.push('view.open: "' + id + '" is not a node id.'); });
@@ -825,6 +927,10 @@ window.archCore = function (MODEL) {
   var SIZE = { person: [250, 104], system: [300, 124], container: [260, 108], store: [240, 108], component: [264, 96], code: [272, 84], ext: [224, 96], sibling: [250, 104], state: [200, 68] };
   // HEAD header of an open box · PAD inner padding · GX/GY gaps between cells · RGX/RGY gaps at the top level
   var HEAD = 84, PAD = 30, GX = 112, GY = 76, RGX = 90, RGY = 110;   // HEAD leaves an arrow lane (18px above the first row) below the 60px title strip
+  // GX/GY/RGX/RGY are the sizes of quiet gutters; a busy gutter gets more (see "gutter sizes" below). Extra room per gutter:
+  // group ('' = top level) → { r: {row value: px}, c: {column value: px}, n: {id of the box on its left: px} (top level) }
+  var GUT = {};
+  function gutExtra(grp, ax, k) { var g = GUT[grp]; return (g && g[ax] && g[ax][k]) || 0; }
   var expanded = new Set();
   // boxes that show a sequence inside instead of their children: id → scenario index. Such a box is closed as far as
   // layout and arrows are concerned (its children are not placed, arrows attach to its border); "expanded" wins over it.
@@ -859,7 +965,7 @@ window.archCore = function (MODEL) {
   function textW(s, px) { return s.length * px * 0.62; }
   function measure(n) {
     if (isOpen(n)) {
-      var g = grid(n.kids, GX, GY);
+      var g = grid(n.kids, GX, GY, n.id);
       n._grid = g;
       n._w = Math.max(g.w + 2 * PAD, textW(n.name, 11.5) + 160 + NV * 14);
       n._h = HEAD + g.h + PAD;
@@ -871,7 +977,8 @@ window.archCore = function (MODEL) {
       n._w = SIZE[n.t][0]; n._h = SIZE[n.t][1];
     }
   }
-  function grid(items, gx, gy) {
+  // grp: the open box whose children these are; its busy gutters get their extra room (none when grp is omitted)
+  function grid(items, gx, gy, grp) {
     items.forEach(measure);
     var cols = [], rows = [];
     items.forEach(function (it) { if (cols.indexOf(it.at[0]) < 0) cols.push(it.at[0]); if (rows.indexOf(it.at[1]) < 0) rows.push(it.at[1]); });
@@ -879,9 +986,9 @@ window.archCore = function (MODEL) {
     var cw = cols.map(function () { return 0; }), rh = rows.map(function () { return 0; });
     items.forEach(function (it) { var c = cols.indexOf(it.at[0]), r = rows.indexOf(it.at[1]); cw[c] = Math.max(cw[c], it._w); rh[r] = Math.max(rh[r], it._h); });
     var cx = [], ry = [], acc = 0;
-    cw.forEach(function (w, i) { cx.push(acc); acc += w + (i < cw.length - 1 ? gx : 0); });
+    cw.forEach(function (w, i) { cx.push(acc); acc += w + (i < cw.length - 1 ? gx + (grp ? gutExtra(grp, 'c', cols[i]) : 0) : 0); });
     var W = acc; acc = 0;
-    rh.forEach(function (h, i) { ry.push(acc); acc += h + (i < rh.length - 1 ? gy : 0); });
+    rh.forEach(function (h, i) { ry.push(acc); acc += h + (i < rh.length - 1 ? gy + (grp ? gutExtra(grp, 'r', rows[i]) : 0) : 0); });
     return { w: W, h: acc, cols: cols, rows: rows, cw: cw, rh: rh, cx: cx, ry: ry };
   }
   function cellRect(it, g, ox, oy) {
@@ -1005,21 +1112,25 @@ window.archCore = function (MODEL) {
   // Top level. With explicit "at": each row is centred on its own, columns only give the order.
   // Automatic: the row holding the system is laid out first; boxes in the other rows are then slid sideways
   // to sit above / below whatever they talk to, so their arrows run close to vertical.
-  function layout() {
+  // One pass with the current gutter sizes (GUT); layout() below repeats it while busy gutters still need room.
+  var ROOTGRID = null;
+  function layoutOnce() {
     var target = new Map();
     ROOTS.forEach(measure);
     var rows = {}; ROOTS.forEach(function (n) { (rows[n.at[1]] = rows[n.at[1]] || []).push(n); });
     var keys = Object.keys(rows).map(Number).sort(function (a, b) { return a - b; });
     keys.forEach(function (k) { rows[k].sort(function (a, b) { return a.at[0] - b.at[0]; }); });
-    var widths = keys.map(function (k) { return rows[k].reduce(function (s, n) { return s + n._w; }, 0) + RGX * (rows[k].length - 1); });
+    function gapAfter(n) { return RGX + gutExtra('', 'n', n.id); }
+    var widths = keys.map(function (k) { return rows[k].reduce(function (s, n, i) { return s + n._w + (i < rows[k].length - 1 ? gapAfter(n) : 0); }, 0); });
     var heights = keys.map(function (k) { return Math.max.apply(null, rows[k].map(function (n) { return n._h; })); });
-    var ys = [], y = 0; heights.forEach(function (h) { ys.push(y); y += h + RGY; });
+    var ys = [], y = 0; heights.forEach(function (h, i) { ys.push(y); y += h + RGY + gutExtra('', 'r', keys[i]); });
+    ROOTGRID = { rows: rows, keys: keys, ys: ys, heights: heights };
     function put(n, x, i) {
       var r = { x: x, y: ys[i] + (heights[i] - n._h) / 2, w: n._w, h: n._h };
       target.set(n.id, r);
       if (isOpen(n)) place(target, n.kids, n._grid, r.x + (n._w - n._grid.w) / 2, r.y + HEAD);
     }
-    function centred(i) { var x = -widths[i] / 2; rows[keys[i]].forEach(function (n) { put(n, x, i); x += n._w + RGX; }); }
+    function centred(i) { var x = -widths[i] / 2; rows[keys[i]].forEach(function (n) { put(n, x, i); x += n._w + gapAfter(n); }); }
     if (!ROOT_AUTO) { keys.forEach(function (k, i) { centred(i); }); return target; }
     var anchor = 0;
     keys.forEach(function (k, i) { if (rows[k].some(function (n) { return n.t === 'system'; }) && !rows[keys[anchor]].some(function (n) { return n.t === 'system'; })) anchor = i; });
@@ -1040,8 +1151,8 @@ window.archCore = function (MODEL) {
       var mean = known.reduce(function (s, o) { return s + o.want; }, 0) / known.length;
       list.forEach(function (o) { if (o.want === null) o.want = mean; });
       list.sort(function (a, b) { return a.want - b.want || a.order - b.order; });
-      var right = -Infinity, shift = 0;
-      list.forEach(function (o) { o.x = Math.max(o.want - o.n._w / 2, right + RGX); right = o.x + o.n._w; shift += o.want - (o.x + o.n._w / 2); });
+      var right = -Infinity, gap = 0, shift = 0;
+      list.forEach(function (o) { o.x = Math.max(o.want - o.n._w / 2, right + gap); right = o.x + o.n._w; gap = gapAfter(o.n); shift += o.want - (o.x + o.n._w / 2); });
       shift /= list.length;
       list.forEach(function (o) { put(o.n, o.x + shift, i); });
     });
@@ -1078,6 +1189,8 @@ window.archCore = function (MODEL) {
       if (a === b || within(a, b) || within(b, a)) return;
       mergeInto(m, e, a, b, a !== f || b !== t, false);
     });
+    // twin: an arrow also runs the other way between the same two boxes (drawn as two parallel lines when straight)
+    m.forEach(function (x) { x.twin = !x.loop && m.has(x.b.id + '>' + x.a.id); });
     return finishMerged(Array.from(m.values()));
   }
 
@@ -1333,7 +1446,207 @@ window.archCore = function (MODEL) {
       }
       if (over) out.overlaps.push([paths[i].x, paths[j].x]);
     }
+    // labels that could not be placed clear of boxes, titles and other labels (the map draws them as markers)
+    out.labels = [];
+    placeLabels(geo, agg, null).forEach(function (it) { if (!it.full) out.labels.push({ x: it.x, hits: it.hits }); });
     return out;
+  }
+
+  /* ---------------- arrow labels ----------------
+     A label is one line up to 16 characters, else two lines broken at the space nearest the middle (20 characters each at
+     most). It sits on its own arrow: on a right-angled arrow on one of its segments, the roomiest first, sliding along it;
+     on a straight one along the line. It keeps clear of closed boxes, of the title strip and header buttons of open boxes,
+     and of the labels placed before it. Labels of hot arrows (the selected box's) go first and are always drawn in full;
+     the others go most constrained first. A label that still overlaps something is not drawn in full: it becomes a small
+     marker on its arrow. layout() uses this placement to size busy gutters; check-model.mjs reports what is left. */
+  // label geometry, in px. CH: width of one character and LH: line height of the 11px label font (keep in step with the
+  // .elab text font-size in the CSS) · BASE: baseline below a line's centre · PADW / PADH: padding added to the text
+  // (both sides together) · GAP: clearance kept around a label · MW × MH: the marker of a folded label
+  var LBL = { CH: 6.7, LH: 13, BASE: 4, PADW: 14, PADH: 7, GAP: 4, MW: 20, MH: 12 };
+  var TRIES = [0.5, 0.4, 0.6, 0.32, 0.68, 0.24, 0.76, 0.16, 0.84];
+  function wrapLabel(s) {
+    if (s.length <= 16) return [s];
+    var mid = s.length / 2, best = -1;
+    for (var i = 0; i < s.length; i++) if (s.charAt(i) === ' ' && (best < 0 || Math.abs(i - mid) < Math.abs(best - mid))) best = i;
+    return (best < 0 ? [s] : [s.slice(0, best), s.slice(best + 1)]).map(function (l) { return l.length > 20 ? l.slice(0, 19) + '…' : l; });
+  }
+  function labelSize(lines) { return { w: Math.max.apply(null, lines.map(function (l) { return l.length; })) * LBL.CH + LBL.PADW, h: lines.length * LBL.LH + LBL.PADH }; }
+  function rectAt(q, w, h) { return { x: q[0] - w / 2, y: q[1] - h / 2, w: w, h: h }; }
+  function pointAt(pts, f) {
+    var len = 0, i;
+    for (i = 0; i + 1 < pts.length; i++) len += dist(pts[i], pts[i + 1]);
+    var want = len * f;
+    for (i = 0; i + 1 < pts.length; i++) {
+      var d = dist(pts[i], pts[i + 1]);
+      if (want <= d || i + 2 === pts.length) { var t = d ? Math.min(1, want / d) : 0; return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t]; }
+      want -= d;
+    }
+    return pts[0];
+  }
+  // the points an arrow is drawn through: a self-transition is stood in for by the top of its loop; a straight pair of
+  // arrows running both ways becomes two parallel lines 9px either side of the centre line
+  function arrowPoints(x, geo) {
+    var ra = geo.get(x.a.id), rb = geo.get(x.b.id);
+    if (!ra || !rb) return null;
+    if (x.loop) return [[ra.x + ra.w - 78, ra.y - 38], [ra.x + ra.w - 34, ra.y - 38]];
+    var pts = pathPoints(x, geo);
+    if (!x.segs && pts.length === 2 && x.twin) {
+      var ca = ctr(ra), cb = ctr(rb), dx = cb[0] - ca[0], dy = cb[1] - ca[1], len = Math.hypot(dx, dy) || 1, ox = -dy / len * 9, oy = dx / len * 9;
+      var q1 = clip(ra, cb[0] + ox, cb[1] + oy), q2 = clip(rb, ca[0] + ox, ca[1] + oy);
+      pts = [[q1[0] + ox, q1[1] + oy], [q2[0] + ox, q2[1] + oy]];
+    }
+    return pts;
+  }
+  // candidate centres for a label, best first
+  function labelSpots(x, pts, w, h) {
+    var spots = [], k, n;
+    function slide(A, B, len) {   // from the middle of A–B outwards, about every 24px
+      n = Math.max(1, Math.min(24, Math.floor(len / 24)));
+      spots.push([(A[0] + B[0]) / 2, (A[1] + B[1]) / 2]);
+      for (k = 1; k <= n / 2; k++) [0.5 + k / (n + 1), 0.5 - k / (n + 1)].forEach(function (f) { spots.push([A[0] + (B[0] - A[0]) * f, A[1] + (B[1] - A[1]) * f]); });
+    }
+    if (x.segs) {
+      // right-angled: one of its own segments, the roomiest first (a segment long enough to hold the label beats a longer one)
+      var ranked = [];
+      for (var si = 0; si + 1 < pts.length; si++) {
+        var horiz = Math.abs(pts[si][1] - pts[si + 1][1]) < 0.01, len = dist(pts[si], pts[si + 1]);
+        ranked.push({ i: si, len: len, room: len - (horiz ? w : h) });
+      }
+      ranked.sort(function (p, q) { return (q.room >= 12 ? 1 : 0) - (p.room >= 12 ? 1 : 0) || q.len - p.len; });
+      ranked.forEach(function (sg) { slide(pts[sg.i], pts[sg.i + 1], sg.len); });
+    }
+    TRIES.forEach(function (f) { spots.push(pointAt(pts, f)); });
+    if (!x.segs) { n = 22; for (k = 1; k <= n; k++) spots.push(pointAt(pts, 0.5 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 0.4 / (n / 2))); }
+    return spots;
+  }
+  // what a label must keep clear of: closed boxes, and the title strip and header buttons of open boxes
+  function labelObstacles(geo) {
+    var obs = [];
+    geo.forEach(function (r, id) {
+      var n = byId[id];
+      if (!isOpen(n)) { obs.push({ r: r, n: n, what: 'box' }); return; }
+      obs.push({ r: { x: r.x + 10, y: r.y + 6, w: Math.min(r.w - 20, 340), h: 52 }, n: n, what: 'title' });
+      var bw = 98 + NV * 14 + (n.seqScen.length ? 95 : 0);
+      obs.push({ r: { x: r.x + r.w - bw - 6, y: r.y + 8, w: bw, h: 28 }, n: n, what: 'title' });
+    });
+    return obs;
+  }
+  // geo: box rectangles · agg: routed arrows · hot(x): true for arrows whose label must be drawn in full
+  // → Map arrow key → { x, pts, lines, w, h, at: [x, y], full, mark: [x, y] (when not full), hits: [{ what: 'label' | 'box' | 'title', x | n }] }
+  function placeLabels(geo, agg, hot) {
+    var obs = labelObstacles(geo), items = [], full = [], marks = [], out = new Map(), G = LBL.GAP;
+    agg.forEach(function (x, idx) {
+      var pts = arrowPoints(x, geo);
+      if (!pts) return;
+      var lines = wrapLabel(x.text), sz = labelSize(lines);
+      var spots = labelSpots(x, pts, sz.w, sz.h).map(function (q) {
+        var lr = rectAt(q, sz.w + 2 * G, sz.h + 2 * G);
+        return { q: q, lr: lr, obs: obs.filter(function (o) { return hit(lr, o.r); }) };
+      });
+      var it = { x: x, idx: idx, pts: pts, lines: lines, w: sz.w, h: sz.h, spots: spots, hot: !!(hot && hot(x)), at: spots[0].q, full: true, mark: null, hits: [] };
+      it.free = spots.filter(function (s) { return !s.obs.length; }).length;
+      items.push(it); out.set(x.key, it);
+    });
+    // hot labels first, then the most constrained (fewest spots clear of boxes); one with no clear spot cannot be drawn in full anyway
+    var order = items.slice().sort(function (p, q) { return (q.hot ? 1 : 0) - (p.hot ? 1 : 0) || (p.free ? 0 : 1) - (q.free ? 0 : 1) || p.free - q.free || p.idx - q.idx; });
+    order.forEach(function (it) {
+      var best = null, bestBad = Infinity;
+      for (var i = 0; i < it.spots.length && bestBad > 0; i++) {
+        var s = it.spots[i], lab = full.filter(function (f) { return hit(s.lr, f.r); }), bad = s.obs.length * 3 + lab.length;
+        if (bad < bestBad) { bestBad = bad; best = { s: s, lab: lab }; }
+      }
+      it.at = best.s.q; it.full = !bestBad || it.hot;
+      it.hits = best.s.obs.map(function (o) { return { what: o.what, n: o.n }; }).concat(best.lab.map(function (f) { return { what: 'label', x: f.it.x }; }));
+      if (it.full) full.push({ r: rectAt(it.at, it.w, it.h), it: it });
+    });
+    // the marker of a label not drawn in full: the first spot on its arrow clear of boxes, full labels and other markers
+    order.forEach(function (it) {
+      if (it.full) return;
+      var pick = null, fallback = null;
+      for (var i = 0; i < it.spots.length && !pick; i++) {
+        var q = it.spots[i].q, r = rectAt(q, LBL.MW + 2 * G, LBL.MH + 2 * G);
+        if (obs.some(function (o) { return hit(r, o.r); })) continue;
+        if (!fallback) fallback = q;
+        if (!full.some(function (f) { return hit(r, f.r); }) && !marks.some(function (m) { return hit(r, m); })) pick = q;
+      }
+      it.mark = pick || fallback || it.at;
+      marks.push(rectAt(it.mark, LBL.MW, LBL.MH));
+    });
+    return out;
+  }
+
+  /* ---------------- gutter sizes ----------------
+     A gutter is the strip between two neighbouring rows or columns of a group (at the top level: between two rows, or
+     between two neighbours in a row). It starts at GY / GX (RGY / RGX at the top level) and grows when what runs in it
+     needs more room:
+       lanes   n right-angled arrows running side by side along it (the most at any point) need 2·OM + (n − 1)·LANE;
+       labels  a label centred in it that could not be placed in full widens it to fit that label across, and each
+               such label adds GROW px per round.
+     layout() lays out, routes, places labels, grows the gutters that need it and lays out again, until nothing changes
+     (GROUNDS rounds at most; a gutter grows by GMAX px at most). Growth for labels that leaves as many labels stuck in
+     that gutter as before is taken back; those labels become markers. Quiet gutters keep their size. Routes stay tied
+     to boxes, so the result animates like any other layout change. */
+  var GROUNDS = 5, GMAX = 200, GROW = { r: 22, c: 28, n: 28 };
+  function gutterList(geo) {
+    var out = [], T = ROOTGRID;
+    geo.forEach(function (r, id) {
+      var n = byId[id], g = n._grid, i;
+      if (!isOpen(n) || !g) return;
+      var ox = r.x + (n._w - g.w) / 2, oy = r.y + HEAD;
+      for (i = 0; i + 1 < g.rows.length; i++) { var y0 = oy + g.ry[i] + g.rh[i]; out.push({ grp: n.id, ax: 'r', k: g.rows[i], base: GY, rect: { x: r.x, y: y0, w: r.w, h: oy + g.ry[i + 1] - y0 } }); }
+      for (i = 0; i + 1 < g.cols.length; i++) { var x0 = ox + g.cx[i] + g.cw[i]; out.push({ grp: n.id, ax: 'c', k: g.cols[i], base: GX, rect: { x: x0, y: oy, w: ox + g.cx[i + 1] - x0, h: r.y + r.h - oy } }); }
+    });
+    T.keys.forEach(function (k, i) {
+      if (i + 1 < T.keys.length) { var y0 = T.ys[i] + T.heights[i]; out.push({ grp: '', ax: 'r', k: k, base: RGY, rect: { x: -1e7, y: y0, w: 2e7, h: T.ys[i + 1] - y0 } }); }
+      var row = T.rows[k].map(function (n) { return { n: n, r: geo.get(n.id) }; }).sort(function (a, b) { return a.r.x - b.r.x; });
+      for (var j = 0; j + 1 < row.length; j++) { var A = row[j].r, B = row[j + 1].r; out.push({ grp: '', ax: 'n', k: row[j].n.id, base: RGX, rect: { x: A.x + A.w, y: T.ys[i], w: B.x - A.x - A.w, h: T.heights[i] } }); }
+    });
+    return out;
+  }
+  function gutterNeed(gt, P) {
+    var R = gt.rect, row = gt.ax === 'r', have = gt.base + gutExtra(gt.grp, gt.ax, gt.k), ev = [], stuck = 0, fit = 0;
+    var c0 = row ? R.y : R.x, c1 = c0 + (row ? R.h : R.w), s0 = row ? R.x : R.y, s1 = s0 + (row ? R.w : R.h);
+    P.forEach(function (it) {
+      var p = it.pts;
+      if (it.x.segs) for (var i = 0; i + 1 < p.length; i++) {
+        var A = p[i], B = p[i + 1];
+        if (Math.abs(row ? A[1] - B[1] : A[0] - B[0]) > 0.01) continue;   // not running along the gutter
+        var c = row ? A[1] : A[0], lo = Math.min(row ? A[0] : A[1], row ? B[0] : B[1]), hi = Math.max(row ? A[0] : A[1], row ? B[0] : B[1]);
+        if (c > c0 && c < c1 && hi > s0 && lo < s1) ev.push([Math.max(lo, s0), 1], [Math.min(hi, s1), -1]);
+      }
+      var q = it.at;
+      if (!it.full && q[0] > R.x && q[0] < R.x + R.w && q[1] > R.y && q[1] < R.y + R.h) { stuck++; fit = Math.max(fit, (row ? it.h : it.w) + 2 * LBL.GAP + 16); }
+    });
+    ev.sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+    var depth = 0, d = 0;
+    ev.forEach(function (e) { d += e[1]; depth = Math.max(depth, d); });
+    return { have: have, stuck: stuck, lanes: depth ? 2 * OM + (depth - 1) * LANE : 0, labels: stuck ? Math.max(fit, have + stuck * GROW[gt.ax]) : 0 };
+  }
+  function layout() {
+    GUT = {};
+    var geo = layoutOnce(), first = {}, last = {};
+    function setSize(gt, size) { var g = GUT[gt.grp] = GUT[gt.grp] || { r: {}, c: {}, n: {} }; g[gt.ax][gt.k] = size - gt.base; }
+    // grow (GROUNDS rounds at most), then one more pass that only measures
+    for (var round = 0; round <= GROUNDS; round++) {
+      var P = placeLabels(geo, route(geo, aggregate()), null), changed = false;
+      gutterList(geo).forEach(function (gt) {
+        var id = gt.grp + '|' + gt.ax + '|' + gt.k, s = gutterNeed(gt, P);
+        if (!(id in first)) first[id] = s.stuck;
+        last[id] = { gt: gt, stuck: s.stuck, lanes: s.lanes };
+        if (round === GROUNDS) return;
+        var size = Math.min(Math.max(s.have, s.lanes, s.labels), Math.max(s.have, gt.base + GMAX));
+        if (size > s.have + 0.5) { setSize(gt, size); changed = true; }
+      });
+      if (!changed) break;
+      geo = layoutOnce();
+    }
+    // growth for labels that did not reduce the labels stuck in that gutter is taken back: they become markers instead
+    var back = false;
+    Object.keys(last).forEach(function (id) {
+      var L = last[id], gt = L.gt, keep = Math.max(gt.base, L.lanes);
+      if (first[id] && L.stuck >= first[id] && gt.base + gutExtra(gt.grp, gt.ax, gt.k) > keep + 0.5) { setSize(gt, keep); back = true; }
+    });
+    return back ? layoutOnce() : geo;
   }
   function setEdgeStyle(s) { if (s === 'straight' || s === 'orthogonal') edgeStyle = s; return edgeStyle; }
 
@@ -1348,7 +1661,9 @@ window.archCore = function (MODEL) {
     seqView: seqView, isSeq: isSeq, innerSeq: innerSeq, SEQ: SEQ,
     layout: layout, aggregate: aggregate, route: route, pathPoints: pathPoints, analyse: analyse, mergeInto: mergeInto, finishMerged: finishMerged,
     sameKind: sameKind, joinLabels: joinLabels, clip: clip, hit: hit, levelSet: levelSet, openToLevel: openToLevel,
-    setEdgeStyle: setEdgeStyle, edgeStyle: function () { return edgeStyle; } };
+    setEdgeStyle: setEdgeStyle, edgeStyle: function () { return edgeStyle; },
+    wrapLabel: wrapLabel, labelSize: labelSize, arrowPoints: arrowPoints, placeLabels: placeLabels, LBL: LBL,
+    gutters: function () { return JSON.parse(JSON.stringify(GUT)); } };
 };
 /* END CORE */
 </script>
@@ -1486,6 +1801,18 @@ function fatal(title, list) {
   root.setAttribute('data-explorer', 'error');
   window.ARCH_EXPLORER = { ready: false, errors: list, warnings: [] };
 }
+/* colour theme: `auto` or an id from ARCH_THEMES (validator script). Set before anything is drawn, so the error screen follows it too.
+   The first of these that is set wins: #theme= in the URL (for this visit, not saved), the reader's last pick (localStorage),
+   the model's view.theme, auto. The menu and the T key are wired up further down ("theme menu"). */
+var THEME_KEY = 'architecture-explorer-theme', THEME_LIST = window.ARCH_THEMES || [];
+var THEMES = ['auto'].concat(THEME_LIST.map(function (t) { return t.id; }));
+var THEME_DEFAULT = window.MODEL && window.MODEL.view && THEMES.indexOf(window.MODEL.view.theme) >= 0 ? window.MODEL.view.theme : 'auto';
+var themeLocked = !document.getElementById('btn-theme');   // the theme menu was deleted from the page: view.theme (else auto) is final
+var theme = THEME_DEFAULT, hashTheme = themeLocked ? null : (/(?:^#|&)theme=([\w-]+)/.exec(location.hash) || [])[1] || null;
+try { var savedTheme = themeLocked ? null : localStorage.getItem(THEME_KEY); if (THEMES.indexOf(savedTheme) >= 0) theme = savedTheme; } catch (e) {}
+if (THEMES.indexOf(hashTheme) >= 0) theme = hashTheme; else hashTheme = null;
+function setThemeAttr() { if (theme === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', theme); }
+setThemeAttr();
 var MODEL = window.MODEL;
 if (!MODEL || typeof MODEL !== 'object') { fatal('The MODEL block did not load', ['window.MODEL is undefined: the MODEL script block probably has a JavaScript syntax error (see the browser console).']); return; }
 var CHECK = window.validateArchModel(MODEL);
@@ -1728,25 +2055,6 @@ function clip(r, px, py) {
   return [cx + dx * s, cy + dy * s];
 }
 function hit(a, b) { return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h; }
-var TRIES = [0.5, 0.4, 0.6, 0.32, 0.68, 0.24, 0.76, 0.16, 0.84];
-// arrow labels: one line up to 16 characters, otherwise two lines broken at the space nearest the middle
-function wrapLabel(s) {
-  if (s.length <= 16) return [s];
-  var mid = s.length / 2, best = -1;
-  for (var i = 0; i < s.length; i++) if (s.charAt(i) === ' ' && (best < 0 || Math.abs(i - mid) < Math.abs(best - mid))) best = i;
-  return (best < 0 ? [s] : [s.slice(0, best), s.slice(best + 1)]).map(function (l) { return l.length > 20 ? l.slice(0, 19) + '…' : l; });
-}
-function pointAt(pts, f) {
-  var len = 0, i;
-  for (i = 0; i + 1 < pts.length; i++) len += Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]);
-  var want = len * f;
-  for (i = 0; i + 1 < pts.length; i++) {
-    var d = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]);
-    if (want <= d || i + 2 === pts.length) { var t = d ? Math.min(1, want / d) : 0; return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t]; }
-    want -= d;
-  }
-  return pts[0];
-}
 // polyline with rounded bends
 function roundedPath(pts, rad) {
   var d = 'M' + pts[0][0].toFixed(1) + ',' + pts[0][1].toFixed(1);
@@ -1759,80 +2067,71 @@ function roundedPath(pts, rad) {
   var e = pts[pts.length - 1];
   return d + ' L' + e[0].toFixed(1) + ',' + e[1].toFixed(1);
 }
+/* Arrow labels are placed by the core (C.placeLabels): the selected box's labels first and always in full, then the rest.
+   A label that would still overlap a label, a box or a title strip is folded: a small marker sits on its arrow and the
+   full label appears there on hover of the arrow or the marker, on a click or tap of either (sticky until the next
+   click elsewhere), or when an end box is selected. */
+var hoverKey = null, pinKey = null, hoverT = 0;
+// an arrow of a selected box (or of something inside one); with several selected, of any of them
+function hotArrow(x) { var S = selList(); return S.length > 0 && x.raw.some(function (e) { return S.some(function (s) { return within(byId[e.from], s) || within(byId[e.to], s); }); }); }
+function showLabel(prev, key) {
+  [prev, key].forEach(function (k) {
+    var o = k && edgeEls.get(k); if (!o) return;
+    var on = k === hoverKey || k === pinKey;
+    o.lab.classList.toggle('reveal', on); o.path.classList.toggle('hover', on);
+    if (on && o.lab.nextSibling) L.labels.appendChild(o.lab);   // on top of the other labels
+  });
+}
+// leaving waits a moment: the revealed label may cover the arrow the pointer came from
+function hoverLabel(key) {
+  clearTimeout(hoverT);
+  if (key === null) { hoverT = setTimeout(function () { var p = hoverKey; hoverKey = null; showLabel(p, null); }, 140); return; }
+  var prev = hoverKey; hoverKey = key; showLabel(prev, key);
+}
+function pinLabel(key) { var prev = pinKey; pinKey = key && key !== pinKey ? key : null; showLabel(prev, pinKey); }
 function drawEdges(geo) {
-  var seen = new Set(), placed = [], boxes = [], keys = new Set(agg.map(function (x) { return x.key; }));
-  // labels keep clear of closed boxes and of the title strip of open ones
-  geo.forEach(function (r, id) { if (!isOpen(byId[id])) boxes.push(r); else boxes.push({ x: r.x + 10, y: r.y + 6, w: Math.min(r.w - 20, 340), h: 52 }); });
+  var seen = new Set(), P = C.placeLabels(geo, agg, hotArrow), LB = C.LBL;
   agg.forEach(function (x) {
-    var ra = geo.get(x.a.id), rb = geo.get(x.b.id);
-    if (!ra || !rb) return;
+    var ra = geo.get(x.a.id), it = P.get(x.key);
+    if (!it) return;
     seen.add(x.key);
     var o = edgeEls.get(x.key);
     if (!o) {
-      var path = mk('path', {}, L.edges);
-      var lab = mk('g', {}, L.labels);
+      var key = x.key, path = mk('path', {}, L.edges), hitp = mk('path', { 'class': 'ehit', 'data-ekey': key }, L.edges);
+      var lab = mk('g', { 'data-ekey': key }, L.labels);
       mk('rect', { rx: 5 }, lab); mk('text', { 'text-anchor': 'middle' }, lab);
-      o = { path: path, lab: lab, text: null, lines: [] }; edgeEls.set(x.key, o);
+      var mark = mk('g', { 'class': 'emark' }, lab);
+      mk('rect', { x: -LB.MW / 2, y: -LB.MH / 2, width: LB.MW, height: LB.MH, rx: LB.MH / 2 }, mark);
+      [-5, 0, 5].forEach(function (cx) { mk('circle', { cx: cx, cy: 0, r: 1.4 }, mark); });
+      [hitp, lab].forEach(function (el) {
+        el.addEventListener('pointerenter', function () { hoverLabel(key); });
+        el.addEventListener('pointerleave', function () { hoverLabel(null); });
+      });
+      o = { path: path, hit: hitp, lab: lab, mark: mark, text: null }; edgeEls.set(key, o);
     }
     // class, colour and text are refreshed every time: opening a box changes which relationships an arrow stands for
-    o.path.setAttribute('class', 'e ' + kc(x.k) + (x.dash ? ' dash' : ''));
+    var shown = hoverKey === x.key || pinKey === x.key;
+    o.path.setAttribute('class', 'e ' + kc(x.k) + (x.dash ? ' dash' : '') + (shown ? ' hover' : ''));
     o.path.setAttribute('marker-end', 'url(#a-' + x.k + ')');
-    o.lab.setAttribute('class', 'elab ' + kc(x.k));
+    o.lab.setAttribute('class', 'elab ' + kc(x.k) + (it.full ? '' : ' folded') + (shown ? ' reveal' : ''));
     var textEl = o.lab.children[1];
-    if (o.text !== x.text) { o.text = x.text; o.lines = wrapLabel(x.text); textEl.textContent = ''; o.lines.forEach(function (l) { mk('tspan', {}, textEl).textContent = l; }); }
+    if (o.text !== x.text) { o.text = x.text; textEl.textContent = ''; it.lines.forEach(function (l) { mk('tspan', {}, textEl).textContent = l; }); o.lab.setAttribute('aria-label', 'Arrow label: ' + x.text); }
     markModes(o.path, x.modes); markModes(o.lab, x.modes);
-    var hot = selected && x.raw.some(function (e) { return within(byId[e.from], selected) || within(byId[e.to], selected); });
-    o.path.classList.toggle('hot', !!hot); o.lab.classList.toggle('hot', !!hot);
-    var pts, d;
+    o.path.classList.toggle('hot', it.hot); o.lab.classList.toggle('hot', it.hot);
+    var d;
     if (x.loop) {
       // a transition from a state to itself: a small loop on the top edge
       var x1 = ra.x + ra.w - 78, x2 = ra.x + ra.w - 34, y0 = ra.y;
       d = 'M' + x1.toFixed(1) + ',' + y0.toFixed(1) + ' C' + (x1 - 14).toFixed(1) + ',' + (y0 - 46).toFixed(1) + ' ' + (x2 + 14).toFixed(1) + ',' + (y0 - 46).toFixed(1) + ' ' + x2.toFixed(1) + ',' + y0.toFixed(1);
-      pts = [[x1, y0 - 38], [x2, y0 - 38]];
-    } else {
-      pts = C.pathPoints(x, geo);
-      if (!x.segs && pts.length === 2 && keys.has(x.b.id + '>' + x.a.id)) {
-        // a pair of arrows running both ways is drawn as two parallel lines instead of one on top of the other
-        var ca = [ra.x + ra.w / 2, ra.y + ra.h / 2], cb = [rb.x + rb.w / 2, rb.y + rb.h / 2];
-        var ddx = cb[0] - ca[0], ddy = cb[1] - ca[1], len = Math.hypot(ddx, ddy) || 1, ox = -ddy / len * 9, oy = ddx / len * 9;
-        var q1 = clip(ra, cb[0] + ox, cb[1] + oy), q2 = clip(rb, ca[0] + ox, ca[1] + oy);
-        pts = [[q1[0] + ox, q1[1] + oy], [q2[0] + ox, q2[1] + oy]];
-      }
-      d = roundedPath(pts, x.segs ? 8 : 26);
-    }
-    o.path.setAttribute('d', d);
-    var w = Math.max.apply(null, o.lines.map(function (l) { return l.length; })) * 6.7 + 14, hgt = o.lines.length * 13 + 7, at = pointAt(pts, 0.5);
-    var spots = [];
-    if (x.segs) {
-      // right-angled arrow: the label sits on one of its own segments, the roomiest first (a segment long enough to hold it beats a longer path position)
-      var ranked = [];
-      for (var si = 0; si + 1 < pts.length; si++) {
-        var horiz = Math.abs(pts[si][1] - pts[si + 1][1]) < 0.01, slen = Math.hypot(pts[si + 1][0] - pts[si][0], pts[si + 1][1] - pts[si][1]);
-        ranked.push({ i: si, len: slen, room: slen - (horiz ? w : hgt) });
-      }
-      ranked.sort(function (p, q) { return (q.room >= 12 ? 1 : 0) - (p.room >= 12 ? 1 : 0) || q.len - p.len; });
-      ranked.forEach(function (sg) {
-        // slide along the segment in steps, from its middle outwards
-        var steps = Math.max(1, Math.min(12, Math.floor(sg.len / 44))), fr = [0.5];
-        for (var k = 1; k <= steps / 2; k++) { fr.push(0.5 + k / (steps + 1), 0.5 - k / (steps + 1)); }
-        fr.forEach(function (f) { spots.push([pts[sg.i][0] + (pts[sg.i + 1][0] - pts[sg.i][0]) * f, pts[sg.i][1] + (pts[sg.i + 1][1] - pts[sg.i][1]) * f]); });
-      });
-      if (spots.length) at = spots[0];
-    }
-    TRIES.forEach(function (f) { spots.push(pointAt(pts, f)); });
-    // first free spot wins; if none is free, the one that covers the least (a box counts more than another label)
-    var bestBad = Infinity;
-    for (var ti = 0; ti < spots.length; ti++) {
-      var q = spots[ti], lr = { x: q[0] - w / 2 - 4, y: q[1] - hgt / 2 - 4, w: w + 8, h: hgt + 8 };
-      var bad = boxes.filter(function (b) { return hit(lr, b); }).length * 3 + placed.filter(function (b) { return hit(lr, b); }).length;
-      if (bad < bestBad) { bestBad = bad; at = q; if (!bad) break; }
-    }
-    placed.push({ x: at[0] - w / 2, y: at[1] - hgt / 2, w: w, h: hgt });
-    var rect = o.lab.children[0];
+    } else d = roundedPath(it.pts, x.segs ? 8 : 26);   // it.pts: a straight pair running both ways is already two parallel lines
+    o.path.setAttribute('d', d); o.hit.setAttribute('d', d);
+    // a folded label waits, hidden, centred on its marker
+    var at = it.full ? it.at : it.mark, w = it.w, hgt = it.h, rect = o.lab.children[0];
     rect.setAttribute('x', at[0] - w / 2); rect.setAttribute('y', at[1] - hgt / 2); rect.setAttribute('width', w); rect.setAttribute('height', hgt);
-    for (var li = 0; li < textEl.children.length; li++) { textEl.children[li].setAttribute('x', at[0]); textEl.children[li].setAttribute('y', at[1] - (o.lines.length - 1) * 6.5 + 4 + li * 13); }
+    for (var li = 0; li < textEl.children.length; li++) { textEl.children[li].setAttribute('x', at[0]); textEl.children[li].setAttribute('y', at[1] + (li - (it.lines.length - 1) / 2) * LB.LH + LB.BASE); }
+    o.mark.setAttribute('transform', 'translate(' + at[0].toFixed(1) + ',' + at[1].toFixed(1) + ')');
   });
-  edgeEls.forEach(function (o, key) { if (!seen.has(key)) { o.path.remove(); o.lab.remove(); edgeEls.delete(key); } });
+  edgeEls.forEach(function (o, key) { if (!seen.has(key)) { o.path.remove(); o.hit.remove(); o.lab.remove(); edgeEls.delete(key); } });
 }
 
 function frame(geo) {
@@ -1842,7 +2141,12 @@ function frame(geo) {
   // keep open boxes ordered parent-first
   Array.from(L.bounds.children).sort(function (a, b) { return depthOf(byId[a.dataset.id]) - depthOf(byId[b.dataset.id]); }).forEach(function (e) { L.bounds.appendChild(e); });
   drawEdges(geo);
-  els.forEach(function (el, id) { el.classList.toggle('sel', !!selected && selected.id === id); });
+  // selected boxes, and with a selection: lit (connected), context (open box around a lit one) or dimmed
+  var S = selList(), lit = litSet(geo);
+  els.forEach(function (el, id) {
+    var on = !lit || lit.on.has(id), ctx = !!lit && lit.ctx.has(id);
+    el.classList.toggle('sel', S.indexOf(byId[id]) >= 0); el.classList.toggle('nd-ctx', ctx); el.classList.toggle('nd-dim', !on && !ctx);
+  });
   svg.classList.toggle('has-sel', !!selected);
 }
 
@@ -1942,7 +2246,9 @@ function toggle(n, focus) {
   if (expanded.has(n.id)) {
     expanded.delete(n.id);
     NODES.forEach(function (x) { if (within(x, n) && x !== n) expanded.delete(x.id); });
+    var was = selList();
     if (selected && within(selected, n) && selected !== n) selected = n;
+    if (was.length > 1) setSel(was.map(function (s) { return within(s, n) ? n : s; }));   // what closed with it is now the box
     if (seqSel && within(byId[seqSel.id], n)) seqSel = null;
     relayout(null);
   } else {
@@ -2031,6 +2337,7 @@ function seqToDynamic(n) {
 }
 function setLevel(lv) {
   openToLevel(lv); seqView.clear(); seqSel = null;
+  if (selList().length > 1) setSel(selList().map(rep));
   if (selected && !visible(selected)) selected = rep(selected);
   relayout(function () { return fitAll(); });
   syncLevel(); renderPanel(); crumb();
@@ -2043,11 +2350,42 @@ function syncLevel() {
 function reveal(n) {
   if (view !== 'map') setView('map');
   ancestors(n).forEach(function (a) { expanded.add(a.id); seqView.delete(a.id); });
-  selected = n; seqSel = null;
+  selected = n; multi = []; seqSel = null;
   relayout(function () { var r = target.get(n.id), b = { x: r.x - 160, y: r.y - 120, w: r.w + 320, h: r.h + 240 }; return centerOn(b, Math.min(fitTo(b).s, 1.1)); });
   syncLevel(); renderPanel(); crumb();
 }
-function select(n) { selected = n; seqSel = null; redraw(); renderPanel(); crumb(); }
+function select(n) { selected = n; multi = []; seqSel = null; redraw(); renderPanel(); crumb(); }
+/* Several boxes selected (Ctrl / ⌘ / Shift + click, or + Enter on a focused box): their ids in `multi`, the most recent
+   last, which is also `selected`, the box the rest of the engine reads. `multi` counts only while it holds `selected`,
+   so code that sets `selected` alone still selects a single box. */
+var multi = [];
+function selList() { return !selected ? [] : multi.length > 1 && multi.indexOf(selected.id) >= 0 ? multi.map(function (id) { return byId[id]; }) : [selected]; }
+function isSel(n) { return selList().indexOf(n) >= 0; }
+function setSel(list) {
+  var ids = []; list.forEach(function (n) { if (n && ids.indexOf(n.id) < 0) ids.push(n.id); });
+  multi = ids; selected = ids.length ? byId[ids[ids.length - 1]] : null;
+}
+// add a box to the selection, or take it out
+function toggleSel(n) { var list = selList(), i = list.indexOf(n); if (i >= 0) list.splice(i, 1); else list.push(n); setSel(list); seqSel = null; }
+function selectToggle(n) { toggleSel(n); redraw(); renderPanel(); crumb(); }
+// P and the panel's pin button: one box toggles; several are all pinned, or all unpinned when every one already is
+function pinSel() {
+  var S = selList(); if (!S.length) return;
+  if (S.length === 1) { togglePin(S[0]); return; }
+  var all = S.every(function (n) { return isPinned(n.id); });
+  S.forEach(function (n) { if (all) pins = pins.filter(function (x) { return x !== n.id; }); else if (!isPinned(n.id)) pins.push(n.id); });
+  pinsChanged();
+}
+// with a selection: the selected boxes, what is inside them, and the boxes at the other end of their arrows stay lit;
+// open boxes around a lit box are context (they fade a little); everything else fades
+function litSet(geo) {
+  var S = selList(); if (!S.length) return null;
+  var on = new Set(), ctx = new Set();
+  geo.forEach(function (r, id) { if (S.some(function (s) { return within(byId[id], s); })) on.add(id); });
+  agg.forEach(function (x) { if (geo.get(x.a.id) && geo.get(x.b.id) && hotArrow(x)) { on.add(x.a.id); on.add(x.b.id); } });
+  on.forEach(function (id) { ancestors(byId[id]).forEach(function (a) { if (!on.has(a.id)) ctx.add(a.id); }); });
+  return { on: on, ctx: ctx };
+}
 function setMode(m) {
   mode = m; svg.setAttribute('data-mode', m);
   document.querySelectorAll('#modes button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.mode === m)); });
@@ -2085,6 +2423,7 @@ function renderPanel() {
   writeHash();
   if (view === 'dynamic' && !selected) { renderStepPanel(); return; }
   if (view === 'map' && !selected && seqSel) { if (renderSeqPanel()) return; seqSel = null; }
+  if (selList().length > 1 && view !== 'dynamic') { renderMultiPanel(selList()); return; }
   var n = selected;
   if (!n) {
     var counts = LEVELS.map(function (l) { return NODES.filter(function (x) { return x.lv === l; }).length; });
@@ -2095,9 +2434,10 @@ function renderPanel() {
       '<div class="stats" style="grid-template-columns:repeat(' + LEVELS.length + ',1fr)">' + LEVELS.map(function (l, i) { return '<div><b>' + counts[i] + '</b><small>L' + l + ' ' + esc(LEVEL_NAME[l].split(' ').pop()) + '</small></div>'; }).join('') + '</div>' +
       '<h3>Keys</h3><div class="keys">' +
       '<kbd>click</kbd><span>select a box, show its details</span><kbd>double-click</kbd><span>open or close a box</span>' +
+      '<kbd>Ctrl / ⌘ + click</kbd><span>add a box to the selection, or take it out (Shift + click too; on a focused box Ctrl / ⌘ / Shift + Enter)</span>' +
       '<kbd>drag · scroll</kbd><span>pan · zoom</span>' +
       (MAXL > 1 ? '<kbd>' + LEVELS.join(' ') + '</kbd><span>open the map to level L1–L' + MAXL + '</span>' : '') +
-      '<kbd>P</kbd><span>pin or unpin the selected box</span>' +
+      '<kbd>P</kbd><span>pin or unpin the selected box (all selected boxes)</span>' +
       (HAS_DYN ? '<kbd>S</kbd><span>show the sequence inside the selected box, or its boxes again</span>' : '') +
       '<kbd>M · B' + (HAS_DYN ? ' · D' : '') + '</kbd><span>Map · Pinned board' + (HAS_DYN ? ' · Dynamic' : '') + '</span>' +
       (HAS_DYN ? '<kbd>← →  space</kbd><span>step / play a dynamic diagram</span>' : '') +
@@ -2150,6 +2490,52 @@ function renderPanel() {
     '<h3>' + (isState ? 'Transitions to' : 'Uses') + ' (' + out.length + ')</h3>' + relList(out, '→') +
     '<h3>' + (isState ? 'Reached from' : 'Used by') + ' (' + inn.length + ')</h3>' + relList(inn, '←');
 }
+// several boxes selected: the list (each entry centres its box, × takes it out), the relationships between them,
+// and what they use and are used by together (relationships of everything inside them included)
+function renderMultiPanel(S) {
+  function owner(x) { for (var i = 0; i < S.length; i++) if (within(x, S[i])) return S[i]; return null; }
+  var between = [], out = [], inn = [];
+  EDGES.forEach(function (e) {
+    var f = byId[e.from], t = byId[e.to], sf = owner(f), st = owner(t);
+    if (sf && st) { if (sf !== st) between.push({ e: e, f: f, t: t }); }
+    else if (sf) out.push({ e: e, other: t, me: f });
+    else if (st) inn.push({ e: e, other: f, me: t });
+  });
+  function dim(e) { return mode !== 'all' && e.modes.indexOf(mode) < 0 ? 'mx' : ''; }
+  function rel(list, arrow) {
+    if (!list.length) return '<p class="none">none</p>';
+    return '<div class="rel">' + list.map(function (x) {
+      return '<button type="button" class="' + dim(x.e) + '" data-go="' + esc(x.other.id) + '"><i>' + arrow + '</i>' + esc(x.other.name) +
+        '<small>' + esc(x.e.label) + (arrow === '→' ? ' · from ' : ' · to ') + esc(x.me.name) + '</small></button>';
+    }).join('') + '</div>';
+  }
+  var allPinned = S.every(function (n) { return isPinned(n.id); });
+  panel.innerHTML = sheetBtn() +
+    '<span class="ptag">Selection</span><h2>' + S.length + ' boxes selected</h2>' +
+    '<p class="psub">Ctrl / ⌘ / Shift + click adds or removes a box · Esc clears</p>' +
+    '<div class="actions">' +
+      '<button type="button" class="btn" data-act="sel-pin">' + (allPinned ? '× Unpin all' : 'Pin all ' + S.length) + '</button>' +
+      (view === 'map' ? '<button type="button" class="btn" data-act="sel-fit">Show all on map</button>' : '') +
+      '<button type="button" class="btn" data-act="sel-clear">Clear selection</button>' +
+    '</div>' +
+    '<h3>Selected (' + S.length + ')</h3><div class="rel">' + S.map(function (n) {
+      return '<div class="selrow"><button type="button" data-focus="' + esc(n.id) + '" title="Centre ' + esc(n.name) + '"><i>●</i>' + esc(n.name) +
+        '<small>L' + n.lv + ' · ' + esc(ancestors(n).map(function (a) { return a.name; }).join(' › ') || 'top level') + '</small></button>' +
+        '<button type="button" class="unsel" data-unsel="' + esc(n.id) + '" title="Take ' + esc(n.name) + ' out of the selection" aria-label="Take ' + esc(n.name) + ' out of the selection">×</button></div>';
+    }).join('') + '</div>' +
+    '<h3>Between them (' + between.length + ')</h3>' + (between.length ? '<div class="rel">' + between.map(function (x) {
+      return '<button type="button" class="' + dim(x.e) + '" data-go="' + esc(x.t.id) + '"><i>→</i>' + esc(x.f.name) + ' → ' + esc(x.t.name) + '<small>' + esc(x.e.label) + '</small></button>';
+    }).join('') + '</div>' : '<p class="none">none</p>') +
+    '<h3>Together they use (' + out.length + ')</h3>' + rel(out, '→') +
+    '<h3>Together they are used by (' + inn.length + ')</h3>' + rel(inn, '←');
+}
+// after the selection changed from the panel
+function afterSel() { if (view === 'pins') renderPins(); else redraw(); renderPanel(); crumb(); }
+// centre one box without changing the selection
+function focusBox(n) {
+  if (view === 'pins') { var c = document.querySelector('#pins .nd[data-id="' + n.id.replace(/["\\]/g, '\\$&') + '"]'); if (c && c.scrollIntoView) c.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' }); return; }
+  if (target.get(n.id)) relayout(focusOn(n));
+}
 function legend() {
   var LBL = { person: 'Person', system: 'System, or a highlighted element', container: 'Container', store: 'Data store', code: 'Component or code', ext: 'External system', sibling: 'Separate system (related, not part of this one)', state: 'State in a lifecycle (dot: initial · double border: final)' };
   var custom = MODEL.legend || {}, rows = [], used = {}, anyDash = false;
@@ -2168,6 +2554,13 @@ function legend() {
 }
 panel.addEventListener('click', function (ev) {
   var go = ev.target.closest('[data-go]'), act = ev.target.closest('[data-act]');
+  // several selected: centre one, take one out, pin all, show all, clear
+  var fc = ev.target.closest('[data-focus]'), us = ev.target.closest('[data-unsel]');
+  if (us) { unselect(byId[us.dataset.unsel]); afterSel(); return; }
+  if (fc) { focusBox(byId[fc.dataset.focus]); return; }
+  if (act && act.dataset.act === 'sel-pin') { pinSel(); return; }
+  if (act && act.dataset.act === 'sel-fit') { relayout(function () { return fitTo(bbox(selList().map(function (n) { return n.id; })), 80); }); return; }
+  if (act && act.dataset.act === 'sel-clear') { setSel([]); afterSel(); return; }
   if (go) { reveal(byId[go.dataset.go]); return; }
   if (!act) return;
   if (act.dataset.act === 'toggle') toggle(selected);
@@ -2214,7 +2607,7 @@ function crumb() {
   var c = document.getElementById('crumb');
   var openList = NODES.filter(function (n) { return (isOpen(n) || isSeq(n)) && visible(n); }).map(function (n) { return n.name + (isSeq(n) ? ' (sequence)' : ''); });
   if (!selected && seqSel) { c.innerHTML = 'sequence in <b>' + esc(byId[seqSel.id].name) + '</b> · step ' + (seqSel.step + 1); return; }
-  c.innerHTML = selected ? 'selected <b>' + esc(selected.name) + '</b>' : 'open: ' + (openList.length ? openList.map(function (x) { return '<b>' + esc(x) + '</b>'; }).join(' · ') : '<b>nothing (system context)</b>');
+  c.innerHTML = selected ? 'selected ' + selList().map(function (n) { return '<b>' + esc(n.name) + '</b>'; }).join(' · ') : 'open: ' + (openList.length ? openList.map(function (x) { return '<b>' + esc(x) + '</b>'; }).join(' · ') : '<b>nothing (system context)</b>');
 }
 
 /* ======================================================================
@@ -2248,6 +2641,10 @@ function endPtr(ev) {
   if (!drag || ev.type === 'pointercancel') { drag = null; return; }
   var d = drag; drag = null;
   if (d.moved) return;
+  // an arrow or its label / marker: keep its label shown (touch has no hover); any other click lets it go
+  var ek = d.target.closest && d.target.closest('[data-ekey]');
+  if (ek) { pinLabel(ek.dataset.ekey); return; }
+  if (pinKey) pinLabel(null);
   // inside a box that shows its sequence: header / scenario buttons, a message, a participant card
   var host = d.target.closest && d.target.closest('.nd');
   var sq = host && (d.target.closest('[data-seqact]') || d.target.closest('[data-seqstep]') || d.target.closest('[data-seqpart]'));
@@ -2264,6 +2661,7 @@ function endPtr(ev) {
   var g = d.target.closest && d.target.closest('.nd');
   if (!g) { if (selected) select(null); return; }
   var n = byId[g.dataset.id], now = performance.now();
+  if (ev.ctrlKey || ev.metaKey || ev.shiftKey) { lastTap = { id: null, t: 0 }; selectToggle(n); return; }   // add to / take out of the selection
   if (lastTap.id === n.id && now - lastTap.t < 320) { lastTap = { id: null, t: 0 }; toggle(n); return; }
   lastTap = { id: n.id, t: now };
   select(n);
@@ -2279,7 +2677,7 @@ svg.addEventListener('wheel', function (ev) {
 svg.addEventListener('keydown', function (ev) {
   var g = ev.target.closest && ev.target.closest('.nd'); if (!g) return;
   var n = byId[g.dataset.id];
-  if (ev.key === 'Enter') { ev.preventDefault(); select(n); }
+  if (ev.key === 'Enter') { ev.preventDefault(); if (ev.ctrlKey || ev.metaKey || ev.shiftKey) selectToggle(n); else select(n); }
   if (ev.key === ' ' && !(seqSel && seqSel.id === n.id)) { ev.preventDefault(); toggle(n); }   // with a message picked, space plays the sequence instead
 });
 function centerZoom(f) { zoomAt(f, svg.clientWidth / 2, svg.clientHeight / 2); }
@@ -2293,14 +2691,54 @@ lblBtn.onclick = function () { showLabels = !showLabels; svg.classList.toggle('l
 /* arrow style: right-angled (orthogonal) or straight. Only the map's arrows are affected, not the pinned board or the diagrams. */
 var edgesBtn = document.getElementById('btn-edges'), EDGES_DEFAULT = C.edgeStyle();
 function syncEdges() { edgesBtn.textContent = 'edges: ' + (C.edgeStyle() === 'orthogonal' ? 'square' : 'straight'); }
-edgesBtn.onclick = function () { C.setEdgeStyle(C.edgeStyle() === 'orthogonal' ? 'straight' : 'orthogonal'); syncEdges(); aggregate(); redraw(); writeHash(); };
+// gutters are sized for the arrows in them, so switching style re-lays out (animated)
+edgesBtn.onclick = function () { C.setEdgeStyle(C.edgeStyle() === 'orthogonal' ? 'straight' : 'orthogonal'); syncEdges(); relayout(null); writeHash(); };
 syncEdges();
 
-/* theme: auto follows the OS; light / dark force it. Remembered per browser. */
-var THEME_KEY = 'architecture-explorer-theme', THEMES = ['auto', 'light', 'dark'], theme = 'auto', hashTheme = null, themeBtn = document.getElementById('btn-theme');
-try { var savedTheme = localStorage.getItem(THEME_KEY); if (THEMES.indexOf(savedTheme) >= 0) theme = savedTheme; } catch (e) {}
-function applyTheme() { if (theme === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', theme); themeBtn.textContent = 'theme: ' + theme; }
-themeBtn.onclick = function () { hashTheme = null; theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]; try { localStorage.setItem(THEME_KEY, theme); } catch (e) {} applyTheme(); };
+/* theme menu: auto plus every entry of ARCH_THEMES, each with a swatch drawn in its own colours (the theme itself is chosen
+   near the top of this script). A pick from the menu or the T key (which cycles) is remembered for this reader and goes into
+   the URL whenever it differs from the model's default. Without the menu (themeLocked) the theme stays at view.theme, else auto. */
+var themeBtn = document.getElementById('btn-theme'), themeMenu = document.getElementById('theme-menu');
+function applyTheme() {
+  if (themeLocked) theme = THEME_DEFAULT;   // also undoes a #theme= that boot reads from the URL
+  setThemeAttr();
+  if (!themeBtn) return;
+  themeBtn.textContent = 'theme: ' + theme + ' ▾';
+  themeMenu.querySelectorAll('[data-theme-pick]').forEach(function (b) { b.setAttribute('aria-checked', String(b.dataset.themePick === theme)); });
+}
+function pickTheme(t) {
+  if (themeLocked || THEMES.indexOf(t) < 0) return;
+  theme = t; hashTheme = null;
+  try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
+  applyTheme(); writeHash();
+}
+function cycleTheme() { pickTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]); }
+function showThemeMenu(open, focusItem) {
+  themeMenu.hidden = !open; themeBtn.setAttribute('aria-expanded', String(open));
+  if (open && focusItem) (themeMenu.querySelector('[aria-checked="true"]') || themeMenu.querySelector('button')).focus();
+}
+if (themeBtn && themeMenu) {
+  themeMenu.innerHTML = [{ id: 'auto', note: 'light, or dark when the system is' }].concat(THEME_LIST).map(function (t) {
+    var sw = t.id === 'auto' ? '<span class="sw sw-auto" aria-hidden="true"><b data-theme="light"></b><b data-theme="dark"></b></span>'
+      : '<span class="sw" data-theme="' + esc(t.id) + '" aria-hidden="true"><i></i><i></i><i></i></span>';
+    return '<button type="button" role="menuitemradio" aria-checked="false" data-theme-pick="' + esc(t.id) + '">' + sw + '<span>' + esc(t.id) +
+      (VIEW.theme && t.id === THEME_DEFAULT ? ' · default' : '') + '<small>' + esc(t.note || '') + '</small></span></button>';
+  }).join('');
+  themeBtn.onclick = function (ev) { showThemeMenu(themeMenu.hidden, ev.detail === 0); };   // detail 0: opened from the keyboard, so focus moves into the menu
+  themeMenu.addEventListener('click', function (ev) { var b = ev.target.closest('[data-theme-pick]'); if (b) { pickTheme(b.dataset.themePick); showThemeMenu(false); themeBtn.focus(); } });
+  themeMenu.addEventListener('keydown', function (ev) {
+    var items = Array.from(themeMenu.querySelectorAll('button')), i = items.indexOf(document.activeElement);
+    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') items[(i + (ev.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus();
+    else if (ev.key === 'Home' || ev.key === 'End') items[ev.key === 'Home' ? 0 : items.length - 1].focus();
+    else if (ev.key === 'Escape') { showThemeMenu(false); themeBtn.focus(); }
+    else return;
+    ev.preventDefault(); ev.stopPropagation();   // keep these keys away from the page shortcuts
+  });
+  themeMenu.addEventListener('focusout', function (ev) { if (!themeMenu.hidden && !(ev.relatedTarget && ev.relatedTarget.closest && ev.relatedTarget.closest('.themes'))) showThemeMenu(false); });
+  // pointerdown, not click: the map captures the pointer and redraws on selection, so a click there may never reach the document
+  document.addEventListener('pointerdown', function (ev) { if (!themeMenu.hidden && !(ev.target.closest && ev.target.closest('.themes'))) showThemeMenu(false); }, true);
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !themeMenu.hidden) showThemeMenu(false); });
+}
 applyTheme();
 
 /* search */
@@ -2332,10 +2770,10 @@ document.addEventListener('keydown', function (ev) {
   else if (ev.key === '-') centerZoom(0.8);
   else if (view === 'map' && ev.key.length === 1 && ev.key >= '1' && +ev.key <= MAXL) setLevel(+ev.key);
   else if (ev.key === 'Escape' && selected) { if (view === 'map') select(null); else { selected = null; if (view === 'pins') renderPins(); renderPanel(); } }
-  else if ((ev.key === 'p' || ev.key === 'P') && selected) togglePin(selected);
+  else if ((ev.key === 'p' || ev.key === 'P') && selected) pinSel();
   else if (ev.key === 'l' || ev.key === 'L') lblBtn.click();
   else if (view === 'map' && (ev.key === 'e' || ev.key === 'E')) edgesBtn.click();
-  else if (ev.key === 't' || ev.key === 'T') themeBtn.click();
+  else if (ev.key === 't' || ev.key === 'T') cycleTheme();
   else if (ev.key === 'm' || ev.key === 'M') setView('map');
   else if (ev.key === 'b' || ev.key === 'B') setView('pins');
   else if (HAS_DYN && (ev.key === 'd' || ev.key === 'D')) setView('dynamic');
@@ -2363,7 +2801,7 @@ function setView(v, noHash) {
   document.querySelector('.grp-level').hidden = v !== 'map' || MAXL < 2;
   if (v === 'map') { redraw(); } else { stopPlay(); }
   if (v === 'pins') renderPins();
-  if (v === 'dynamic') { selected = null; renderDyn(); }
+  if (v === 'dynamic') { selected = null; multi = []; renderDyn(); }
   renderPanel();
 }
 document.querySelectorAll('#tabs button').forEach(function (b) { b.onclick = function () { setView(b.dataset.view); }; });
@@ -2377,14 +2815,15 @@ function isPinned(id) { return pins.indexOf(id) >= 0; }
 function pinRep(n) { for (var x = n; x; x = parentOf(x)) if (isPinned(x.id)) return x; return null; }
 function pinsChanged() { savePins(); els.forEach(function (el, id) { el.classList.toggle('pinned', isPinned(id)); }); if (view === 'pins') renderPins(); if (view === 'dynamic') renderDyn(); renderPanel(); }
 function togglePin(n) { if (isPinned(n.id)) pins = pins.filter(function (x) { return x !== n.id; }); else pins.push(n.id); pinsChanged(); }
-function pinUp(n) { var p = parentOf(n); if (!p) return; pins = pins.filter(function (x) { return x !== n.id; }); if (!isPinned(p.id)) pins.push(p.id); if (selected === n) selected = p; pinsChanged(); }
-function pinDown(n) { if (!n.kids.length) return; pins = pins.filter(function (x) { return x !== n.id; }); n.kids.forEach(function (k) { if (!isPinned(k.id)) pins.push(k.id); }); if (selected === n) selected = null; pinsChanged(); }
+function pinUp(n) { var p = parentOf(n); if (!p) return; pins = pins.filter(function (x) { return x !== n.id; }); if (!isPinned(p.id)) pins.push(p.id); if (isSel(n)) setSel(selList().map(function (s) { return s === n ? p : s; })); pinsChanged(); }
+function pinDown(n) { if (!n.kids.length) return; pins = pins.filter(function (x) { return x !== n.id; }); n.kids.forEach(function (k) { if (!isPinned(k.id)) pins.push(k.id); }); unselect(n); pinsChanged(); }
+function unselect(n) { if (isSel(n)) setSel(selList().filter(function (s) { return s !== n; })); }
 var ORDER = {}; NODES.forEach(function (n, i) { ORDER[n.id] = i; });
 document.getElementById('pins-reset').hidden = !DEFAULT_PINS.length;
 
 function svgEl(tag, attrs, parent, text) { var e = mk(tag, attrs, parent); if (text !== undefined) e.textContent = text; return e; }
 function cardInto(g, n, x, y, w, h, opts) {
-  var el = svgEl('g', { 'class': ndClass(n) + (selected === n ? ' sel' : ''), 'data-id': n.id, tabindex: '0', role: 'button', 'aria-label': n.name }, g);
+  var el = svgEl('g', { 'class': ndClass(n) + (isSel(n) ? ' sel' : ''), 'data-id': n.id, tabindex: '0', role: 'button', 'aria-label': n.name }, g);
   markModes(el, n.modes);
   if (opts && opts.cls) el.classList.add(opts.cls);
   var rx = n.t === 'state' ? Math.min(h / 2, 34) : 11;
@@ -2456,7 +2895,7 @@ function renderPins() {
     else { p0 = [A.x + A.w, A.y + A.h / 2 - 8]; p1 = [B.x + B.w, B.y + B.h / 2 + 8]; c0 = [p0[0] + 90, p0[1]]; c1 = [p1[0] + 90, p1[1]]; }
     var k = sameKind(x.raw);
     var cls = 'e ' + kc(k) + (x.modes.length < NV || x.raw.every(function (r) { return r.dashed; }) ? ' dash' : '');
-    var hot = selected && (x.a === selected || x.b === selected);
+    var hot = isSel(x.a) || isSel(x.b);
     var path = svgEl('path', { 'class': cls + (hot ? ' hot' : ''), d: 'M' + p0 + ' C' + c0 + ' ' + c1 + ' ' + p1, 'marker-end': 'url(#a-' + k + ')' }, ge);
     markModes(path, x.modes);
     var text = x.text, w = text.length * 6.7 + 14, at = bez(p0, c0, c1, p1, .5);
@@ -2472,13 +2911,27 @@ function renderPins() {
     svgEl('text', { x: at[0], y: at[1] + 4, 'text-anchor': 'middle' }, lab, text);
   });
   host.classList.toggle('has-sel', !!selected);
+  // with a selection, cards neither selected nor at the other end of a selected card's relationship fade
+  var lit = new Set(selList().map(function (n) { return n.id; }));
+  m.forEach(function (x) { if (isSel(x.a) || isSel(x.b)) { lit.add(x.a.id); lit.add(x.b.id); } });
+  gn.querySelectorAll('.nd').forEach(function (el) { el.classList.toggle('nd-dim', !!selected && !lit.has(el.dataset.id)); });
   document.getElementById('pins-count').textContent = pins.length + ' pinned · ' + m.size + ' relationships';
 }
 document.getElementById('pins-wrap').addEventListener('click', function (ev) {
   var b = ev.target.closest('[data-pact]');
-  if (b) { var n = byId[b.dataset.id]; if (b.dataset.pact === 'up') pinUp(n); if (b.dataset.pact === 'down') pinDown(n); if (b.dataset.pact === 'unpin') { pins = pins.filter(function (x) { return x !== n.id; }); if (selected === n) selected = null; pinsChanged(); } return; }
-  var g = ev.target.closest('.nd');
-  selected = g ? byId[g.dataset.id] : null; renderPins(); renderPanel();
+  if (b) { var n = byId[b.dataset.id]; if (b.dataset.pact === 'up') pinUp(n); if (b.dataset.pact === 'down') pinDown(n); if (b.dataset.pact === 'unpin') { pins = pins.filter(function (x) { return x !== n.id; }); unselect(n); pinsChanged(); } return; }
+  var g = ev.target.closest('.nd'), n = g && byId[g.dataset.id];
+  if (n && (ev.ctrlKey || ev.metaKey || ev.shiftKey)) toggleSel(n); else { selected = n || null; multi = []; }
+  renderPins(); renderPanel();
+});
+// keyboard on the board: Enter selects the focused card, Ctrl / ⌘ / Shift + Enter adds it to the selection or takes it out
+document.getElementById('pins-wrap').addEventListener('keydown', function (ev) {
+  var g = ev.key === 'Enter' && ev.target.closest && ev.target.closest('.nd'); if (!g) return;
+  ev.preventDefault();
+  var n = byId[g.dataset.id], id = n.id;
+  if (ev.ctrlKey || ev.metaKey || ev.shiftKey) toggleSel(n); else { selected = n; multi = []; }
+  renderPins(); renderPanel();
+  var again = document.querySelector('#pins .nd[data-id="' + id.replace(/["\\]/g, '\\$&') + '"]'); if (again) again.focus();   // the board was redrawn
 });
 document.getElementById('pins-reset').onclick = function () { pins = DEFAULT_PINS.slice(); selected = null; pinsChanged(); };
 document.getElementById('pins-clear').onclick = function () { pins = []; selected = null; pinsChanged(); };
@@ -2799,7 +3252,7 @@ function writeHash() {
   if (view !== 'map') p.push('view=' + view);
   var lv = LEVELS.filter(function (l) { var ids = C.levelSet(l); return ids.length === expanded.size && ids.every(function (id) { return expanded.has(id); }); })[0];
   p.push(lv ? 'level=' + lv : 'open=' + Array.from(expanded).map(enc).join(','));
-  if (selected) p.push('sel=' + enc(selected.id));
+  if (selected) p.push('sel=' + selList().map(function (n) { return enc(n.id); }).join(','));
   if (mode !== 'all') p.push('variant=' + enc(VBY[mode].id));
   if (view === 'dynamic' && SCEN[dyn.sc]) p.push('scenario=' + enc(SCEN[dyn.sc].id), 'at=' + dyn.level, 'style=' + dyn.style, 'step=' + (dyn.step + 1));
   // boxes showing a sequence inside: seq=<box>:<scenario>,…  and the picked message: seqstep=<box>:<n>
@@ -2808,7 +3261,7 @@ function writeHash() {
   if (seqSel && view === 'map') p.push('seqstep=' + enc(seqSel.id) + ':' + (seqSel.step + 1));
   if (!showLabels) p.push('labels=0');
   if (C.edgeStyle() !== EDGES_DEFAULT) p.push('edges=' + C.edgeStyle());
-  if (hashTheme) p.push('theme=' + hashTheme);
+  if (theme !== THEME_DEFAULT) p.push('theme=' + theme);
   try { history.replaceState(null, '', '#' + p.join('&')); } catch (e) {}
 }
 function idList(s) { return String(s || '').split(',').map(function (x) { return x.trim(); }).filter(function (id) { return byId[id]; }); }
@@ -2823,7 +3276,8 @@ if (H.open !== undefined) idList(H.open).forEach(openWithAncestors);
 else if (H.level) openToLevel(Math.max(1, Math.min(MAXL, +H.level || 1)));
 else if (VIEW.open) VIEW.open.forEach(openWithAncestors);
 else openToLevel(Math.min(VIEW.startLevel || 2, MAXL));
-if (H.sel && byId[H.sel]) { selected = byId[H.sel]; ancestors(selected).forEach(function (a) { expanded.add(a.id); }); }
+// sel=a or sel=a,b,c (several selected; the last is the primary one)
+if (H.sel && idList(H.sel).length) { setSel(idList(H.sel).map(function (id) { return byId[id]; })); selList().forEach(function (n) { ancestors(n).forEach(function (a) { expanded.add(a.id); }); }); }
 // seq=api:upload,worker  → those boxes show the sequence of that scenario inside (default: the first one through them)
 function splitLast(kv) { var i = kv.lastIndexOf(':'); return i > 0 ? [kv.slice(0, i), kv.slice(i + 1)] : [kv, '']; }
 if (H.seq) H.seq.split(',').forEach(function (kv) {

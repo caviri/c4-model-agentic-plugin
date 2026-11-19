@@ -26,7 +26,7 @@ The page validates the model at boot. Errors replace the page with a list of wha
 | `scenarios` | no | The Dynamic tab (hidden when absent or empty) |
 | `variants` | no | The filter group in the toolbar, the dots on each box, coloured chips (hidden when absent) |
 | `source` | no | "Source" links in the details panel |
-| `view` | no | What is open when the page loads |
+| `view` | no | What is open when the page loads, the arrow style, the default colour theme |
 | `defaultPins` | no | Initial contents of the Pinned board and its "default pins" button |
 | `levelNames` | no | Rename the four levels |
 | `legend` | no | Override legend labels, name hand-picked colours |
@@ -222,6 +222,7 @@ source: { repoUrl: 'https://github.com/org/repo', branch: 'main' }
 | `startLevel` | `1`–`4`. The map opens with everything above this level expanded. Default `2` (containers visible). |
 | `open` | Array of node ids to open instead (their ancestors open too). Use it to start on the one interesting container rather than on all of them. |
 | `edges` | Arrow style on the map: `'orthogonal'` (default; right-angled arrows in the gutters, one lane each) or `'straight'` (centre to centre, bending round boxes). The reader can switch with the `edges` button or `E`. See features.md, "Arrow styles". |
+| `theme` | Default colour theme: `'auto'` (default; light, or dark when the reader's OS is dark), `'light'`, `'dark'`, `'contrast'`, `'paper'`, `'blueprint'` or `'graphite'`. Any other value is an error. It is only a default: a reader's own pick (remembered per browser) and `#theme=` in the URL win over it. See features.md, "Colour themes". |
 
 ## `defaultPins`, `levelNames`, `legend`
 
