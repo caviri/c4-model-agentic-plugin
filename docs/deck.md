@@ -39,8 +39,9 @@ Every deck has speaker notes, a reading view that shows the slides as one scroll
 | ++s++ | Speaker notes |
 
 In a browser that offers [WebMCP](mcp.md#webmcp-agents-in-the-browser), a deck built from the current template also
-lets an agent in the browser read its outline and slide text and turn the slides. (The example deck was built before
-that block existed.)
+lets an agent in the browser read its outline and slide text and turn the slides; the example deck has this block too.
+A deck made from an older template gets it by copying the block between `BEGIN WEBMCP` and `END WEBMCP` from the
+template to the end of its `deck.src.html` and rebuilding.
 
 ## Source and rebuild
 

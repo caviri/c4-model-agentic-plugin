@@ -16,6 +16,7 @@ Files in this skill (`${CLAUDE_PLUGIN_ROOT}/skills/architecture-history/`):
   `timeline`, `diff`, `pr`, `blame`, `status`, `prepare`, `adopt`, `validate`; `help` lists the options.
 - `scripts/history-core.js`: the element-level comparison, shared by the command line and the page.
 - `scripts/make-demo-history.mjs`: builds a demonstration repository (fictional authors) for trying the skill.
+- `scripts/check-timeline-options.mjs`: a regression check of `timeline`'s options on that demonstration repository.
 - `references/workflows.md`: choosing source and resolution, the four workflows, regenerating a missing or stale model,
   the page, the command reference. Read it before step 1.
 - `references/history-graph.md`: the dataset (layout, terms, stable IRIs, privacy) and tested SPARQL queries. Read it
@@ -35,8 +36,9 @@ requests, `gh` logged in helps; without it, merge messages and `refs/pull/N/head
 
 Show what exists: `git log --oneline --follow -- communications/architecture-explorer/model.js | head`, the tags, and
 `H status` (which refs have no model or a stale one). Then agree on one of: merges of a branch (default), every model
-commit, tags, merged PRs, explicit refs, a range, a squashed range, a two-ref diff, a PR. The table at the top of
-`references/workflows.md` maps requests to options. If the history is a single version, say so: there is nothing to
+commit, tags, merged PRs, explicit refs, a range, a squashed range, a two-ref diff, a PR. Any timeline can also show
+pull requests on top (`--pr N`: an open PR's head, a merged PR's head and merge, among the versions the resolution,
+range or refs chose). The table at the top of `references/workflows.md` maps requests to options. If the history is a single version, say so: there is nothing to
 compare yet, except the working tree (`--worktree`, or `diff HEAD worktree`).
 
 ### 2. Regenerate the models that are missing or stale (only for refs the user needs)

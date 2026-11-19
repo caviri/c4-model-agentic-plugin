@@ -980,6 +980,15 @@ ul.usecase[class*="flow-"] { border-left: 3px solid var(--flow); padding-left: 1
 .flowleg button { background: none; border: 0; padding: 0 2px; font: 12px var(--f-mono); color: var(--muted); cursor: pointer; }
 .flowleg button:hover, .flowleg button:focus-visible { color: var(--accent); outline: none; text-decoration: underline; }
 .flowleg .fl-note { font: 11px var(--f-mono); color: var(--muted); margin: 2px 0 0; }
+/* folded (html.fl-min): one line, the flows' colours and how many, a button that unfolds it */
+.flowleg .fl-fold { font: 600 13px/1 var(--f-mono); padding: 0 3px; }
+.fl-min .hud.flowleg { padding: 3px 6px; }
+.flowleg .fl-chip { display: flex; align-items: center; gap: 8px; padding: 2px 2px; font: 500 10.5px var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.flowleg .fl-chip:hover, .flowleg .fl-chip:focus-visible { text-decoration: none; }
+.flowleg .fl-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.flowleg .fl-chip b { font: 600 13px/1 var(--f-mono); letter-spacing: 0; }
+.flowleg .fl-sw { display: inline-flex; gap: 3px; }
+.flowleg .fl-sw i { width: 14px; height: 6px; border-radius: 3px; background: var(--flow); opacity: .75; }
 /* the band under an arrow (several flows on one arrow share it as stripes), a step that has no arrow, the numbered chips */
 .fband { fill: none; stroke: var(--flow); stroke-width: calc(8px * var(--ink-scale, .85) / .85); stroke-linecap: butt; stroke-linejoin: round; opacity: .5; pointer-events: none; transition: opacity .25s; }
 .fdirect { fill: none; stroke: var(--flow); stroke-width: calc(2.4px * var(--ink-scale, .85)); stroke-dasharray: 3 5; stroke-linecap: round; pointer-events: none; }
@@ -6733,6 +6742,8 @@ function relayout(camTarget) {
     from.set(id, c);
   });
   var cam0 = { x: cam.x, y: cam.y, s: cam.s }, cam1 = camTarget ? camTarget() : null, t0 = performance.now(), D = reduce ? 1 : 420;
+  relayout.goal = cam1;   // where the camera is going (keepFitted)
+  if (cam1) fitCam = cam1.fit ? cam1 : null;
   if (anim) cancelAnimationFrame(anim);
   function step(now) {
     var t = Math.max(0, Math.min(1, (now - t0) / D)), e = ease(t), geo = new Map();
@@ -6763,13 +6774,73 @@ function bbox(ids) {
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 }
 function stageSize() { return { W: svg.clientWidth || 1000, H: svg.clientHeight || 700 }; }
-function fitTo(b, pad) {
-  var z = stageSize(), W = z.W, H = z.H; pad = pad || 60;
-  var s = Math.min((W - 2 * pad) / b.w, (H - 2 * pad) / b.h); s = Math.max(0.08, Math.min(1.6, s));
-  return { s: s, x: W / 2 - (b.x + b.w / 2) * s, y: H / 2 - (b.y + b.h / 2) * s };
+/* What covers the map: the controls drawn on top of it (the flows legend, the minimap or its chip, the zoom buttons, the
+   breadcrumb), as rectangles in the map's pixels. The history bar and the panel have a row and a column of their own. */
+function covers() {
+  if (!svg.clientWidth || view !== 'map') return [];
+  var sr = svg.getBoundingClientRect(), out = [];
+  ['flowleg', 'minimap', 'mm-toggle', 'crumb'].map(function (id) { return document.getElementById(id); }).concat([document.querySelector('#v-map .hud.zoom')]).forEach(function (el) {
+    if (!el || el.hidden) return;
+    var r = el.getBoundingClientRect();
+    if (r.width >= 1 && r.height >= 1) out.push({ x0: r.left - sr.left, y0: r.top - sr.top, x1: r.right - sr.left, y1: r.bottom - sr.top });
+  });
+  return out;
 }
-function centerOn(b, s) { var z = stageSize(); return { s: s, x: z.W / 2 - (b.x + b.w / 2) * s, y: z.H / 2 - (b.y + b.h / 2) * s }; }
-function fitAll() { return fitTo(bbox(Array.from(target.keys()))); }
+/* The camera that shows b (world units) as large as fits (s null), or at scale s, centred in the map less pad, and clear of
+   the covers: each cover is left alone or kept clear by moving in one side of the free area, across (the side nearer it,
+   left or right) or along (top or bottom), as an inset. Every way is tried (3^covers, at most 243): the largest scale wins,
+   then the fewest insets, then the least shift from the centre; where nothing covers b, that is the plain centring. On a
+   map too small for that (a phone, the history bar, an unfolded legend), less padding; failing that, the plain centring. */
+function place(b, s, pad) {
+  var z = stageSize(), W = z.W, H = z.H, cv = covers(), GAP = 10;
+  function at(L, R, T, B, k) {
+    var sc = s != null ? s : Math.max(0.08, Math.min(1.6, Math.min((R - L) / b.w, (B - T) / b.h)));
+    var cx = (L + R) / 2, cy = (T + B) / 2, x = cx - (b.x + b.w / 2) * sc, y = cy - (b.y + b.h / 2) * sc;
+    var x0 = x + b.x * sc, y0 = y + b.y * sc, x1 = x0 + b.w * sc, y1 = y0 + b.h * sc;
+    return { s: sc, x: x, y: y, k: k, shift: Math.hypot(cx - W / 2, cy - H / 2), clear: !cv.some(function (o) { return x0 < o.x1 && x1 > o.x0 && y0 < o.y1 && y1 > o.y0; }) };
+  }
+  var pads = [pad, 24, 8].filter(function (p, i, a) { return p <= pad && a.indexOf(p) === i; });
+  for (var pi = 0; pi < pads.length; pi++) {
+    var best = null, P = pads[pi];
+    for (var c = 0, n = Math.pow(3, cv.length); c < n; c++) {
+      var L = P, R = W - P, T = P, B = H - P, k = 0;
+      for (var i = 0, code = c; i < cv.length; i++, code = Math.floor(code / 3)) {
+        var o = cv[i], m = code % 3; if (!m) continue; k++;
+        if (m === 1) { if (o.x0 + o.x1 > W) R = Math.min(R, o.x0 - GAP); else L = Math.max(L, o.x1 + GAP); }
+        else if (o.y0 + o.y1 > H) B = Math.min(B, o.y0 - GAP); else T = Math.max(T, o.y1 + GAP);
+      }
+      if (R - L < 40 || B - T < 40) continue;
+      var p = at(L, R, T, B, k);
+      if (p.clear && (!best || p.s > best.s + 1e-6 || (p.s > best.s - 1e-6 && (p.k < best.k || (p.k === best.k && p.shift < best.shift))))) best = p;
+    }
+    if (best) return { s: best.s, x: best.x, y: best.y };
+  }
+  var r = at(pad, W - pad, pad, H - pad, 0);
+  return { s: r.s, x: r.x, y: r.y };
+}
+function fitTo(b, pad) { return place(b, null, pad || 60); }
+function centerOn(b, s) { return place(b, s, 0); }
+function fitAll() { var f = fitTo(bbox(Array.from(target.keys()))); f.fit = true; return f; }
+/* A fitted map stays fitted when the map changes size: the window, the panel, the history bar (drawn after the first fit)
+   or the fonts arriving. fitCam is the last fit the camera was sent to (boot, relayout, the fit button); a camera moved
+   since (pan, zoom, centring on a box) is left where it is. Disconnected in teardown(). */
+var fitCam = null, mapWH = null;
+function sameCam(a, b) { return a === b || (!!a && !!b && Math.abs(a.s - b.s) < 1e-3 && Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1); }
+var mapRO = window.ResizeObserver ? new ResizeObserver(function () {
+  if (!svg.clientWidth) return;   // the map is hidden (another view)
+  var z = stageSize(); if (!mapWH || (z.W === mapWH.W && z.H === mapWH.H)) return; mapWH = z;
+  if (!booted || view !== 'map' || !fitCam || !sameCam(anim && relayout.goal ? relayout.goal : cam, fitCam)) return;
+  if (anim) { relayout(function () { return fitAll(); }); return; }
+  var f = fitAll(); cam.x = f.x; cam.y = f.y; cam.s = f.s; fitCam = f; applyCam();   // at once: no frames in between
+}) : null;
+if (mapRO) mapRO.observe(svg);
+// a change to what covers the map (the flows legend shown, hidden, folded or unfolded) keeps a fitted map fitted, clear of it
+function keepFitted(change) {
+  var f = booted && view === 'map' ? fitAll() : null, c = anim && relayout.goal ? relayout.goal : cam;
+  var fitted = !!f && (sameCam(c, fitCam) || (Math.abs(f.s - c.s) < f.s * 0.02 && Math.abs(f.x - c.x) < 4 && Math.abs(f.y - c.y) < 4));
+  change();
+  if (fitted) relayout(function () { return fitAll(); });
+}
 function zoomAt(f, px, py) {
   var s = Math.max(0.06, Math.min(2.5, cam.s * f)); f = s / cam.s;
   cam.x = px - (px - cam.x) * f; cam.y = py - (py - cam.y) * f; cam.s = s; applyCam();
@@ -6836,7 +6907,9 @@ function syncFold() {
 function setPanel(open, keep) {
   open = !!open; if (open === panelOpen()) return;
   var z0 = stageSize(), onMap = booted && view === 'map', f = onMap ? fitAll() : null;
-  var fitted = !!f && Math.abs(f.s - cam.s) < f.s * 0.02 && Math.abs(f.x - cam.x) < 4 && Math.abs(f.y - cam.y) < 4;
+  // fitted: sent to a fit and not moved since (fitCam; also right when the map's size changed just before, as when the MCP
+  // view is expanded), or where a fit would put it now
+  var fitted = onMap && (sameCam(anim && relayout.goal ? relayout.goal : cam, fitCam) || (!!f && Math.abs(f.s - cam.s) < f.s * 0.02 && Math.abs(f.x - cam.x) < 4 && Math.abs(f.y - cam.y) < 4));
   var wx = (z0.W / 2 - cam.x) / cam.s, wy = (z0.H / 2 - cam.y) / cam.s;
   root.classList.toggle('panel-closed', !open);
   if (!keep) { try { localStorage.setItem(PANEL_KEY, open ? 'open' : 'closed'); } catch (e) { /* storage off: the URL still has it */ } }
@@ -7530,7 +7603,7 @@ function editDragCancel(d) { editDragCleanup(d); redraw(); }
 function centerZoom(f) { zoomAt(f, svg.clientWidth / 2, svg.clientHeight / 2); }
 document.getElementById('z-in').onclick = function () { centerZoom(1.25); };
 document.getElementById('z-out').onclick = function () { centerZoom(0.8); };
-document.getElementById('z-fit').onclick = function () { var f = fitAll(); cam.x = f.x; cam.y = f.y; cam.s = f.s; applyCam(); };
+document.getElementById('z-fit').onclick = function () { var f = fitAll(); cam.x = f.x; cam.y = f.y; cam.s = f.s; fitCam = f; applyCam(); };
 document.querySelectorAll('#levels button').forEach(function (b) { b.onclick = function () { setLevel(+b.dataset.level); }; });
 document.querySelectorAll('#modes button').forEach(function (b) { b.onclick = function () { setMode(b.dataset.mode); }; });
 var lblBtn = document.getElementById('btn-labels');
@@ -7544,13 +7617,31 @@ syncEdges();
 
 /* flows menu and legend: turn scenarios on and off on the map (see "flows on the map" above). The menu lists every scenario
    with its colour; the legend on the map lists the ones on, with their step counts, a way to open each in the Dynamic view
-   (drawn at "map", so the numbers match), and to turn it off. */
+   (drawn at "map", so the numbers match), and to turn it off. The legend covers part of the map, so a fit keeps clear of
+   it (covers()), and a fitted map is fitted again when it appears, goes or changes size. It folds to one line (its – button;
+   html.fl-min, so a restart keeps it): remembered for this reader and written to the URL (#legend=min, which wins when it
+   names it, legend=full unfolds); until either says, it follows the width: folded on a narrow screen. */
 var flowsGrp = document.getElementById('grp-flows'), flowsBtn = document.getElementById('btn-flows'), flowsMenu = document.getElementById('flows-menu'), flowLeg = document.getElementById('flowleg');
+var FL_KEY = 'architecture-explorer-flowlegend', flAuto = false;   // flAuto: no choice yet (URL, reader), so it follows the width
 function setFlows(list) {
   var next = []; (list || []).forEach(function (si) { if (SCEN[si] && next.indexOf(si) < 0) next.push(si); });
-  flowsOn = next; planMemo = null;
-  if (view === 'map') redraw();
-  syncFlows(); writeHash();
+  keepFitted(function () {
+    flowsOn = next; planMemo = null;
+    if (view === 'map') redraw();
+    syncFlows();
+  });
+  writeHash();
+}
+function flMin() { return root.classList.contains('fl-min'); }
+// keep: do not remember the choice for this reader
+function setFlowLeg(min, keep) {
+  if (!keep) flAuto = false;
+  min = !!min; if (min === flMin()) return;
+  var had = flowLeg && flowLeg.contains(document.activeElement);
+  keepFitted(function () { root.classList.toggle('fl-min', min); syncFlows(); });
+  if (!keep) { try { localStorage.setItem(FL_KEY, min ? 'min' : 'full'); } catch (e) { /* storage off: the URL still has it */ } }
+  if (had) { var b = flowLeg.querySelector('[data-flowleg]'); if (b) b.focus(); }   // the button that undoes it
+  writeHash();
 }
 function toggleFlow(si) { setFlows(flowOn(si) ? flowsOn.filter(function (x) { return x !== si; }) : flowsOn.concat([si])); }
 function flowOn(si) { return flowsOn.indexOf(si) >= 0; }
@@ -7569,9 +7660,16 @@ function syncFlows() {
   if (!flowLeg) return;
   flowLeg.hidden = view !== 'map' || !flowsOn.length;
   if (flowLeg.hidden) { flowLeg.innerHTML = ''; return; }
+  if (flMin()) {   // folded: one line
+    var names = flowsOn.map(function (si) { return SCEN[si].name; }).join(', ');
+    flowLeg.innerHTML = '<button type="button" class="fl-chip" data-flowleg="full" aria-expanded="false" title="Show the legend: ' + esc(names) + '" aria-label="Flows on the map: ' + esc(names) + '. Show the legend">' +
+      '<span class="fl-sw" aria-hidden="true">' + flowsOn.map(function (si) { return '<i class="flow-' + SCEN[si].tone + '"></i>'; }).join('') + '</span>flows · ' + flowsOn.length + '<b aria-hidden="true">+</b></button>';
+    return;
+  }
   var plan = flowPlanNow(), loose = 0;
   plan.loose.forEach(function (l) { loose += l.length; });
-  flowLeg.innerHTML = '<div class="fl-h"><span>Flows on the map</span><button type="button" data-flowact="none" title="Turn every flow off">clear</button></div>' + flowsOn.map(function (si) {
+  flowLeg.innerHTML = '<div class="fl-h"><span>Flows on the map</span><button type="button" data-flowact="none" title="Turn every flow off">clear</button>' +
+    '<button type="button" class="fl-fold" data-flowleg="min" aria-expanded="true" title="Fold the legend to one line" aria-label="Fold the legend to one line">–</button></div>' + flowsOn.map(function (si) {
     var n = liftedSteps(si, rep).steps.length;
     return '<div class="fl-i flow-' + SCEN[si].tone + '"><i aria-hidden="true"></i><b title="' + esc(SCEN[si].name) + '">' + esc(SCEN[si].name) + '</b><small>' + n + ' step' + (n === 1 ? '' : 's') + '</small>' +
       '<span><button type="button" data-flowdyn="' + si + '" title="Open it in the Dynamic view, drawn as the map is opened">Dynamic ›</button><button type="button" data-flowoff="' + si + '" title="Take it off the map" aria-label="Take ' + esc(SCEN[si].name) + ' off the map">×</button></span></div>';
@@ -7601,9 +7699,12 @@ if (flowsBtn && flowsMenu) {
   on(document, 'pointerdown', function (ev) { if (!flowsMenu.hidden && !(ev.target.closest && ev.target.closest('.flows'))) showFlowsMenu(false); }, true);
   on(document, 'keydown', function (ev) { if (ev.key === 'Escape' && !flowsMenu.hidden) showFlowsMenu(false); });
 }
+// the default follows the width (a frame such as the MCP view may be narrow when the page starts, and grow)
+on(window, 'resize', function () { if (flAuto && booted && narrow() !== flMin()) setFlowLeg(narrow(), true); });
 if (flowLeg) on(flowLeg, 'click', function (ev) {
-  var off = ev.target.closest('[data-flowoff]'), dy = ev.target.closest('[data-flowdyn]'), a = ev.target.closest('[data-flowact]');
-  if (off) toggleFlow(+off.dataset.flowoff);
+  var off = ev.target.closest('[data-flowoff]'), dy = ev.target.closest('[data-flowdyn]'), a = ev.target.closest('[data-flowact]'), fold = ev.target.closest('[data-flowleg]');
+  if (fold) setFlowLeg(fold.dataset.flowleg === 'min');
+  else if (off) toggleFlow(+off.dataset.flowoff);
   else if (a) setFlows([]);
   else if (dy) { stopPlay(); dyn.sc = +dy.dataset.flowdyn; dyn.level = 'map'; autoStyle(); dyn.step = 0; syncDyn(); setView('dynamic'); writeHash(); }
 });
@@ -8344,6 +8445,7 @@ on(document, 'click', function (ev) { if (!ev.target.closest('.export') && !expo
    URL state. The hash mirrors what is on screen, so any view can be linked, reloaded or screenshotted:
    #level=3  #open=api,orders  #sel=place-order  #variant=cloud  #labels=0  #theme=dark
    #view=pins  #view=dynamic&scenario=checkout&at=3&style=seq&step=4  #panel=closed  #mm=min
+   #flows=upload,review  #legend=min (the flows legend folded; legend=full unfolds it)
    with a history: #ver=<key>  #cmp=<key>  #hist=open  #hx=<key>,…  (the history script)
    read-only extras: zoom=<id> fits the camera to one box, pins=a,b sets the pinned board for this visit
    ====================================================================== */
@@ -8373,6 +8475,7 @@ function writeHash() {
   if (!panelOpen()) p.push('panel=closed');
   if (mmMin()) p.push('mm=min');
   if (flowsOn.length) p.push('flows=' + flowsOn.map(function (si) { return enc(SCEN[si].id); }).join(','));
+  if (flowsOn.length && !flAuto && (flMin() || narrow())) p.push('legend=' + (flMin() ? 'min' : 'full'));   // a choice, where it differs from the default
   if (HU) p.push.apply(p, HU.hash());   // ver=, cmp=, hist=open, hx= (history)
   try { history.replaceState(null, '', '#' + p.join('&')); } catch (e) {}
 }
@@ -8390,6 +8493,9 @@ if (THEMES.indexOf(H.theme) >= 0) { hashTheme = theme = H.theme; applyTheme(); }
   function saved(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   root.classList.toggle('panel-closed', H.panel === 'closed' || (H.panel !== 'open' && (PREV ? !panelOpen() : saved(PANEL_KEY) === 'closed')));
   root.classList.toggle('mm-min', H.mm === 'min' || (H.mm !== 'full' && (PREV ? mmMin() : saved(MM_KEY) === 'min')));
+  // the flows legend: the same, and folded by default on a narrow screen, where it would take much of the map
+  flAuto = H.legend !== 'min' && H.legend !== 'full' && saved(FL_KEY) === null;
+  root.classList.toggle('fl-min', H.legend === 'min' || (H.legend !== 'full' && (PREV ? flMin() : (saved(FL_KEY) || (narrow() ? 'min' : 'full')) === 'min')));
   syncFold();
 })();
 if (H.open !== undefined) idList(H.open).forEach(openWithAncestors);
@@ -8431,9 +8537,11 @@ if (PREV) {
 layout(); aggregate(); cur = new Map(target);
 if (H.seqstep) { var ss = splitLast(H.seqstep), sn = byId[ss[0]]; if (sn && isSeq(sn) && +ss[1] > 0) { seqSel = { id: sn.id, step: Math.min(sn._seq.steps.length, Math.floor(+ss[1])) - 1 }; if (!H.sel) selected = null; } }
 renderPanel(); // before fitting: on narrow screens the panel takes height away from the canvas
+crumb(); syncFlows();   // before fitting too: the breadcrumb and the flows legend cover part of the map (covers())
 if (PREV && PREV.cam) { cam.x = PREV.cam.x; cam.y = PREV.cam.y; cam.s = PREV.cam.s; }   // a restart keeps the reader where they were
 else { var zr = H.zoom && target.get(H.zoom), f0 = zr ? fitTo(zr, 40) : fitAll(); cam.x = f0.x; cam.y = f0.y; cam.s = f0.s; }
-applyCam(); redraw(); crumb(); syncLevel(); syncFlows();
+(function () { var f = fitAll(); fitCam = sameCam(f, cam) ? f : null; mapWH = stageSize(); })();   // fitted (also a restart that was), and the size it is for
+applyCam(); redraw(); syncLevel();
 if (VIEWS.indexOf(H.view) > 0) setView(H.view);
 booted = true;
 root.setAttribute('data-explorer', 'ready');
@@ -8463,6 +8571,8 @@ window.ARCH_EXPLORER = { ready: true, errors: [], warnings: CHECK.warnings,
     setFlows: function (ids) { if (view !== 'map') setView('map'); setFlows(scIndexes(ids)); return flowsOn.map(function (si) { return { id: SCEN[si].id, name: SCEN[si].name, color: SCEN[si].tone, steps: liftedSteps(si, rep).steps.length }; }); },
     flows: function () { return flowsOn.map(function (si) { return { id: SCEN[si].id, name: SCEN[si].name, color: SCEN[si].tone }; }); },
     flowColors: function () { return SCEN.map(function (s) { return { id: s.id, color: s.tone }; }); },
+    // the flows legend folded to one line (keep: do not remember it for this reader)
+    flowLegendFolded: flMin, setFlowLegend: setFlowLeg,
     // images: open a list in the lightbox (n:<node id>, e:<edge index>, s:<scenario index>, st:<scenario>:<step>)
     openImages: function (ref, i) { return openLightbox(ref, i || 0, null); }, closeImages: closeLightbox,
     // the details panel and the minimap folded away (keep: do not remember it for this reader); go to an element (goTo)
@@ -8476,6 +8586,7 @@ function teardown() {
   AC.abort(); if (HU) HU.stop();
   stopPlay(); stopSeqPlay(); if (anim) cancelAnimationFrame(anim); clearTimeout(relayout._guard); clearTimeout(hoverT);
   if (seqRO) seqRO.disconnect();
+  if (mapRO) mapRO.disconnect();
   [L.bounds, L.edges, L.nodes, L.labels, L.flows, L.ftags, document.getElementById('mm')].forEach(function (g) { if (g) while (g.firstChild) g.removeChild(g.firstChild); });
   if (lbEl) { lbEl.hidden = true; lbEl.innerHTML = ''; }
   if (flowLeg) { flowLeg.hidden = true; flowLeg.innerHTML = ''; }

@@ -53,6 +53,13 @@ The example's own history is short. To try the history features on merges, pull 
 and a branch comparison, build the demonstration repository (fictional authors) in a new directory outside this one:
 `node skills/architecture-history/scripts/make-demo-history.mjs <dir>`, then run `arch-history.mjs` there with `--demo`.
 
+After a change to `arch-history.mjs`, run `node skills/architecture-history/scripts/check-timeline-options.mjs`: it
+builds the demonstration repository in a temporary directory and checks how `timeline` combines `--resolution`,
+`--refs` and `--pr` (the merge line with and without pull request #3, two refs plus the pull request, a merged pull
+request recorded on its merge), and validates each dataset when a SHACL engine is found (pass
+`--rete-module mcp/node_modules/rete-graph/dist/index.js` after `npm ci` in `mcp/`, or have pyshacl). It exits 1 when a
+check fails; `--keep` keeps the directory.
+
 `check-model.mjs` can also check the template on its own (`node skills/architecture-explorer/scripts/check-model.mjs
 skills/architecture-explorer/templates/explorer.html`): it should report only the placeholder-model warning.
 
@@ -76,15 +83,16 @@ The MCP server reads the template at startup, so a template change also deserves
 ## Screenshots in these docs
 
 The images in `docs/img/` are taken with `screenshot.mjs` at 1500 × 900 in the light theme, from URL states, and
-saved as 256-colour PNGs to keep them small:
+saved as 256-colour PNGs to keep them small (Pillow: `Image.open(f).convert('RGB').quantize(256,
+method=Image.Quantize.FASTOCTREE)`; the default median cut shifts small areas such as the flow colours in a legend):
 
 - the explorer ones from the example's model, built without `--history` (so the panel shows the introduction), for
   example `"level=2&theme=light"`, `"level=2&flows=annotate,review&theme=light"` or
   `"view=dynamic&scenario=annotate&style=seq&at=2&step=1&theme=light"`. A menu, the image viewer or edit mode is
   opened by a copy of the page, in a temporary folder, with a short script that clicks the button (or calls
   `ARCH_EXPLORER.api.openImages`) once `data-explorer="ready"`;
-- the history ones from the demonstration repository (fictional authors), built with `--refs` set to the five versions
-  of the merge line and `--pr 3`, for example `"level=1&ver=<#3>&cmp=<v1.0>&theme=light"` and
+- the history ones from the demonstration repository (fictional authors), built with `--resolution merges --pr 3`
+  (the five versions of the merge line and the open pull request), for example `"level=1&ver=<#3>&cmp=<v1.0>&theme=light"` and
   `"level=2&ver=<#3>&hist=open&hx=<#3>&theme=light"`, where `<#3>` and `<v1.0>` stand for the short SHAs of the pull
   request and the release (they change whenever the example's model does);
 - `mcp-widget.png` is `mcp/test/output/widget-01-inline-map-level2.png` from the MCP tests;

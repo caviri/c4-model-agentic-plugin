@@ -99,10 +99,12 @@ changes inside the API service by child, each a button that goes to it.*
 | `all` | commit that changed the model, branch commits included | the full detail |
 | `tags` | release tag (unchanged releases are skipped) | release notes |
 | `prs` | merged pull request (gh, or GitHub's merge messages) | review history |
-| `--refs a,b,c`, `--pr N` | named ref or pull request | side by side |
+| `--refs a,b,c` | named ref | side by side |
 
 `--range A..B` limits any of them; `--range A..B --squash` turns a release into one step that lists the commits it
-covers. `--worktree` adds your uncommitted model. Within a merge, a release or a squash, each change still names the
+covers. `--pr N` (repeatable) adds a pull request to any of them, `--refs` included: its head, and its merge when it
+was merged, take their place among the versions, with the pull request recorded on them; `--resolution merges --pr 42`
+is the main line with an open pull request on top. `--worktree` adds your uncommitted model. Within a merge, a release or a squash, each change still names the
 commit inside it that made it, so a merge is credited to the branch's authors as well as the person who merged it.
 
 ## Refs with no model, or an outdated one

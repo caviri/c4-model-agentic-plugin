@@ -157,7 +157,8 @@ test('explorer without WebMCP: nothing registers and the page draws exactly as w
   assert.ok(Buffer.compare(pa, pb) === 0, 'identical screenshots');
 });
 
-// ---- the deck: the example deck's source with the template's WebMCP block, built with build.py
+// ---- the deck: the example deck's source, built with build.py. It carries the template's WebMCP block; a copy without
+// it (an older deck) gets the template's block appended, where the template has it (last, after the reveal.js script)
 const python = ['python', 'python3', 'py'].find((p) => spawnSync(p, ['--version']).status === 0);
 test('deck: outline, navigation and slide text', { skip: skip || (!python && 'no Python for build.py') }, async () => {
   const dir = join(OUT, 'deck'), src = join(dir, 'src');
@@ -166,8 +167,9 @@ test('deck: outline, navigation and slide text', { skip: skip || (!python && 'no
   const tpl = readFileSync(join(REPO, 'skills/project-deck/templates/deck.src.html'), 'utf8');
   const block = (tpl.match(/<!-- BEGIN WEBMCP[\s\S]*?<!-- END WEBMCP -->/) || [])[0];
   assert.ok(block, 'the deck template has the WebMCP block');
-  const deckSrc = join(src, 'deck.src.html');
-  writeFileSync(deckSrc, readFileSync(deckSrc, 'utf8').replace(/\s*$/, '\n') + block + '\n');
+  const deckSrc = join(src, 'deck.src.html'), own = readFileSync(deckSrc, 'utf8');
+  if (!own.includes('<!-- BEGIN WEBMCP')) writeFileSync(deckSrc, own.replace(/\s*$/, '\n') + block + '\n');
+  else assert.ok(own.includes(block), 'the example deck has the template\'s WebMCP block as it is now');
   const b = spawnSync(python, ['-B', 'build.py', 'deck.src.html', '--figs', 'figs.json'], { cwd: src, encoding: 'utf8' });
   assert.equal(b.status, 0, b.stderr);
   const file = join(dir, 'index.html'); assert.ok(existsSync(file));

@@ -85,7 +85,9 @@ next to the picker. Set one with `color`, or let the scenarios take distinct col
 steps travel along get a coloured band under them, with chips carrying the step numbers, and the boxes they pass
 through stay bright while the rest fades. Where several flows share an arrow, the band is striped in their colours and
 their chips sit side by side. A legend lists the flows on, opens one in the Dynamic view, or turns it off; the URL
-carries them (`#flows=upload,review`).
+carries them (`#flows=upload,review`). Its `–` button folds it to a one-line chip (`#legend=min`, remembered; until you
+choose, it is folded on a narrow screen). Fitting the map keeps the boxes clear of the legend, as of the minimap, the zoom buttons and
+the breadcrumb, and a fitted map makes room again when the legend appears or folds, or when the window changes size.
 
 ![Two flows painted on the map at the container level: the annotate flow in gold and the review flow in violet, with numbered chips on the arrows, a striped band where they share an arrow, and the legend at the top right](img/explorer-flows.png){ .shot }
 
@@ -217,6 +219,7 @@ reloaded or screenshotted. Parameters are joined with `&`, for example `index.ht
 | `zoom=api` | Fit the camera to that box instead of the whole map (read only) |
 | `pins=a,b,c` | Use these pins for this visit (read only) |
 | `flows=upload,review` | Scenarios painted on the map |
+| `legend=min`, `legend=full` | The flows legend folded to one line, or unfolded (overrides the stored choice) |
 | `panel=closed`, `panel=open` | The details panel folded away, or open (overrides the reader's stored choice) |
 | `mm=min`, `mm=full` | The minimap minimized to its chip, or full (overrides the stored choice) |
 | `ver=4d60afd`, `cmp=a889a40` | With a history: the version drawn, and the version it is compared with |

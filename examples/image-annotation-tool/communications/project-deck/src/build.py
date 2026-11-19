@@ -68,7 +68,7 @@ def find_css(src, explicit):
 def fill_figures(body, figs_path):
     wanted = FIG_RE.findall(body)
     if not wanted:
-        return body
+        return body, 0
     if not figs_path:
         die(f"the source has {len(wanted)} <!--FIG:...--> placeholders but no --figs file was given")
     try:
@@ -86,7 +86,7 @@ def fill_figures(body, figs_path):
     unused = sorted(set(figs) - set(wanted))
     if unused:
         print("build.py: warning: figures not used by any slide: " + ", ".join(unused), file=sys.stderr)
-    return FIG_RE.sub(lambda m: figs[m.group(1)], body)
+    return FIG_RE.sub(lambda m: figs[m.group(1)], body), len(wanted)
 
 
 def inline_images(body, base):
@@ -191,7 +191,7 @@ def main():
         die(f"{src.name} has no /*REVEAL_CSS*/ placeholder; the reveal.js stylesheet would be missing")
     css_path = find_css(src, args.css)
 
-    body = fill_figures(body, args.figs)
+    body, n_fig = fill_figures(body, args.figs)
     n_frag = None
     if args.static:   # before the vendored CSS / JS go in, so only the deck's own markup is rewritten
         body, n_frag = make_static(body)
@@ -224,11 +224,11 @@ def main():
         art.write_text(body, encoding="utf-8", newline="\n")
         print(f"wrote {art}")
 
-    notes = [f"{count_slides(rest)} slides",f"{len(FIG_RE.findall(read(src, 'deck source')))} figures"]
+    notes = [f"{count_slides(rest)} slides", f"{n_fig} figure{'' if n_fig == 1 else 's'} filled in"]
     if n_img:
-        notes.append(f"{n_img} images embedded")
+        notes.append(f"{n_img} image{'' if n_img == 1 else 's'} embedded")
     if n_js:
-        notes.append(f"{n_js} scripts embedded")
+        notes.append(f"{n_js} script{'' if n_js == 1 else 's'} embedded")
     if n_frag is not None:
         notes.append(f"static: {n_frag} step reveals removed")
     if not args.inline_js and SCRIPT_RE.search(body):

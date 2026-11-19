@@ -5,6 +5,8 @@ so the drawings follow the light and dark themes. Nothing here hard-codes a colo
 
 Typical use, in a `figures.py` next to your deck source:
 
+    import sys
+    sys.dont_write_bytecode = True      # keep __pycache__ out of the project
     from diagrams import Dg, Seq, flow, save_figs
 
     def overview():
@@ -15,6 +17,14 @@ Typical use, in a `figures.py` next to your deck source:
         return g.render()
 
     save_figs({"overview": overview()}, "figs.json")   # fills <!--FIG:overview-->
+
+Layout warnings (printed by save_figs) catch: text wider than its box, too many
+text lines for a box, anything outside the canvas, an arrow running through a box
+that is not one of its ends, sequence lanes that are too close and message labels
+wider than the gap they span. They do NOT catch: overlapping boxes, labels that
+sit on top of boxes or of each other, crossing arrows, or anything about mini()
+boxes without an id, Seq self-calls and variant_toggle. A run without warnings is
+necessary, not sufficient: look at the rendered slide.
 
 Vocabulary
   node kinds   code (neutral) · system · container · person · ext · store · sibling · c1 · c2 · c3
@@ -75,6 +85,27 @@ def rpath(pts, r=10):
     return d
 
 
+def _seg_hits_rect(a, b, x0, y0, x1, y1):
+    """True if the segment a-b touches the rectangle x0..x1, y0..y1 (Liang-Barsky clipping)."""
+    if x0 >= x1 or y0 >= y1:
+        return False
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    t0, t1 = 0.0, 1.0
+    for p, q in ((-dx, a[0] - x0), (dx, x1 - a[0]), (-dy, a[1] - y0), (dy, y1 - a[1])):
+        if p == 0:
+            if q < 0:
+                return False
+            continue
+        t = q / p
+        if p < 0:
+            t0 = max(t0, t)
+        else:
+            t1 = min(t1, t)
+        if t0 > t1:
+            return False
+    return True
+
+
 def row(n, w, gap=None, x0=0, W=1200):
     """x positions for `n` boxes of width `w` in one row.
 
@@ -113,6 +144,7 @@ class Dg:
         self._base = None
         self._steps = 0
         self._maxy = 0
+        self._routes = []    # point lists of every edge, checked against the nodes at render time
 
     # ------------------------------------------------------------ bookkeeping
     def _warn(self, msg):
@@ -288,6 +320,7 @@ class Dg:
         if both:
             mk += f' marker-start="url(#{self.pid}-a-{kind})"'
         self.edges.append(f'<path class="{cls}" d="{d}" {mk}/>')
+        self._routes.append((list(pts), label))
         self._track(min(p[0] for p in pts), min(p[1] for p in pts),
                     max(p[0] for p in pts), max(p[1] for p in pts), "edge")
         if label:
@@ -370,6 +403,20 @@ class Dg:
             self.bg.append(f'<polygon class="wedge" points="{hx+hw},{hy} {x},{y} {x},{y+h} {hx+hw},{hy+hh}"/>')
             self.edges.append(f'<path class="zoomline" d="M{hx+hw},{hy} L{x},{y} M{hx+hw},{hy+hh} L{x},{y+h}"/>')
 
+    def _check_routes(self):
+        """Warn about arrows that run through a box they neither start nor end at."""
+        for pts, label in self._routes:
+            ends = (pts[0], pts[-1])
+            for nid, (x, y, w, h) in self.n.items():
+                if any(x - 3 <= px <= x + w + 3 and y - 3 <= py <= y + h + 3 for px, py in ends):
+                    continue    # the arrow starts or ends at this box
+                if any(_seg_hits_rect(a, b, x + 3, y + 3, x + w - 3, y + h - 3) for a, b in zip(pts, pts[1:])):
+                    lab = label[0] if isinstance(label, list) else label
+                    what = f"edge \"{lab}\"" if lab else "an unlabelled edge"
+                    self._warn(f"{what} from ({pts[0][0]:.0f},{pts[0][1]:.0f}) to ({pts[-1][0]:.0f},{pts[-1][1]:.0f}) "
+                               f"runs through box '{nid}'; route it around with edge() points or move the box")
+        self._routes = []
+
     # ----------------------------------------------------------------- render
     def render(self, svg_cls="", svg_attrs="", fig_cls="", maxh=None):
         """Return the <figure> HTML string for this diagram.
@@ -378,6 +425,7 @@ class Dg:
         maxh=540             cap the height in px by limiting the figure's width;
                              required when the diagram uses frame()
         """
+        self._check_routes()
         H = self.H or math.ceil(self._maxy + 10)
         defs = "".join(
             f'<marker id="{self.pid}-a-{k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
@@ -483,6 +531,11 @@ class Seq:
         lines = label if isinstance(label, list) else [label]
         w = max(text_w(l, MONO_SEQ) for l in lines)
         lo, hi = min(xa, xb), max(xa, xb)
+        if w > hi - lo - 26:
+            fit = int((hi - lo - 26) / MONO_SEQ)
+            self.g._warn(f"message \"{max(lines, key=len)}\" is about {w:.0f}px wide but its lanes are {hi - lo:.0f}px apart: "
+                         f"it will run over a number badge or the next lifeline; keep each line to {fit} characters "
+                         "or split it into two lines")
         if w + 30 < hi - lo:
             cx, anchor = (lo + hi) / 2, "middle"
         else:

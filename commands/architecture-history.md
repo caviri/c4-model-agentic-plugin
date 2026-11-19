@@ -11,7 +11,7 @@ Trace how the architecture of the project in the current working directory chang
 2. Show the user what the history holds (model commits, tags, `status`: refs with no model or a stale one) and agree on
    the source and the resolution:
    - `timeline [resolution]` → a timeline at that resolution (`merges` by default; `all`, `tags`, `prs`); ask whether
-     to limit it to a range or squash a release.
+     to limit it to a range, squash a release, or show pull requests on top (`--pr N`).
    - `diff A B` → a comparison of the two refs (either may be `worktree`).
    - `pr N` → the architecture impact of pull request N.
 3. For refs the user needs whose model is missing or stale, regenerate it outside the checkout (`prepare` / `adopt`)

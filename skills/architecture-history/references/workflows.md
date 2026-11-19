@@ -14,7 +14,8 @@ Outputs go to `communications/architecture-history/` unless `--out` says otherwi
 | One version per merged pull request | `timeline --resolution prs` (gh, else GitHub's merge messages `Merge pull request #N …` / `… (#N)`) |
 | Only a period | add `--range A..B` (A's state becomes the first version) |
 | A release as one step | `timeline --range A..B --squash` |
-| Specific refs, side by side | `timeline --refs main,feature/x,v2.0` and/or `--pr 12` |
+| Specific refs, side by side | `timeline --refs main,feature/x,v2.0` (instead of a resolution) |
+| A pull request in the timeline too | add `--pr 12` (repeatable) to any of the above: its head, and its merge when merged, join the versions in their place (after what they descend from, by date), with the pull request recorded on them; a version already there gets the pull request recorded |
 | Uncommitted changes too | add `--worktree` |
 | Two refs, as a report | `diff A B` (either may be `worktree`) |
 | A pull request's impact | `pr N` |

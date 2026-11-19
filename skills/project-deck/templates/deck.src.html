@@ -867,9 +867,16 @@ python -B build.py deck.src.html --figs figs.json
     return Array.prototype.filter.call(document.querySelectorAll('.reveal .slides section'), function (s) { return !s.querySelector('section'); });
   }
   function clean(s) { return String(s || '').replace(/\s+/g, ' ').trim(); }
+  // a heading's text as read aloud: <br> and the title slide's subtitle span (.h1-sub, drawn on its own line) become separators
+  function headText(h) {
+    var c = h.cloneNode(true);
+    Array.prototype.forEach.call(c.querySelectorAll('br'), function (b) { b.replaceWith(' '); });
+    Array.prototype.forEach.call(c.querySelectorAll('.h1-sub'), function (x) { x.prepend(' — '); });
+    return c.textContent;
+  }
   function titleOf(s) {
     var h = s.querySelector('h1, h2, h3');
-    return clean(s.getAttribute('data-menu-title') || (h && h.textContent) || s.getAttribute('aria-label') || '').slice(0, 160) || clean(s.textContent).slice(0, 60);
+    return clean(s.getAttribute('data-menu-title') || (h && headText(h)) || s.getAttribute('aria-label') || '').slice(0, 160) || clean(s.textContent).slice(0, 60);
   }
   function numberOf(s) { if (!R()) return null; var i = R().getIndices(s); return i.h + '.' + ((i.v || 0) + 1); }   // as the deck shows it
   function entry(s, k) { var o = { position: k + 1, title: titleOf(s) }, n = numberOf(s); if (n) o.number = n; if (s.querySelector('aside.notes')) o.notes = true; return o; }
