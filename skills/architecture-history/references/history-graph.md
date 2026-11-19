@@ -11,7 +11,7 @@ so a version graph is exactly what `build-explorer.mjs` exports for that model, 
 | `history.trig` | TriG 1.2: the default graph, then one named graph per changeset, then one per version |
 | `history.nq` | the same quads as N-Quads 1.2 (triple terms written `<<( s p o )>>`) |
 | `history.rete` | the same, as one queryable `.rete` file with its named graphs (when the `rete` CLI or `rete-graph` is available) |
-| `history.json` | compact form for the explorer page (`build-explorer.mjs --history`): every version's model, deduplicated, with element-level changes |
+| `history.json` | compact form for the explorer page (`build-explorer.mjs --history`): every version's model, deduplicated, with element-level changes, and the git details its version list shows (the commit's full `message`, `parents` and `authored` time, the same values as `c4h:message`, `c4h:parentSha`, `c4h:authoredAtTime` on that commit; the pull request's `head` and `base` branches, as `c4h:headRef`, `c4h:baseRef`) |
 | `timeline.md` | the versions as a table, then the changes of each version |
 | `diff-<A>-<B>.md`, `.trig` | `diff A B`: report and changeset; `--with-graphs` adds both version graphs to the `.trig` |
 | `pr-<N>.md`, `.trig` | `pr N`: the same for a pull request |
@@ -113,8 +113,10 @@ in the third query below.
 
 Agents carry `foaf:name` only. Git commit e-mail addresses are personal data: anyone with the repository can read them,
 but a dataset copies them to new places (a published page, a shared `.rete` file) and makes them trivial to harvest.
-`--emails` adds `foaf:mbox`, and the history says which it is (`c4h:includesEmails`). Remote URLs are reduced to the
-host and path, so a token in an `https://user:token@…` remote is never exported.
+`--emails` adds `foaf:mbox`, and the history says which it is (`c4h:includesEmails`). Without it, e-mail addresses in
+commit messages (`Signed-off-by:` and `Co-authored-by:` trailers, or anywhere else) are dropped from `c4h:message` and
+from `history.json`. Remote URLs are reduced to the host and path, so a token in an `https://user:token@…` remote is
+never exported.
 
 ## SPARQL queries
 

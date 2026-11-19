@@ -7,12 +7,14 @@ description: The architecture over time - versions with provenance from git, dif
 An explorer model committed with the code has a history. The `architecture-history` skill reads it with git and
 turns it into **versions with provenance**: which architecture each commit, merge, release or pull request held, who
 changed what and when, and what changed between any two versions, from boxes and arrows down to single RDF triples.
-The explorer page gets a **timeline** to step through the versions and a **compare mode** that draws the differences.
+The explorer page gets a **history bar** to step through the versions, a **version list** with the details of each
+one, and a **compare mode** that draws the differences.
 
-![Compare mode: the later version drawn with added boxes and arrows in green, a removed function as a red ghost, and the panel listing each change with its author and commit](img/history-compare.png){ .shot }
+![Compare mode: the later version drawn with added boxes and arrows in green, a removed function as a red ghost, the panel listing each change with its author and commit, and the history bar along the bottom](img/history-compare.png){ .shot }
 
-*Compare mode on demonstration data (fictional authors): a branch adds a mail server and a notification component
-(green) and drops a helper function from the model (red ghost); the panel lists every change with who and when.*
+*Compare mode on demonstration data (fictional authors): a pull request adds a mail server and a notification
+component (green) and drops a helper function from the model (red ghost); the panel lists every change with who and
+when, and a click on one goes to it.*
 
 ## Try it
 
@@ -43,18 +45,35 @@ node skills/architecture-explorer/scripts/build-explorer.mjs \
   --root . --history communications/architecture-history/history.json
 ```
 
-![A version of the demonstration history: the timeline bar under the toolbar, and the panel listing what this version changed](img/history-version.png){ .shot }
+![The version list of the demonstration history, opened upward from the history bar: one card per version with its kind, date, authors, message, pull request and changes, one of them unfolded with its full message, git details and change list](img/history-version.png){ .shot }
 
-- **Timeline bar**: one dot per version, labelled with its tag or pull request. Click a dot, step with ◀ ▶ or the
-  `[` and `]` keys, or press play. The page runs again on that version's model, keeping your zoom and the boxes you
-  opened. The panel says who made the version, when, and what it changed.
+*The version list on demonstration data (fictional authors and invented dates, as its banner says).*
+
+- **History bar**: along the bottom of the map, the Pinned board and the Dynamic view, like a bottom navigation bar;
+  one dot per version, labelled with its tag or pull request. Click a dot, step with `‹ ›` or the `[` and `]` keys,
+  or press play. The page runs again on that version's model, keeping your zoom and the boxes you opened. The panel
+  says who made the version, when, and what it changed. The bar never covers the minimap, the zoom buttons or the
+  panel; with the panel folded away it spans the whole width, and on a phone it sits above the bottom sheet.
+- **Version list**: **▴ History** (or `H`) opens a drawer with every version, newest first, the one shown highlighted.
+  Each card has the tag, pull request or short SHA, the kind (commit, merge, tag, pull request, squash), the date, the
+  authors, the first line of the commit message, the pull request, whether the model was committed or regenerated, and
+  what changed since the version before (`+` / `−` / `~` boxes, arrows, scenarios, and the RDF triples added and
+  removed). Unfold a card for the full message, the SHA, parents, branches, the pull request's branches and the list
+  of changes. Each card can be **shown**, **compared** with the version on screen (or set as end A or B of a
+  comparison), its **SHA copied**, and its **commit** or **pull request** opened on GitHub, GitLab or Bitbucket when
+  the repository is known. `Esc` closes it; `#hist=open` in the URL opens it.
 - **Compare mode** (`⇄ compare` or `C`): the later version is drawn with **added** boxes and arrows in green,
   **removed** ones brought back from the earlier version as red, dashed ghosts, and **changed** ones in amber. A closed
   box with changes inside gets a dotted amber border. Click a dot to move the later end, Shift + click (or the *from*
   list) to move the earlier one. The panel lists every change with the fields that changed and who changed them in
   which commit; select a box to see its old and new text.
-- **Links**: `#ver=<key>` opens a version, `#ver=<key>&cmp=<key>` a comparison, together with the usual state
-  (`open=`, `level=`, `sel=` …). The colours come from each theme's tones.
+- **Go to a change**: every change in the panel and in the version list is a button. A box is opened down to its
+  level, selected and centred; an arrow shows both ends, selected, with the arrow highlighted; a removed box or arrow
+  is its red ghost; a scenario opens the Dynamic view on the step that changed. A change of another version switches
+  to that version first (or to a comparison with the version before it, for a removal or when you are comparing).
+- **Links**: `#ver=<key>` opens a version, `#ver=<key>&cmp=<key>` a comparison, `#hist=open&hx=<key>` the version
+  list with that card unfolded, together with the usual state (`open=`, `level=`, `sel=` …). The colours come from
+  each theme's tones.
 - You edit the page's own model only: **✎ edit** is hidden while an older version or a comparison is shown.
 
 ## What to build the history from
@@ -124,8 +143,9 @@ validation; the [workflows guide](reference/history-workflows.md) has the four w
 
 Datasets carry each author's **name** only. Commit e-mail addresses are personal data: anyone with the repository can
 read them, but a dataset copies them to new places (a published page, a shared `.rete` file) and makes them easy to
-harvest. `--emails` adds them when you want them, and the dataset says which it is (`c4h:includesEmails`). Credentials
-in a remote URL are never exported.
+harvest. `--emails` adds them when you want them, and the dataset says which it is (`c4h:includesEmails`). The same
+goes for addresses inside commit messages (`Signed-off-by:`, `Co-authored-by:` trailers): they are dropped from the
+messages the dataset and the page carry. Credentials in a remote URL are never exported.
 
 ## Real history and demonstration data
 

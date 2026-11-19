@@ -141,8 +141,25 @@
   }
 
   /* ---------- size and display mode ---------- */
-  var INLINE = 620, MIN = 380, folded = false;
+  var INLINE = 620, MIN = 380;
   function ctx() { return (app && app.getHostContext()) || {}; }
+  /* inline, the details panel (a bottom sheet under 820px, else the right-hand column) and the minimap start folded, so the
+     map gets the little room there is; expanded, they come back. Neither choice is remembered for the reader, and once the
+     reader folds or unfolds one of them it is theirs: the view stops managing it (as it does when the reader's own saved
+     choice already matches). mine[k]: what the view last set; undefined before, null once it is the reader's. */
+  var mine = { panel: undefined, mm: undefined };
+  function own(k, cls, want, apply) {
+    if (mine[k] === null) return;
+    var has = root.classList.contains(cls);
+    if (mine[k] === undefined ? has === want : has !== mine[k]) { mine[k] = null; return; }
+    if (has !== want) apply();
+    mine[k] = want;
+  }
+  function autoFold(inl) {
+    var api = (window.ARCH_EXPLORER || {}).api || {};
+    own('panel', 'panel-closed', inl, function () { if (api.setPanel) api.setPanel(!inl, true); else root.classList.toggle('panel-closed', inl); });
+    own('mm', 'mm-min', inl, function () { if (api.setMinimap) api.setMinimap(inl, true); else root.classList.toggle('mm-min', inl); });
+  }
   function layout() {
     var c = ctx(), d = c.containerDimensions || {}, h;
     if (typeof d.height === 'number' && d.height > 0) h = d.height;                                   // fixed: fill it
@@ -151,7 +168,7 @@
     root.style.setProperty('--c4w-h', Math.round(h) + 'px');
     var inl = c.displayMode !== 'fullscreen';
     root.classList.toggle('c4-inline', inl);
-    if (inl && !folded) { var pnl = document.getElementById('panel'); if (pnl) { pnl.classList.add('min'); folded = true; } }   // once: the reader may unfold it
+    autoFold(inl);
     var s = c.safeAreaInsets || {};
     ['top', 'right', 'bottom', 'left'].forEach(function (k) { root.style.setProperty('--c4w-inset-' + k, (+s[k] || 0) + 'px'); });
     var btn = document.getElementById('c4w-expand');

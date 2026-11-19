@@ -109,8 +109,9 @@ domains at all.
   On `ui/notifications/tool-input` and `tool-result` it restarts the engine with the model, exactly as the page's
   own editor does (`ARCH_EXPLORER.teardown()`, then `archEngine()`), then applies `view`.
 - **Size.** Inline it asks for 620 px (less if the host caps it) and reports it with `ui/notifications/size-changed`;
-  a compact toolbar keeps the map large and the details sheet starts folded. **⤢ expand** requests full screen
-  (`ui/request-display-mode`); there the view fills what the host gives it.
+  a compact toolbar keeps the map large, and the details panel (a bottom sheet in a narrow view) and the minimap start
+  folded. **⤢ expand** requests full screen (`ui/request-display-mode`); there the view fills what the host gives it
+  and brings the panel and the minimap back, unless you folded or unfolded them yourself.
 - **Downloads.** Chat apps block downloads from their frames, so every export of the page (SVG, PNG, HTML, JSON-LD,
   Turtle, the editor's `model.js` and page) goes through the host's download dialog (`ui/download-file`). A `.rete`
   file is built by the server (`export_rdf`, called from the view) instead of fetching the builder from a CDN.
@@ -120,8 +121,8 @@ domains at all.
 - **Agents.** The view also offers the explorer's [agent tools](#webmcp-agents-in-the-browser) to the chat's
   assistant as MCP Apps *app tools*, so it can open a level, select boxes or show a scenario in the view you have open.
   Claude offers app tools to a limited set of organizations so far.
-- **History.** With `history` (a `history.json` from the [history skill](history.md)) the view shows the timeline
-  and compare mode; without it the bar stays hidden.
+- **History.** With `history` (a `history.json` from the [history skill](history.md)) the view shows the history
+  bar along its bottom edge, the version list and compare mode; without it the bar stays hidden.
 
 Where a chat has no MCP Apps support, `show_explorer` still answers with a text summary and points to
 `build_explorer_page` and `export_rdf`.

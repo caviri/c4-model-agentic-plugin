@@ -5,9 +5,9 @@
 | # | version | date | by | what | change |
 |---:|---|---|---|---|---|
 | 1 | `888fcad` | 2026-11-19 | caviri | Add C4 model plugin: exploration, deck and architecture exp… | first version: 64 nodes, 69 edges, 4 scenarios |
-| 2 | `1e415ac` (main) | 2026-11-19 | caviri | Ontology: publish the C4 architecture ontology, Turtle expo… | ~2 scenarios (+16 −0 triples) |
+| 2 | `1e415ac` | 2026-11-19 | caviri | Ontology: publish the C4 architecture ontology, Turtle expo… | ~2 scenarios (+16 −0 triples) |
 
-## `1e415ac` (main): Ontology: publish the C4 architecture ontology, Turtle export, lossless RDF round trip
+## `1e415ac`: Ontology: publish the C4 architecture ontology, Turtle export, lossless RDF round trip
 
 From `888fcad`. caviri, 2026-11-19, [`1e415ac`](https://github.com/caviri/c4-model-agentic-plugin/commit/1e415ac8413eb9e53fd1e596e04e3bb446097b15). Triples: +16 −0 (1 of them presentation only, c4v:).
 

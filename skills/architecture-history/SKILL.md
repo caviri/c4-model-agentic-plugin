@@ -74,8 +74,8 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/architecture-explorer/scripts/build-explorer.
   --root . --history communications/architecture-history/history.json
 ```
 
-Take screenshots of the timeline and of compare mode with the explorer's `screenshot.mjs` (states `ver=<key>` and
-`cmp=<older key>&ver=<newer key>`) and look at them.
+Take screenshots of the history bar, of the version list and of compare mode with the explorer's `screenshot.mjs`
+(states `ver=<key>`, `hist=open&hx=<key>` and `cmp=<older key>&ver=<newer key>`) and look at them.
 
 ### 6. Report
 

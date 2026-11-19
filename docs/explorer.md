@@ -19,7 +19,7 @@ rendering engine around it never changes, so a page can be rebuilt with a newer 
 Boxes open in place: from the system context (L1) to containers (L2), components (L3) and code (L4). A box with
 children shows a **+ N inside** badge; double-click it or press the badge to open it, and the boxes around it make
 room. Keys ++1++ to ++4++ open the whole map to a level. Pan, zoom, a minimap and search (++"/"++) help on large
-models.
+models; the minimap's `–` button (or ++o++) minimizes it to a small chip.
 
 Relationships are declared once, between the most specific elements known, and drawn between whatever is visible.
 A closed container therefore shows every relationship of the things inside it. Arrows are **squared** by default,
@@ -29,6 +29,11 @@ running in the gaps between boxes on separate lanes; ++e++ switches to **straigh
 
 Click a box to see its description, notes, technology, source file and line (linked to the repository), the boxes
 inside it, and the lists of what it uses and what uses it. Every entry navigates to the other end.
+
+The handle on the right edge of the map (or ++i++) folds the panel away and gives the views the whole width; it
+stays folded when you select a box (the handle shows a dot) until you bring it back. On a phone the panel is a bottom
+sheet that folds to one line. Both the panel and the minimap remember their state and appear in the URL
+(`#panel=closed`, `#mm=min`).
 
 ### State machines
 
@@ -96,10 +101,11 @@ Turtle (`.ttl`) or `.rete`. Try it on the [live example](example/explorer.md).
 
 ### Versions and compare mode
 
-Built with the history of its model (`--history`, from the `architecture-history` skill), the page gets a timeline
-bar: step through the versions or play them, and compare two, with added boxes and arrows in green, removed ones as
-red ghosts and changed ones in amber, each change listed with who made it and when. See
-[History and diffs](history.md).
+Built with the history of its model (`--history`, from the `architecture-history` skill), the page gets a history
+bar along the bottom of the map: step through the versions or play them, and compare two, with added boxes and arrows
+in green, removed ones as red ghosts and changed ones in amber, each change listed with who made it and when.
+**History** (or ++h++) opens a list of every version with its message, authors, pull request and changes; click a
+change to go to it. See [History and diffs](history.md).
 
 ### Keyboard
 
@@ -112,7 +118,9 @@ red ghosts and changed ones in amber, each change listed with who made it and wh
 | ++p++ | Pin or unpin the selected box |
 | ++s++ | Sequence inside the selected box, or its boxes again (Map) · all scenarios (Dynamic) |
 | ++l++, ++e++, ++t++ | Arrow labels, arrow style, colour theme |
-| ++esc++ | Clear the selection |
+| ++i++, ++o++ | Hide or show the details panel, minimize or restore the minimap |
+| ++bracket-left++ ++bracket-right++, ++c++, ++h++ | With a history: previous / next version, compare, the version list |
+| ++esc++ | Clear the selection (or close the version list) |
 | ++left++ ++right++ ++space++ | Previous step, next step, play |
 | ++del++, ++ctrl+z++, ++ctrl+y++ | In edit mode: delete the selected box, undo, redo |
 

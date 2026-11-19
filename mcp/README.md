@@ -109,7 +109,9 @@ Packages: `@modelcontextprotocol/sdk` 1.32.2 (server, low-level `Server` for han
   path: set `window.MODEL` and `ARCH_ORIGINAL`, `ARCH_EXPLORER.teardown()`, `window.archEngine({ open, select })`, then
   the rest of `view` through `ARCH_EXPLORER.api`. Size: the explorer is a full-height app, so the bridge gives it an
   explicit height (fixed `containerDimensions.height`, else `min(620, maxHeight)`, at least 380) and reports it with
-  `sendSizeChanged`; it re-lays out on `onhostcontextchanged`. Inline, a compact toolbar and a folded details sheet;
+  `sendSizeChanged`; it re-lays out on `onhostcontextchanged`. Inline, a compact toolbar, and the details panel and
+  the minimap folded (`ARCH_EXPLORER.api.setPanel` / `setMinimap`, not remembered; full screen unfolds them again unless
+  the reader changed them);
   **⤢ expand** calls `requestDisplayMode`. Downloads (`<a download>` on blob URLs) go to `app.downloadFile`
   (`ui/download-file`) when the host offers it; source links to `app.openLink`; the page's `.rete` builder
   (`window.rete.build`) to `app.callServerTool('export_rdf')`, so no CDN is ever fetched. The editor's edits stay in

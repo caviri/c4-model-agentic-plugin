@@ -19,7 +19,7 @@ PREFIX : <urn:architecture:image-annotation-tool:>
     c4h:resolution "all" ;
     c4h:sourceRepository <https://github.com/caviri/c4-model-agentic-plugin> ;
     c4h:includesEmails "false"^^xsd:boolean ;
-    prov:generatedAtTime "2026-11-19T16:15:45.697Z"^^xsd:dateTime ;
+    prov:generatedAtTime "2026-11-19T17:51:33.710Z"^^xsd:dateTime ;
     prov:hadMember :version:888fcadf3564b60bd485b6b74af2a8da5b92dcc9, :version:1e415ac8413eb9e53fd1e596e04e3bb446097b15 ;
     c4h:hasChangeSet :changeset:888fcadf3564b60bd485b6b74af2a8da5b92dcc9..1e415ac8413eb9e53fd1e596e04e3bb446097b15 .
 :version:888fcadf3564b60bd485b6b74af2a8da5b92dcc9 a c4h:Version, prov:Entity ;
@@ -40,7 +40,6 @@ PREFIX : <urn:architecture:image-annotation-tool:>
     c4h:modelCommit :commit:1e415ac8413eb9e53fd1e596e04e3bb446097b15 ;
     c4h:modelPath "examples/image-annotation-tool/communications/architecture-explorer/model.js" ;
     c4h:modelOrigin c4h:Committed ;
-    c4h:ref "main" ;
     prov:wasRevisionOf :version:888fcadf3564b60bd485b6b74af2a8da5b92dcc9 ;
     prov:generatedAtTime "2026-11-19T15:43:27Z"^^xsd:dateTime ;
     prov:wasGeneratedBy :commit:1e415ac8413eb9e53fd1e596e04e3bb446097b15 ;

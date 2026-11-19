@@ -200,9 +200,10 @@ versions with provenance and shows how the architecture changed:
 > /c4-model-agentic-plugin:architecture-history pr 42                   # a pull request's architecture impact
 ```
 
-- **In the explorer** (`build-explorer.mjs --history history.json`): a timeline bar to step through or play the
-  versions, and a compare mode that draws added boxes and arrows in green, removed ones as red ghosts and changed ones
-  in amber, with every change listed with its author and commit. `#ver=` and `#cmp=` in the URL.
+- **In the explorer** (`build-explorer.mjs --history history.json`): a history bar along the bottom to step through
+  or play the versions, a version list with each one's message, authors, pull request and changes, and a compare mode
+  that draws added boxes and arrows in green, removed ones as red ghosts and changed ones in amber, with every change
+  listed with its author and commit; a click on a change goes to it. `#ver=`, `#cmp=` and `#hist=open` in the URL.
 - **Reports**: Markdown diffs for two refs or a pull request, a timeline, and blame for every element.
 - **Dataset**: `history.trig` (RDF 1.2), `history.nq`, `history.rete`. Each version is a named graph; PROV-O says who
   made it, when, and in which commit, merge, release or pull request; every added or removed triple has a reifier

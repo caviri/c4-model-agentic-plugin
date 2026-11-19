@@ -16,7 +16,7 @@ The explorer is one HTML file made of five script blocks: `model` (the data), `v
   - **Several boxes.** Ctrl + click (⌘ + click on macOS, where Ctrl + click opens the context menu; Shift + click works everywhere) adds a box to the selection or takes it out; a plain click selects only that box again. From the keyboard: Ctrl / ⌘ / Shift + `Enter` on a focused box. Works on the Map and the Pinned board; the Dynamic view keeps a single selection. The panel then lists the selected boxes (click one to centre it, `×` to take it out), the relationships between them, and what they use and are used by together; `P` or "Pin all" pins every selected box (or unpins them all when all are pinned).
   - **What stays bright.** The selected boxes, everything inside them, and every box at the other end of one of their visible (possibly merged) arrows keep full strength, with the union taken for several selected boxes. Their arrows are drawn thicker and their labels in full (a folded label is revealed). Every other box, arrow and label fades. An open box around a bright box fades only a little, so its frame and title still give context. Fading is opacity only, so it reads the same in light and dark themes; a theme can tune it with `--dim-node` (default .3), `--dim-frame` (.85) and `--dim-edge` (.16).
 - **Pan and zoom.** Drag to pan, wheel or pinch to zoom at the pointer, `+` / `−` / fit buttons, `F` to fit. Below 34% zoom, sub-lines, arrow labels and variant dots hide to keep the overview legible.
-- **Minimap** (bottom left, hidden on phones) shows all visible boxes and the viewport; click to jump.
+- **Minimap** (bottom left, hidden on phones) shows all visible boxes and the viewport; click to jump. The `–` button in its corner (or `O`) minimizes it to a small `▣ minimap` chip that brings it back; the hint line then moves left. Remembered per browser and written to the URL (`mm=min`).
 - **Breadcrumb** (top left) lists what is open, or what is selected.
 - **Arrow labels** toggle with the `labels` button or `L`. A label is one line up to 16 characters, else two lines of up to 20, and is slid along its arrow to avoid boxes, the header (title strip and buttons) of open boxes, and other labels.
   - **Placement order.** Labels of the selected box's arrows are placed first and are always drawn in full. The others follow, the most constrained first (fewest spots clear of boxes), so long arrows with many possible spots give way to short ones.
@@ -25,7 +25,7 @@ The explorer is one HTML file made of five script blocks: `model` (the data), `v
 
 ### Details panel
 
-Right column on desktop, bottom sheet under 820 px (with a collapse toggle). For the selected box: ancestor breadcrumb (clickable), level and tag, name, `sub`, `desc`, `notes`, action buttons (open/close, show on map, pin), technology chips, variant chips, source path and link, children, and **Uses / Used by** lists (**Transitions to / Reached from** for a state). Those lists include the relationships of everything inside the box and say which inner element each comes from; every entry navigates to the other end.
+Right column on desktop, bottom sheet under 820 px. **Folding it away**: the handle on the right edge of the views (`›`, or `I`) hides the panel, so the map, the Pinned board, the Dynamic view and the history bar get the whole width; the map keeps what it showed (re-fitted if it was fitted, else the same centre and zoom, animated unless the reader asks for reduced motion). Folded, the handle reads `‹ details` and carries a dot while something is selected. The panel does **not** reopen by itself when a box is selected: the reader folded it to make room and selects boxes all the time, so it stays folded until the handle or `I` brings it back. Under 820 px the same state folds the bottom sheet to one line (`details ▴`); a click anywhere on that line unfolds it. Remembered per browser and written to the URL (`panel=closed`). For the selected box: ancestor breadcrumb (clickable), level and tag, name, `sub`, `desc`, `notes`, action buttons (open/close, show on map, pin), technology chips, variant chips, source path and link, children, and **Uses / Used by** lists (**Transitions to / Reached from** for a state). Those lists include the relationships of everything inside the box and say which inner element each comes from; every entry navigates to the other end.
 
 With several boxes selected: the selected boxes (each entry centres its box, `×` takes it out), **Pin all / Unpin all**, **Show all on map**, **Clear selection**, **Between them** (relationships from inside one selected box to inside another), and **Together they use / Together they are used by** (relationships with one end inside the selection and the other outside it, naming the inner element).
 
@@ -78,10 +78,13 @@ Present only when `MODEL.scenarios` is non-empty; no model fields are needed. An
 | Ctrl / ⌘ / Shift + click, or + `Enter` on a focused box | Add the box to the selection, or take it out |
 | `S` | Sequence inside the selected box, or its boxes again (Map) · all scenarios (Dynamic) |
 | `L`, `E`, `T` | Arrow labels, arrow style (right-angled / straight), next colour theme (the `theme ▾` menu lists them all) |
+| `I` | Hide or show the details panel (fold or unfold the bottom sheet under 820 px) |
+| `O` | Minimize or restore the minimap |
 | Delete, Ctrl+Z, Ctrl+Y | In edit mode: delete the selected box, undo, redo. Alt+drag connects two boxes |
-| `Esc` | Clear the selection |
+| `Esc` | Clear the selection; with the version list open, close it first |
 | `←` `→` `space` | Previous step, next step, play (Dynamic) |
-| `[` `]`, `C` | With a history embedded: previous / next version, compare mode on or off |
+| `[` `]`, `C`, `H` | With a history embedded: previous / next version, compare mode on or off, the version list (drawer) open or closed |
+| `↑` `↓` `Home` `End` | In the version list and in a list of changes: move between the entries (`Enter` / `Space` activates) |
 | `Tab`, `Enter`, `Space` on a box | Focus, select, open or close |
 
 ### Colour themes
@@ -153,26 +156,57 @@ The URL hash mirrors what is on screen and is read at load, so any state can be 
 | `seqstep=api:3` | Message picked in that box's sequence, numbered from 1 |
 | `zoom=api` | Read only: fit the camera to that box instead of the whole map |
 | `pins=a,b,c` | Read only: use these pins for this visit |
+| `panel=closed` | The details panel folded away (the bottom sheet folded under 820 px). `panel=open` overrides the reader's stored choice. |
+| `mm=min` | The minimap minimized to its chip (`mm=full` overrides the stored choice) |
 | `ver=4d60afd` / `cmp=a889a40` | Only with a history embedded (see "Versions and compare mode"): the version drawn, and the version it is compared with |
+| `hist=open` / `hx=4d60afd,f702ebd` | With a history: the version list (drawer) open, and the entries unfolded in it |
 
-Example: `index.html#open=api&zoom=api&theme=dark`.
+Example: `index.html#open=api&zoom=api&theme=dark`; with a history, `index.html#ver=5ce40d3&cmp=4d60afd&hist=open&hx=5ce40d3`.
 
 ### Versions and compare mode
 
 Only when the page was built with `--history <history.json>` (written by the architecture-history skill's
-`arch-history.mjs timeline`). A **History** bar appears under the toolbar with one dot per version. Clicking a dot,
-◀ ▶ or `[` `]` runs the page again on that version's model, keeping the camera and the open boxes; ▶ play steps through
-the versions. `⇄ compare` (or `C`) draws the later version with added boxes and arrows in green, removed ones as red
-dashed ghosts brought back from the earlier version, changed ones in amber, and a dotted amber border on a closed box
-with changes inside; the colours are each theme's `--green`, `--rose` and `--orange`. Click a dot to move the later end,
-Shift + click (or the "from" list) to move the earlier one. The details panel lists the changes of the version or the
+`arch-history.mjs timeline`). A **history bar** runs along the bottom of the views (map, Pinned board, Dynamic), like a
+bottom navigation bar, with one dot per version. It has its own row, so it never covers the minimap, the zoom buttons,
+the hint line or the panel; with the panel folded it spans the whole width, and under 820 px it sits between the views
+and the bottom sheet, with shorter buttons. Clicking a dot, `‹ ›` or `[` `]` runs the page again on that version's
+model, keeping the camera and the open boxes; `▶ play` steps through the versions. `⇄ compare` (or `C`) draws the later
+version with added boxes and arrows in green, removed ones as red dashed ghosts brought back from the earlier version,
+changed ones in amber, and a dotted amber border on a closed box with changes inside; the colours are each theme's
+`--green`, `--rose` and `--orange`. Click a dot to move the later end, Shift + click (or the "from" list) to move the
+earlier one (Shift + click also starts a comparison). The details panel lists the changes of the version or the
 comparison with the fields that changed and who changed them in which commit; a selected box shows its old and new
 text. `✎ edit` is hidden while another version or a comparison is shown, and the bar is disabled while editing.
 
-The code is the `history` script of the template (the timeline bar, the panel sections, the restarts), the comparison
-code the build embeds with the versions (`history-core.js` of the architecture-history skill, between the
-`/* BEGIN HISTORY */` and `/* END HISTORY */` markers), and a few hooks in the engine (`HU`). Without a history the
-bar stays hidden and nothing else changes.
+**The version list.** `▴ History` at the left of the bar (or `H`) opens a drawer upward over the views with every
+version, newest first, the one shown highlighted (in compare mode both ends, marked A and B). Each card shows the label
+(tag, pull request or short SHA) and the SHA, the kind (commit, merge, tag, pull request, squash, working tree), the
+date, the authors, the first line of the commit message, the pull request, whether the model was committed or
+regenerated, and what changed since the version before: `+` / `−` / `~` counts of boxes, states, arrows, transitions,
+scenarios and settings, and the RDF triples added and removed. Its actions: **show** it, **⇄ compare** it with the
+version shown (or, in compare mode, **set A** / **set B**), **copy SHA**, and **commit ↗** / **PR #n ↗** on the forge
+when the history knows the repository (else the model's `source.repoUrl`). Unfolding a card (`▶`, or `Enter` on it)
+adds the full commit message, the SHA, parents, branches, tags, the pull request's branches and state, where the model
+came from, its size, and the list of its changes. The drawer scrolls, closes with `Esc`, `✕` or the button, keeps its
+place while the reader moves between versions, and is `#hist=open` (with `#hx=<key>,…` for the unfolded cards) in
+the URL. Demonstration histories carry a "Demo data" banner in it and a `demo data` badge on the bar.
+
+**Going to a change.** Every change listed, in the panel (the version's changes, or the comparison's) and in the
+drawer, is a button that goes to that element: a box is revealed as search does (its ancestors open, selected,
+centred); an arrow opens the boxes around both ends, selects both ends and highlights the arrow that carries it (a
+merged, lifted one if the ends are drawn inside closed boxes); a removed box or arrow is its red ghost in compare mode;
+a scenario opens the Dynamic view on it, at a level that draws the first changed step, on that step; a variant sets
+the filter. A change of another version (from the drawer) first shows that version, or compares it with the one before
+it when the page is in compare mode or the change is a removal; a removed scenario opens in the version before. The
+selection fades the rest exactly as a click on the box would. The engine's `ARCH_EXPLORER.api.goTo({ box | edge |
+scenario, step | variant })` does the navigating.
+
+The code is the `history` script of the template (the history bar and its drawer, the panel sections, going to a
+change, the restarts), the comparison code the build embeds with the versions (`history-core.js` of the
+architecture-history skill, between the `/* BEGIN HISTORY */` and `/* END HISTORY */` markers), and a few hooks in the
+engine (`HU`, `goTo`). Without a history the bar stays hidden and nothing else changes. Scripts can rely on these hooks:
+`#histbar [data-hver]` (a version dot), `[data-hgo="play"]`, `[data-hgo="cmp"]`, `[data-hgo="drawer"]`; the drawer's
+own buttons use `data-hact` and the change buttons `data-hnav`.
 
 ### Sizes
 

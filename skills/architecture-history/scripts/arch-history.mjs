@@ -59,6 +59,9 @@ const slug = (s) => String(s || '').toLowerCase().normalize('NFKD').replace(/[̀
 const enc = encodeURIComponent;
 const uniq = (a) => a.filter((x, i) => a.indexOf(x) === i);
 const day = (iso) => (iso ? String(iso).slice(0, 10) : '');
+// commit messages go into the dataset and the page: without --emails, e-mail addresses in them (Signed-off-by:,
+// Co-authored-by: trailers) are dropped, as they are for the agents (see "Privacy" in references/history-graph.md)
+const scrub = (msg) => (C && C.emails ? String(msg || '') : String(msg || '').replace(/\s*<[^<>\s@]+@[^<>\s]+>/g, '').replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, '(e-mail address removed)'));
 
 // ------------------------------------------------------------------ processes and git
 let TOP = null;
@@ -387,7 +390,7 @@ function commitActivity(sha) {
     if (!c) return null;
     const a = agent(c.author.name, c.author.email), m = agent(c.committer.name, c.committer.email);
     ACTS.set(id, { id, kind: c.parents.length > 1 ? 'merge' : 'commit', sha, date: c.committed, authored: c.authored, agents: uniq([a]), committer: m,
-      title: c.subject, message: c.message, parents: c.parents, url: C.web ? C.web.commit(sha) : null });
+      title: scrub(c.subject), message: scrub(c.message), parents: c.parents, url: C.web ? C.web.commit(sha) : null });
   }
   return ACTS.get(id);
 }
@@ -662,8 +665,8 @@ function finishVersions(versions, ctx) {
       v.activity = 'commit:' + v.at;
       commitActivity(v.at);
       v.date = commit(v.at).committed;
-      // a merge GitHub made for a pull request says so in its message
-      const m = v.kind === 'merge' && /^Merge pull request #(\d+) from (\S+)/.exec(commit(v.at).subject);
+      // a merge GitHub made for a pull request says so in its message (also when the version was named by --refs)
+      const m = (v.kind === 'merge' || commit(v.at).parents.length > 1) && /^Merge pull request #(\d+) from (\S+)/.exec(commit(v.at).subject);
       if (m && !v.pr) {
         const n = +m[1], body = commit(v.at).message.split(/\r?\n/).slice(1).join(' ').trim();
         v.pr = { number: n, title: body || commit(v.at).subject, url: C.web ? C.web.pr(n) : null, state: 'MERGED' };
@@ -839,7 +842,15 @@ function addVersion(Q, v, seq) {
   if (v.kind === 'squash') acts.push(...v.covers.map((c) => 'commit:' + c));
   if (v.kind === 'release') acts.push('commit:' + v.at);
   if (v.kind === 'pr' && ACTS.get(v.activity).mergeCommit) { commitActivity(ACTS.get(v.activity).mergeCommit); acts.push('commit:' + ACTS.get(v.activity).mergeCommit); }
+  // the commit the version stands at (c4h:commitSha): its message and parents are what history.json shows (versionCommit)
+  if (v.at !== 'worktree' && commitActivity(v.at)) acts.push('commit:' + v.at);
   return { acts, ags };
+}
+// the git details of the commit a version stands at, for history.json (the same values the dataset gives that commit:
+// c4h:message, c4h:parentSha, c4h:authoredAtTime)
+function versionCommit(v) {
+  const c = v.at === 'worktree' ? null : commitActivity(v.at);
+  return c ? { message: c.message, parents: c.parents, authored: c.authored || null } : {};
 }
 function addVersionGraph(Q, v) { const g = iri(v.iri); for (const [s, p, o] of v.graph.triples) Q.add(s, p, o, g); }
 function addChangeset(Q, cs) {
@@ -1152,9 +1163,13 @@ function historyJson(H) {
           renamedFrom: x.renamedFrom, renamedTo: x.renamedTo, by: x.by })) };
     }
     (v.covers || []).forEach((c) => actsUsed.add('commit:' + c));
+    const prA = v.pr ? ACTS.get('pr:' + v.pr.number) || {} : {}, vc = versionCommit(v);
     return { key: v.key, id: v.iri, kind: (ACTS.get(v.activity) || {}).kind || v.kind, origin: v.origin, sha: v.at === 'worktree' ? null : v.at, modelCommit: v.modelCommit || null,
       date: v.date || null, agents: v.agents, activity: v.activity, title: ((ACTS.get(v.activity) || {}).title || '').split('\n')[0], refs: v.refs, tags: v.tags,
-      pr: v.pr ? { number: v.pr.number, title: v.pr.title, url: v.pr.url || null, state: v.pr.state || null } : null, url: (ACTS.get(v.activity) || {}).url || null,
+      // the commit the version stands at: its full message (e-mail addresses dropped unless --emails), parents, author time
+      message: vc.message, parents: vc.parents, authored: vc.authored || undefined,
+      pr: v.pr ? { number: v.pr.number, title: v.pr.title, url: v.pr.url || null, state: v.pr.state || null, head: prA.headRefName || v.pr.headRefName || undefined, base: prA.baseRefName || v.pr.baseRefName || undefined } : null,
+      url: (ACTS.get(v.activity) || {}).url || null,
       prev: v.prev ? v.prev.key : null, covers: v.covers || undefined, model,
       stats: { nodes: (M.nodes || []).length, edges: (M.edges || []).length, scenarios: (M.scenarios || []).length, triples: v.graph.count }, changes };
   });
@@ -1162,7 +1177,8 @@ function historyJson(H) {
   const activities = {};
   for (const id of actsUsed) {
     const a = ACTS.get(id); if (!a) continue;
-    activities[id] = { kind: a.kind, date: a.date || null, agents: a.agents, title: (a.title || '').split('\n')[0], url: a.url || null, sha: a.sha || null, number: a.number, tag: a.tag };
+    activities[id] = { kind: a.kind, date: a.date || null, agents: a.agents, title: (a.title || '').split('\n')[0], url: a.url || null, sha: a.sha || null, number: a.number, tag: a.tag,
+      base: a.kind === 'regeneration' ? a.base || undefined : undefined, files: a.kind === 'regeneration' && a.files && a.files.length ? a.files : undefined };   // as c4h:baseSha, c4h:changedFile
     agentsUsed.push(...a.agents);
   }
   const agents = {};

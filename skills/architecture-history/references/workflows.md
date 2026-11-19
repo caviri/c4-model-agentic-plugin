@@ -115,10 +115,13 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/architecture-explorer/scripts/build-explorer.
   --root . --history communications/architecture-history/history.json
 ```
 
-The explorer gets a timeline bar: pick a version, step with `[` and `]`, or play. Compare mode draws the later version
-with added boxes and arrows in green, removed ones brought back from the earlier version as red ghosts, and changed
-ones in amber; the panel lists every change with who and when. The URL hash keeps the state: `#ver=<key>` and
-`#cmp=<key>` (with `ver`), for example `index.html#cmp=a889a40&ver=4d60afd`.
+The explorer gets a history bar along the bottom of its views: pick a version, step with `[` and `]`, or play. Compare
+mode draws the later version with added boxes and arrows in green, removed ones brought back from the earlier version
+as red ghosts, and changed ones in amber; the panel lists every change with who and when, and a click on a change goes
+to it. `History` (or `H`) opens the version list: each version's message, authors, pull request, model origin and
+changes, with show, compare, copy-SHA and forge links. The URL hash keeps the state: `#ver=<key>`, `#cmp=<key>` (with
+`ver`), `#hist=open` and `#hx=<key>` (the list, and a card unfolded in it), for example
+`index.html#cmp=a889a40&ver=4d60afd&hist=open&hx=4d60afd`.
 
 ## Demonstration data
 

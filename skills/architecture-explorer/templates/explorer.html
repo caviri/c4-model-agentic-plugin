@@ -264,10 +264,16 @@ window.MODEL = {
 .tone-rose { --tone: var(--rose); --tone-soft: var(--rose-soft); }
 html, body { height: 100%; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); overflow: hidden; }
-.app { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-columns: minmax(0, 1fr) calc(380px * var(--ui, 1)); }
+/* the grid: toolbar on top; the views (map, pinned board, Dynamic) with the history bar under them (only with versions
+   embedded); the details panel on the right, the whole height under the toolbar. html.panel-closed folds the panel away
+   (a handle on the views' right edge brings it back); under 820px the panel is a bottom sheet under the history bar. */
+.app { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr) calc(380px * var(--ui, 1)); }
+.app > .bar { grid-row: 1; } .stage { grid-column: 1; grid-row: 2; } .histbar { grid-column: 1; grid-row: 3; } .panel { grid-column: 2; grid-row: 2 / 4; }
+.panel-closed .app { grid-template-columns: minmax(0, 1fr) 0; }
+.panel-closed .panel { display: none; }
 /* reader sizes (the "size" menu): --ui scales the toolbars, the panel and the map's text overlays; --ink-scale the arrow widths;
    --lbl-scale the arrow label font (the core sizes labels with the same number). The page sets all three on <html>. */
-.bar, .panel, .vbar, .hud.crumb, .hint { zoom: var(--ui, 1); }
+.bar, .panel, .vbar, .hud.crumb, .hint, .histbar { zoom: var(--ui, 1); }
 [hidden] { display: none !important; }
 
 /* ---------- toolbar ---------- */
@@ -307,7 +313,27 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .hud.crumb { left: 14px; top: 12px; font-family: var(--f-mono); font-size: 12px; color: var(--muted); background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid var(--line); border-radius: 9px; padding: 6px 10px; max-width: calc(100% - 28px); flex-wrap: wrap; }
 .hud.crumb b { color: var(--ink); font-weight: 500; }
 #minimap { position: absolute; left: 14px; bottom: 14px; width: 200px; height: 130px; background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--line); border-radius: 10px; z-index: 3; cursor: pointer; }
-.hint { position: absolute; left: 226px; bottom: 16px; font-family: var(--f-mono); font-size: 11px; color: var(--muted); z-index: 3; pointer-events: none; }
+/* the minimap's minimize button sits in its top-right corner; minimized (html.mm-min) it is a small chip that brings it back */
+.mm-toggle { position: absolute; left: 188px; bottom: 118px; z-index: 4; width: 22px; height: 22px; padding: 0; display: grid; place-items: center; font: 600 13px/1 var(--f-mono);
+  color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+.mm-toggle:hover { color: var(--ink); border-color: var(--accent); }
+.mm-toggle:focus-visible, .panel-handle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.mm-min #minimap { display: none; }
+.mm-min .mm-toggle { left: 14px; bottom: 14px; width: auto; height: 30px; padding: 0 10px; border-radius: 9px; font: 500 12px var(--f-mono); color: var(--ink); background: color-mix(in srgb, var(--surface) 92%, transparent); }
+/* the hint line runs between the minimap (or its chip) and the zoom buttons, cut short when there is no room; it is
+   zoomed with the interface size and they are not, so its offsets are divided by that size */
+.hint { position: absolute; left: calc(226px / var(--ui, 1)); right: calc(64px / var(--ui, 1)); bottom: calc(16px / var(--ui, 1)); font-family: var(--f-mono); font-size: 11px; color: var(--muted); z-index: 3; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mm-min .hint { left: calc(124px / var(--ui, 1)); }
+/* the details panel's handle on the views' right edge: hides the panel, or brings it back (it then reads "details") */
+.panel-handle { position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  width: 20px; padding: 14px 0; font: 600 14px/1 var(--f-mono); color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-right: 0;
+  border-radius: 9px 0 0 9px; box-shadow: -3px 0 10px var(--shadow); cursor: pointer; }
+.panel-handle:hover { color: var(--ink); border-color: var(--accent); }
+.panel-handle .ph-t { display: none; writing-mode: vertical-rl; font: 500 10.5px var(--f-mono); letter-spacing: .14em; text-transform: uppercase; }
+.panel-closed .panel-handle { width: 26px; color: var(--accent); }
+.panel-closed .panel-handle .ph-t { display: block; }
+.panel-handle .ph-dot { display: none; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.panel-closed .panel-handle.has-sel .ph-dot { display: block; }   /* something is selected: its details wait in the panel */
 
 /* ---------- SVG ---------- */
 .bgdot { fill: var(--grid); }
@@ -563,16 +589,20 @@ table.steps tr.cur td { background: var(--accent-soft); }
 .fatal li { font-family: var(--f-mono); font-size: 13px; margin: 6px 0; }
 
 @media (max-width: 820px) {
-  .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; }
+  /* one column: toolbar, views, history bar, then the panel as a bottom sheet; folded (html.panel-closed) the sheet keeps
+     one line, and a click anywhere on it unfolds it */
+  .app, .panel-closed .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; }
+  .panel { grid-column: 1; grid-row: 4; }
   .group { flex-wrap: wrap; }
   .brand { margin-right: 0; width: 100%; }
   .stats { grid-template-columns: repeat(2, 1fr) !important; }
   .panel { min-width: 0; overflow-x: hidden; }
   .panel { border-left: 0; border-top: 1px solid var(--line); max-height: 42vh; padding-bottom: max(18px, env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); }
-  .panel.min { max-height: 52px; overflow: hidden; }
+  .panel-closed .panel { display: block; max-height: 52px; overflow: hidden; }
+  .panel-closed .panel { cursor: pointer; }
   .sheet-toggle { display: block; float: right; }
   .search input { width: 150px; }
-  #minimap, .hint { display: none; }
+  #minimap, .hint, .mm-toggle, .panel-handle { display: none !important; }
   .brand b { font-size: 16px; }
 }
 /* ---------- edit mode (editor script) ---------- */
@@ -638,19 +668,28 @@ html.editing #map .nd { cursor: grab; }
 .ed-step > .ed-ops { grid-area: o; justify-self: end; display: inline-flex; gap: 4px; }
 @media (prefers-reduced-motion: reduce) { .box, .e { transition: none; } }
 
-/* ---------- history: timeline bar and compare mode (the "history" script; only with versions embedded) ----------
+/* ---------- history: the history bar under the views, the version drawer it opens upward, and compare mode (the
+   "history" script; only with versions embedded). The bar has its own grid row, so it never covers the minimap, the zoom
+   buttons, the hint line or the panel; the drawer lies over the lower part of the views while it is open.
    The three change colours come from the theme's tones, so every theme keeps them readable. */
 :root { --h-add: var(--green); --h-del: var(--rose); --h-chg: var(--orange); }
-.histbar { flex-basis: 100%; display: flex; align-items: center; gap: 6px 10px; min-width: 0; padding-top: 8px; border-top: 1px solid var(--line); }
+.histbar { position: relative; z-index: 6; min-width: 0; background: var(--surface); border-top: 1px solid var(--line); container: hb / inline-size; }
+.hb-row { display: flex; align-items: center; gap: 6px 8px; min-width: 0; padding: 5px max(12px, env(safe-area-inset-right, 0px)) 5px max(12px, env(safe-area-inset-left, 0px)); }
 .histbar.busy { opacity: .45; pointer-events: none; }
 .editing .histbar { opacity: .45; pointer-events: none; }
+.editing .hb-drawer { display: none; }
 .hist-away #btn-edit { display: none; }   /* edit the page's own model only, not an old version or a comparison */
-.hb-title { font-family: var(--f-display); font-size: 15px; }
-.hb-demo { font: 500 10.5px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--h-chg); border: 1px solid currentColor; border-radius: 6px; padding: 2px 6px; }
-.histbar .btn { padding: 5px 9px; }
+.hb-toggle { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.hb-toggle i { font-style: normal; color: var(--accent); font-size: 11px; }
+.hb-toggle[aria-expanded="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.hb-title { font-family: var(--f-display); font-size: 14.5px; font-weight: 700; }
+.hb-n { font: 500 11px var(--f-mono); color: var(--muted); }
+.hb-demo { font: 600 10.5px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--h-chg); background: var(--orange-soft); border: 1.5px solid currentColor; border-radius: 6px; padding: 2px 6px; white-space: nowrap; }
+.histbar .btn { padding: 5px 9px; white-space: nowrap; }
+.histbar .hb-step { font-size: 17px; line-height: 1; padding: 4px 10px 6px; }
 .histbar .btn:disabled { opacity: .4; cursor: default; }
 .histbar .btn[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-.hb-track { display: flex; align-items: flex-start; flex: 1 1 240px; min-width: 120px; overflow-x: auto; scrollbar-width: thin; padding: 2px 2px 4px; }
+.hb-track { display: flex; align-items: flex-start; flex: 0 1 auto; min-width: 90px; overflow-x: auto; scrollbar-width: thin; padding: 2px 2px 3px; }
 .hv { position: relative; flex: 0 0 auto; display: grid; justify-items: center; gap: 4px; min-width: 66px; padding: 2px 4px 0; background: none; border: 0; cursor: pointer; color: var(--muted); font: 11px var(--f-mono); }
 .hv::before { content: ""; position: absolute; top: 8px; left: 0; right: 0; border-top: 2px solid var(--line); }
 .hv:first-child::before { left: 50%; } .hv:last-child::before { right: 50%; }
@@ -666,8 +705,91 @@ html.editing #map .nd { cursor: grab; }
 .hb-from { display: inline-flex; align-items: center; gap: 4px; }
 .hb-from span { font: 10.5px var(--f-mono); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
 .hb-from select { font: 12px var(--f-mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 4px 6px; max-width: 160px; }
-.hb-info { flex: 0 1 auto; min-width: 0; font-size: 12.5px; color: var(--muted); max-width: 52ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hb-info { flex: 1 1 0; min-width: 0; font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hb-info b { color: var(--ink); font-family: var(--f-mono); font-weight: 500; }
+@container hb (max-width: 760px) { .hb-info { display: none; } }
+@container hb (max-width: 620px) { .hb-t, .hb-n, .hb-from span { display: none; } .hv { min-width: 50px; } .hb-from select { max-width: 92px; } .histbar .btn { padding: 5px 8px; } }
+@container hb (max-width: 430px) { .hb-from { display: none; } }
+/* the drawer: every version with its message, authors, pull request, model origin and changes; the shown one marked */
+.hb-drawer { position: absolute; left: 0; right: 0; bottom: 100%; display: flex; flex-direction: column; max-height: 70vh; background: var(--surface);
+  border-top: 1px solid var(--line); box-shadow: 0 -16px 32px var(--shadow); container: hd / inline-size; }
+.hd-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 14px 9px; border-bottom: 1px solid var(--line); }
+.hd-head h2 { font: 700 16px var(--f-display); margin: 0; }
+.hd-head .spacer { flex: 1; }
+.hd-status { font: 11.5px var(--f-mono); color: var(--muted); }
+.hd-banner { flex-basis: 100%; margin: 0; padding: 7px 10px; border: 1.5px solid var(--h-chg); border-radius: 8px; background: var(--orange-soft); color: var(--ink); font: 12.5px/1.45 var(--f-body); }
+.hd-banner b { color: var(--h-chg); font: 700 11px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; margin-right: 6px; }
+.hd-list { position: relative; list-style: none; margin: 0; padding: 12px 14px 14px 36px; overflow: auto; overscroll-behavior: contain; display: grid; gap: 8px; min-height: 0; }
+/* each version: a dot on a rail, then a card */
+.hd-v { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: start; padding: 8px 10px 9px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.hd-v::before { content: ""; position: absolute; left: -21px; top: -9px; bottom: -9px; border-left: 2px solid var(--line); }
+.hd-v:first-child::before { top: 14px; } .hd-v:last-child::before { bottom: auto; height: 23px; }
+.hd-v:only-child::before { display: none; }
+.hd-v::after { content: ""; position: absolute; left: -26px; top: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--surface); border: 2px solid var(--muted); }
+.hd-v.rng::before { border-left-color: var(--accent); }
+.hd-v.cur { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); background: var(--accent-soft); }
+.hd-v.cur::after { background: var(--accent); border-color: var(--accent); }
+.hd-v.from { border-color: var(--accent); border-style: dashed; }
+.hd-v.from::after { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.hd-x { grid-column: 1; grid-row: 1; display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 2px 8px; min-width: 0; text-align: left; background: none; border: 0; padding: 0; color: var(--ink); cursor: pointer; font: inherit; }
+.hd-x > i { grid-row: 1; align-self: center; width: 12px; height: 12px; line-height: 12px; text-align: center; font-style: normal; color: var(--muted); font-size: 9px; transition: transform .15s; }
+.hd-x[aria-expanded="true"] > i { transform: rotate(90deg); }
+.hd-x:hover .hd-lbl { text-decoration: underline; }
+.hd-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+.hd-l1 { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 7px; min-width: 0; }
+.hd-lbl { font: 700 15px var(--f-display); }
+.hd-sha { font: 12px var(--f-mono); color: var(--muted); }
+.hd-chip { font: 500 10.5px var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; white-space: nowrap; }
+.hd-chip.k-merge { color: var(--accent); border-color: var(--accent); } .hd-chip.k-pr { color: var(--teal); border-color: var(--teal); }
+.hd-chip.k-tag, .hd-chip.k-release { color: var(--violet); border-color: var(--violet); } .hd-chip.k-regen { color: var(--h-chg); border-color: var(--h-chg); }
+.hd-badge { font: 600 10.5px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--bg); background: var(--accent); border: 1px solid var(--accent); border-radius: 5px; padding: 0 6px; white-space: nowrap; }
+.hd-badge.from { color: var(--accent); background: none; }
+.hd-msg { grid-column: 2; min-width: 0; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hd-acts { grid-column: 2; grid-row: 1; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.hd-acts .btn, .hd-acts a { font: 500 11.5px var(--f-mono); padding: 3px 7px; border-radius: 7px; white-space: nowrap; }
+.hd-acts a { color: var(--accent); background: var(--surface); border: 1px solid var(--line); text-decoration: none; }
+.hd-acts a:hover { border-color: var(--accent); }
+.hd-acts a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hd-acts .btn:disabled { opacity: .45; cursor: default; }
+.hd-meta, .hd-sum { grid-column: 1 / -1; padding-left: 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 3px 10px; }
+.hd-meta { font: 12px var(--f-mono); color: var(--muted); }
+.hd-meta b { color: var(--ink); font-weight: 500; }
+.hd-meta a { color: var(--accent); }
+.hd-meta .o-regen, .hd-meta .o-wt { color: var(--h-chg); }
+.hd-sum { gap: 4px; }
+.hc { font: 500 11.5px var(--f-mono); border: 1px solid; border-radius: 5px; padding: 0 6px; white-space: nowrap; }
+.hc.c-added { color: var(--h-add); border-color: var(--h-add); background: var(--green-soft); }
+.hc.c-removed { color: var(--h-del); border-color: var(--h-del); background: var(--rose-soft); }
+.hc.c-modified { color: var(--h-chg); border-color: var(--h-chg); background: var(--orange-soft); }
+.hd-tri, .hd-none { font: 11.5px var(--f-mono); color: var(--muted); }
+.hd-tri { margin-left: 4px; }
+.hd-body { grid-column: 1 / -1; padding: 4px 0 2px 20px; min-width: 0; }
+.hd-full { margin: 4px 0 8px; font: 12.5px/1.5 var(--f-mono); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); background: var(--code-bg); border-radius: 7px; padding: 8px 10px; max-height: 220px; overflow: auto; }
+.hd-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 3px 12px; margin: 0 0 6px; font-size: 12.5px; }
+.hd-dl dt { font: 500 10.5px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+.hd-dl dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; min-width: 0; }
+.hd-dl code { font: 12px var(--f-mono); }
+.hd-dl a { color: var(--accent); }
+.hd-h { margin: 10px 0 6px; font: 500 10.5px var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.hd-ch { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 4px; }
+@container hd (max-width: 640px) {
+  .hd-acts { grid-column: 1 / -1; grid-row: auto; justify-content: flex-start; padding-left: 20px; }
+  .hd-dl { grid-template-columns: minmax(0, 1fr); } .hd-dl dd { margin-bottom: 4px; }
+  .hd-list { padding-left: 30px; } .hd-v::before { left: -17px; } .hd-v::after { left: -22px; }
+}
+/* one change (panel and drawer): a button that goes to it on the map or in the Dynamic view, and who made it */
+.hrow { display: grid; min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.hrow > button, .hrow > span { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 0 6px; align-items: baseline; align-content: start; text-align: left; background: none; border: 0; border-radius: 7px; padding: 7px 9px; color: var(--ink); font: 13px var(--f-body); min-width: 0; }
+.hrow > button { cursor: pointer; }
+.hrow.go:hover { border-color: var(--accent); }
+.hrow > button:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+.hrow > button:hover .hgo, .hrow > button:focus-visible .hgo { color: var(--accent); }
+.hrow i { font-style: normal; font-weight: 700; }
+.hrow.hc-added i { color: var(--h-add); } .hrow.hc-removed i { color: var(--h-del); } .hrow.hc-modified i { color: var(--h-chg); }
+.hrow b { font-weight: 500; overflow-wrap: anywhere; }
+.hrow small { grid-column: 2 / -1; font: 11px var(--f-mono); color: var(--muted); }
+.hrow .hgo { grid-column: 3; grid-row: 1; font: 11px var(--f-mono); color: var(--muted); font-style: normal; }
+.hrow > .hby { padding: 0 9px 7px 31px; font: 11px var(--f-mono); color: var(--muted); }
 /* the map and the pinned board in compare mode: added green, removed red (ghosts of the earlier version), changed amber;
    a closed box with changes inside gets a dotted amber border */
 .nd.h-in:not(.open):not(.h-add):not(.h-chg):not(.h-del) .box { stroke: var(--h-chg); stroke-dasharray: 2 3; stroke-width: 2.2; }
@@ -692,18 +814,14 @@ html.editing #map .nd { cursor: grab; }
 .hlegend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px !important; color: var(--muted) !important; }
 .hlegend i { display: inline-block; width: 18px; height: 10px; border: 2.5px solid; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
 .hl-add { border-color: var(--h-add) !important; } .hl-del { border-color: var(--h-del) !important; border-style: dashed !important; } .hl-chg { border-color: var(--h-chg) !important; } .hl-in { border-color: var(--h-chg) !important; border-style: dotted !important; }
-.hlist { max-height: 46vh; overflow: auto; }
-.hlist > div { display: grid; grid-template-columns: 16px 1fr; gap: 0 6px; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font-size: 13px; }
-.hlist > div small { grid-column: 2; font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
-.hlist i { font-style: normal; font-weight: 700; }
-.hlist .hc-added i { color: var(--h-add); } .hlist .hc-removed i { color: var(--h-del); } .hlist .hc-modified i { color: var(--h-chg); }
-.hlist small a, .hwho a, .hbox p a { color: var(--accent); }
+.hlist { display: grid; gap: 4px; max-height: 46vh; overflow: auto; }
+.hby a, .hwho a, .hbox p a { color: var(--accent); }
 .hdiff { display: grid; gap: 2px; margin: 6px 0; font-size: 12.5px; }
 .hdiff b { font: 500 10.5px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .hdiff del { color: var(--h-del); } .hdiff ins { color: var(--h-add); text-decoration: none; }
 .hwho { font-size: 12.5px !important; color: var(--muted) !important; }
 .hkeys { font-size: 12px !important; color: var(--muted) !important; }
-@media (max-width: 820px) { .hb-info { display: none; } .hv { min-width: 54px; } }
+@media (prefers-reduced-motion: reduce) { .hd-x > i { transition: none; } }
 </style>
 </head>
 <body>
@@ -756,7 +874,6 @@ html.editing #map .nd { cursor: grab; }
       <p class="ed-msg" id="ed-msg" role="status"></p>
     </div>
     <div class="ed-restore" id="ed-restore" role="status" hidden></div>
-    <div class="histbar" id="histbar" role="toolbar" aria-label="Architecture history: versions" hidden></div>
   </header>
 
   <main class="stage" id="stage">
@@ -775,6 +892,7 @@ html.editing #map .nd { cursor: grab; }
       <button type="button" class="btn" id="z-fit" title="Fit everything (F)" aria-label="Fit everything">⤢</button>
     </div>
     <svg id="minimap" aria-label="Minimap: click to move there"><g id="mm"></g><rect id="mm-view" fill="none" stroke-width="1.5"/></svg>
+    <button type="button" class="mm-toggle" id="mm-toggle" aria-controls="minimap" aria-expanded="true" title="Minimize the minimap (O)" aria-label="Minimize the minimap">–</button>
     <div class="hint">drag to pan · scroll to zoom · double-click a box to open it</div>
    </section>
    <section class="view" id="v-pins" hidden>
@@ -800,7 +918,10 @@ html.editing #map .nd { cursor: grab; }
       <div id="dyn-list" hidden></div>
     </div>
    </section>
+   <button type="button" class="panel-handle" id="panel-handle" aria-controls="panel" aria-expanded="true" title="Hide the details panel (I)" aria-label="Hide the details panel"><span aria-hidden="true">›</span><span class="ph-t" aria-hidden="true">details</span><span class="ph-dot"></span></button>
   </main>
+
+  <div class="histbar" id="histbar" role="region" aria-label="Architecture history" hidden></div>
 
   <aside class="panel" id="panel" aria-live="polite"></aside>
 </div>
@@ -3045,17 +3166,27 @@ window.ARCH_HISTORY = null;   // build-explorer.mjs --history <history.json> put
 </script>
 
 <script id="history">
-/* HISTORY. With versions embedded (build-explorer.mjs --history, made by the architecture-history skill), the timeline bar
-   picks the version the page draws, steps through the versions or plays them, and compares two: the later one is drawn
-   with added (green), removed (red: ghosts brought back from the earlier one) and changed (amber) boxes and arrows, and the
-   panel lists every change with who made it and when. URL: #ver=<key> (a version) and #cmp=<key> (compare it with ver).
-   The engine calls window.archHistoryUI({ prev, on }) at the start of every run and uses what it returns: the model to draw,
-   extra classes for boxes and arrows, panel sections, hash parts, ready() and stop(). Picking a version runs the engine
-   again on that version's model, as the editor does; listeners go through the engine's on(), so its teardown() drops them. */
+/* HISTORY. With versions embedded (build-explorer.mjs --history, made by the architecture-history skill), the history bar
+   under the views picks the version the page draws, steps through the versions or plays them, and compares two: the later
+   one is drawn with added (green), removed (red: ghosts brought back from the earlier one) and changed (amber) boxes and
+   arrows, and the panel lists every change with who made it and when. The bar's "History" button (or H) opens a drawer
+   upward with every version: label, kind, date, authors, message, pull request, model origin, what it changed, and actions
+   (show it, compare, copy the SHA, open the commit or the pull request). Every change listed (panel or drawer) is a button
+   that goes to that element: the engine's goTo() opens what is needed, selects it and centres it, or opens the Dynamic view
+   on the scenario's step; for a change of another version it first shows (or compares) that version.
+   URL: #ver=<key> (a version), #cmp=<key> (compare it with ver), #hist=open (the drawer), #hx=<key>,… (its entries expanded).
+   The engine calls window.archHistoryUI({ prev, on, hash, nav }) at the start of every run and uses what it returns: the
+   model to draw, extra classes for boxes and arrows, panel sections, hash parts, ready() and stop(). Picking a version runs
+   the engine again on that version's model, as the editor does; listeners go through the engine's on(), so its teardown()
+   drops them. The bar keeps its hooks for scripts: #histbar [data-hver] (a version dot: click shows it, Shift + click
+   compares from it), [data-hgo="play"], [data-hgo="cmp"]; the drawer uses data-hact and data-hnav, never those. */
 (function () {
 'use strict';
 var KIND = { added: 'add', removed: 'del', modified: 'chg' }, SIGN = { added: '+', removed: '−', modified: '~' };
-var cache = {}, normCache = {};
+var cache = {}, normCache = {}, diffCache = {}, lastHD = null;
+// the drawer outlives the engine's runs (a version picked in it restarts the page): open or not, the entries expanded,
+// where its list was scrolled, and what had the focus
+var drawer = null;
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
 function day(d) { return d ? String(d).slice(0, 10) : ''; }
@@ -3063,7 +3194,8 @@ function clip(s, n) { s = typeof s === 'string' ? s : JSON.stringify(s); return 
 
 window.archHistoryUI = function (env) {
   var HD = window.ARCH_HISTORY, K = window.archHistory, bar = document.getElementById('histbar'), root = document.documentElement;
-  if (!HD || !K || !bar || !Array.isArray(HD.versions) || !HD.versions.length) { if (bar) bar.hidden = true; root.classList.remove('hist-away'); return null; }
+  if (!HD || !K || !bar || !Array.isArray(HD.versions) || !HD.versions.length) { if (bar) { bar.hidden = true; bar.innerHTML = ''; } root.classList.remove('hist-away'); return null; }
+  if (HD !== lastHD) { cache = {}; normCache = {}; diffCache = {}; lastHD = HD; }   // another history (the MCP view loads models one after another)
   var on = env.on, A_ = HD.activities || {}, G_ = HD.agents || {};
   var norm = window.archRdf && window.archRdf.normalizeModel ? window.archRdf.normalizeModel : function (m) { return m; };
   function modelOf(v) {
@@ -3090,6 +3222,9 @@ window.archHistoryUI = function (env) {
   var cur = find(st.ver) || home, A = st.cmp ? find(st.cmp) : null, playing = !!st.play;
   if (A === cur) A = null;
   var editing = !!(window.ARCH_EDIT && window.ARCH_EDIT.active);
+  if (!drawer) drawer = { open: st.hist === 'open', x: st.hx ? String(st.hx).split(',').filter(Boolean) : [], scroll: 0, focus: null };
+  if (editing) drawer.open = false;   // the bar is off while editing
+  var pendingNav = st.nav || null;    // a change picked in a list for another version: go to it once this run is ready
   var model = null, status = null, diff = null, ghosts = false;
   if (!editing) {
     if (A) {
@@ -3134,40 +3269,65 @@ window.archHistoryUI = function (env) {
     (list || []).forEach(function (v) { ((v.changes && v.changes.elements) || []).forEach(function (y) { if (y.kind === x.kind && y.key === x.key) (y.by || []).forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); }); }); });
     return ids.sort(function (p, q) { return String((A_[p] || {}).date).localeCompare(String((A_[q] || {}).date)); });
   }
-  function entryHtml(x, list) {
-    var go = x.kind === 'box' || x.kind === 'state' ? x.key : x.kind === 'arrow' || x.kind === 'transition' ? x.from : null;
-    var name = x.kind === 'arrow' || x.kind === 'transition' ? x.from + ' → ' + x.to + (x.name ? ' · ' + x.name : '') : (x.name || x.key);
-    var what = x.change === 'modified' ? (x.fields || []).join(', ') : x.change;
-    var by = byOf(x, list).map(actHtml).join('<br>');
-    var tag = go ? 'button type="button" data-go="' + esc(go) + '"' : 'div';
-    return '<' + tag + ' class="hc-' + x.change + '"><i>' + SIGN[x.change] + '</i>' + esc(name) + '<small>' + esc(x.kind) + ' · ' + esc(what) + (by ? '<br>' + by : '') + '</small></' + tag.split(' ')[0] + '>';
+  function prevOf(v) { return v && v.prev ? find(v.prev) : null; }
+  // what a version changed from the one before it, computed here (not read from the JSON) so that every entry has its full
+  // detail, the positions of changed scenario steps included
+  function diffOf(v) {
+    var p = prevOf(v); if (!p) return null;
+    if (v.page || p.page) return K.diff(modelOf(p), modelOf(v));
+    var k = p.key + '>' + v.key;
+    return diffCache[k] || (diffCache[k] = K.diff(modelOf(p), modelOf(v)));
   }
-  function changeList(d, list) {
-    var all = K.entries(d).concat(d.settings.map(function (s) { return { kind: 'setting', key: s.key, change: s.change, name: s.key }; }));
-    if (!all.length) return '<p class="none">No architecture change.</p>';
-    return '<div class="rel hlist">' + all.map(function (x) { return entryHtml(x, list); }).join('') + '</div>';
+  function allEntries(d) { return d ? K.entries(d).concat(d.settings.map(function (s) { return { kind: 'setting', key: s.key, change: s.change, name: s.key }; })) : []; }
+  // a change list names its diff: 'cmp' the comparison on screen, 'ver' what the version on screen changed, else a version
+  // key (the drawer: what that version changed)
+  function listOf(ref) {
+    if (ref === 'cmp') return { v: cur, d: diff };
+    if (ref === 'ver') return { v: cur, d: diffOf(cur) };
+    var v = find(ref); return { v: v, d: v ? diffOf(v) : null };
+  }
+  function canGo(x) { return /^(box|state|arrow|transition|scenario)$/.test(x.kind) || (x.kind === 'variant' && x.change !== 'removed'); }
+  function goTitle(x) {
+    return x.kind === 'scenario' ? (x.change === 'removed' ? 'Open this scenario in the Dynamic view of the version before' : 'Open this scenario in the Dynamic view, at the step that changed') :
+      x.kind === 'variant' ? 'Filter the map by this variant' : x.change === 'removed' ? 'Show where it was: a red ghost from the earlier version' : 'Show it on the map';
+  }
+  // one change: a button that goes to it (boxes, arrows, scenarios, variants), and, in the panel, who made it
+  function entryHtml(x, i, ref, list) {
+    var go = canGo(x), name = x.kind === 'arrow' || x.kind === 'transition' ? x.from + ' → ' + x.to + (x.name ? ' · ' + x.name : '') : (x.name || x.key);
+    var what = x.change === 'modified' ? (x.fields || []).join(', ') : x.change;
+    var by = list ? byOf(x, list).map(actHtml).join('<br>') : '';
+    var inner = '<i aria-hidden="true">' + SIGN[x.change] + '</i><b>' + esc(name) + '</b>' + (go ? '<em class="hgo" aria-hidden="true">›</em>' : '') + '<small>' + esc(x.kind) + ' · ' + esc(what) + '</small>';
+    return '<div class="hrow hc-' + x.change + (go ? ' go' : '') + '" role="listitem">' +
+      (go ? '<button type="button" data-hnav="' + esc(ref + '|' + i) + '" title="' + esc(goTitle(x)) + '">' + inner + '</button>' : '<span>' + inner + '</span>') +
+      (by ? '<div class="hby">' + by + '</div>' : '') + '</div>';
+  }
+  function changeList(d, ref, list, cls) {
+    var all = allEntries(d);
+    if (!all.length) return '<p class="none hd-none">No architecture change.</p>';
+    return '<div class="' + (cls || 'hlist') + '" role="list" aria-label="Changes: each one goes to that element">' + all.map(function (x, i) { return entryHtml(x, i, ref, list); }).join('') + '</div>';
   }
   function legendHtml() { return '<p class="hlegend"><span><i class="hl-add"></i>added</span><span><i class="hl-del"></i>removed</span><span><i class="hl-chg"></i>changed</span><span><i class="hl-in"></i>changed inside</span></p>'; }
   function panelTop() {
     if (editing) return '';
     var idx = V.indexOf(cur), demo = HD.demo ? '<p class="hdemo">Demonstration data: the authors are fictional.</p>' : '';
     if (A) {
-      var list = chain(A, cur);
+      var list = chain(A, cur), back = V.indexOf(A) > idx;
       return '<div class="hbox"><span class="ptag">Compare</span><h2>' + esc(label(A)) + ' → ' + esc(label(cur)) + '</h2>' + demo +
         '<p>From <b>' + esc(A.key) + '</b> (' + esc(day(A.date)) + ', ' + esc(versionWho(A)) + ') to <b>' + esc(cur.key) + '</b> (' + esc(day(cur.date)) + ', ' + esc(versionWho(cur)) + ')' +
-        (list ? ', ' + list.length + ' version' + (list.length > 1 ? 's' : '') + ' later.' : '. They are on different lines of the history.') + '</p>' +
+        (list ? ', ' + list.length + ' version' + (list.length > 1 ? 's' : '') + ' later.' : back ? '. Backwards: from a later version to an earlier one, so what that version added shows as removed.' : '. They are on different lines of the history.') + '</p>' +
         '<p><b>' + esc(K.summary(diff)) + '</b>.' + (ghosts ? '' : ' Removed boxes cannot be drawn here (the result would not be a valid model); they are listed below.') + '</p>' + legendHtml() +
-        '<h3>Changes (' + (K.entries(diff).length + diff.settings.length) + ')</h3>' + changeList(diff, list) +
+        '<h3>Changes (' + (K.entries(diff).length + diff.settings.length) + ')</h3>' + changeList(diff, 'cmp', list) +
+        '<p class="hkeys">Click a change to go to it.</p>' +
         '<div class="actions"><button type="button" class="btn" data-hgo="off">× leave compare</button></div></div>';
     }
-    var prev = cur.prev ? find(cur.prev) : null, dd = prev ? K.diff(modelOf(prev), modelOf(cur)) : null;
+    var prev = prevOf(cur), dd = diffOf(cur);
     return '<div class="hbox"><span class="ptag">Version ' + (idx + 1) + ' of ' + V.length + (cur === home ? ' · this page' : '') + '</span>' +
       '<h2>' + esc(label(cur)) + (cur.title ? ' · ' + esc(clip(cur.title, 70)) : '') + '</h2>' + demo +
       '<p>' + (cur.page ? 'The model this page was built with. It matches no version of the history.' : esc(day(cur.date)) + ' · ' + esc(versionWho(cur)) + (cur.url ? ' · <a href="' + esc(cur.url) + '" target="_blank" rel="noopener">' + esc(cur.key) + '</a>' : ' · ' + esc(cur.key))) + '</p>' +
-      (dd ? '<p>Changes from ' + esc(label(prev)) + ': <b>' + esc(K.summary(dd)) + '</b>.</p>' + changeList(dd, [cur]) : '<p>The first version of the history.</p>') +
+      (dd ? '<p>Changes from ' + esc(label(prev)) + ': <b>' + esc(K.summary(dd)) + '</b>.</p>' + changeList(dd, 'ver', [cur]) : '<p>The first version of the history.</p>') +
       '<div class="actions">' + (prev ? '<button type="button" class="btn" data-hgo="cmp-prev">⇄ compare with ' + esc(label(prev)) + '</button>' : '') +
       (cur !== home ? '<button type="button" class="btn" data-hgo="home">back to this page\'s model</button>' : '') + '</div>' +
-      '<p class="hkeys"><kbd>[ ]</kbd> previous / next version · <kbd>C</kbd> compare</p></div>';
+      '<p class="hkeys">' + (dd ? 'Click a change to go to it · ' : '') + '<kbd>[ ]</kbd> previous / next version · <kbd>C</kbd> compare · <kbd>H</kbd> every version in detail</p></div>';
   }
   function panelFor(id) {
     if (editing) return '';
@@ -3192,39 +3352,210 @@ window.archHistoryUI = function (env) {
     return out;
   }
 
-  // the timeline bar
+  // links to the forge (GitHub, GitLab, Bitbucket): the history's repository, else the model's source.repoUrl
+  function safe(u) { return u && /^https?:\/\//i.test(String(u)) ? String(u) : null; }
+  var forge = (function () {
+    var src = ((window.ARCH_HISTORY_HOME || (cur === home && model) || window.MODEL || {}).source) || {}, u = String(HD.repository || src.repoUrl || '').trim();
+    var m = /^https?:\/\/(?:[^@\/]+@)?([^\/]+)\/(.+?)(?:\.git)?\/?$/i.exec(u); if (!m) return null;
+    var host = m[1].toLowerCase(), kind = !HD.repository && /^(github|gitlab|bitbucket)$/.test(src.host || '') ? src.host : /github/.test(host) ? 'github' : /gitlab/.test(host) ? 'gitlab' : /bitbucket/.test(host) ? 'bitbucket' : null;
+    if (!kind) return null;
+    var base = 'https://' + host + '/' + m[2].replace(/\/(?:-\/)?(?:tree|blob|src)\/.*$/, '');
+    return { commit: function (sha) { return base + { github: '/commit/', gitlab: '/-/commit/', bitbucket: '/commits/' }[kind] + sha; },
+      pr: function (n) { return base + { github: '/pull/', gitlab: '/-/merge_requests/', bitbucket: '/pull-requests/' }[kind] + n; } };
+  })();
+  function commitUrl(v) { return v.sha ? safe(v.kind === 'commit' || v.kind === 'merge' ? v.url : null) || (forge ? forge.commit(v.sha) : null) : null; }
+  function prUrl(v) { return v.pr && v.pr.number != null ? safe(v.pr.url) || (forge ? forge.pr(v.pr.number) : null) : null; }
+  function link(u, text, title) { return '<a href="' + esc(u) + '" target="_blank" rel="noopener"' + (title ? ' title="' + esc(title) + '"' : '') + '>' + text + '</a>'; }
+
+  // the drawer: one card per version, newest first
+  var KINDS = { commit: 'commit', merge: 'merge', pr: 'pull request', release: 'tag', squash: 'squash', worktree: 'working tree', regeneration: 'commit' };
+  var NAMES = { box: ['box', 'boxes'], state: ['state', 'states'], arrow: ['arrow', 'arrows'], transition: ['transition', 'transitions'], scenario: ['scenario', 'scenarios'], variant: ['variant', 'variants'] };
+  function firstLine(v) { return v.page ? 'The model this page was built with; it matches no version of the history.' : String(v.message || v.title || '').split('\n')[0]; }
+  function byShaV(sha) { for (var j = 0; j < V.length; j++) if (V[j].sha === sha) return V[j]; return null; }
+  function originHtml(v) {
+    if (v.page) return '<span>model of this page</span>';
+    if (v.origin === 'regenerated') return '<span class="o-regen" title="The commit had no up-to-date model; this one was regenerated afterwards, not by the commit\'s author">model regenerated</span>';
+    if (v.origin === 'worktree') return '<span class="o-wt">uncommitted model</span>';
+    return '<span>model committed</span>';
+  }
+  function sumHtml(v) {
+    var c = v.changes && v.changes.counts, out = [];
+    if (!c && v.page) { var dp = diffOf(v); c = dp && dp.counts; }
+    if (!c) { var s = v.stats || {}; return '<span class="hd-none">' + (V.indexOf(v) === 0 ? 'first version' : 'no earlier version to compare with') + (s.nodes != null ? ' · ' + s.nodes + ' boxes · ' + s.edges + ' arrows · ' + s.scenarios + ' scenarios' : '') + (s.triples ? ' · ' + s.triples + ' triples' : '') + '</span>'; }
+    [['added', '+'], ['removed', '−'], ['modified', '~']].forEach(function (ch) {
+      Object.keys(NAMES).forEach(function (k) { var n = c[k] && c[k][ch[0]]; if (n) out.push('<span class="hc c-' + ch[0] + '">' + ch[1] + n + ' ' + NAMES[k][n === 1 ? 0 : 1] + '</span>'); });
+    });
+    if (c.settings) out.push('<span class="hc c-modified">~' + c.settings + ' setting' + (c.settings === 1 ? '' : 's') + '</span>');
+    var t = v.changes && v.changes.triples;
+    return (out.length ? out.join('') : '<span class="hd-none">no architecture change</span>') + (t ? '<span class="hd-tri" title="RDF triples added and removed">+' + t.added + ' −' + t.removed + ' triples</span>' : '');
+  }
+  function actsHtml(v) {
+    var h = '', shown = v === cur && !A, p = prevOf(v);
+    h += '<button type="button" class="btn" data-hact="show"' + (shown ? ' disabled' : '') + ' title="Draw this version">' + (shown ? 'shown' : 'show') + '</button>';
+    if (A) h += '<button type="button" class="btn" data-hact="a"' + (v === A || v === cur ? ' disabled' : '') + ' title="Compare from this version (A, the earlier end)">set A</button>' +
+      '<button type="button" class="btn" data-hact="b"' + (v === cur || v === A ? ' disabled' : '') + ' title="Compare to this version (B, the later end)">set B</button>';
+    else h += '<button type="button" class="btn" data-hact="cmp"' + (v === cur && !p ? ' disabled' : '') + ' title="' + (v === cur ? 'Compare with the version before it' : 'Compare with the version shown, ' + esc(label(cur))) + '">⇄ ' + (v === cur ? 'with previous' : 'with ' + esc(clip(label(cur), 14))) + '</button>';
+    if (v.sha) h += '<button type="button" class="btn" data-hact="copy" title="Copy the full commit SHA: ' + esc(v.sha) + '">copy SHA</button>';
+    var cu = commitUrl(v), pu = prUrl(v);
+    if (cu) h += link(cu, 'commit ↗', 'Open the commit on the forge');
+    if (pu) h += link(pu, 'PR #' + esc(v.pr.number) + ' ↗', 'Open the pull request on the forge');
+    return h;
+  }
+  function bodyHtml(v) {
+    var rows = [], p = prevOf(v), a = A_[v.activity] || {};
+    function row(k, val) { if (val) rows.push('<dt>' + k + '</dt><dd>' + val + '</dd>'); }
+    if (v.sha) row('commit', '<code>' + esc(v.sha) + '</code>');
+    if (v.parents && v.parents.length) row(v.parents.length > 1 ? 'parents' : 'parent', v.parents.map(function (s) { var pv = byShaV(s); return '<code>' + esc(String(s).slice(0, 7)) + '</code>' + (pv ? ' (' + esc(label(pv)) + ')' : ''); }).join(', '));
+    if (v.refs && v.refs.length) row('branches', esc(v.refs.join(', ')));
+    if (v.tags && v.tags.length) row('tags', esc(v.tags.join(', ')));
+    if (v.pr) row('pull request', '#' + esc(v.pr.number) + (v.pr.title ? ' · ' + esc(v.pr.title) : '') + (v.pr.head ? (v.pr.base ? ' · <code>' + esc(v.pr.head) + '</code> → <code>' + esc(v.pr.base) + '</code>' : ' · from <code>' + esc(v.pr.head) + '</code>') : '') + (v.pr.state ? ' · ' + esc(String(v.pr.state).toLowerCase()) : ''));
+    if (v.covers && v.covers.length) row('covers', v.covers.length + ' model commit' + (v.covers.length > 1 ? 's' : '') + ': ' + v.covers.map(function (s) { return '<code>' + esc(String(s).slice(0, 7)) + '</code>'; }).join(', '));
+    if (v.origin === 'regenerated') row('model', 'regenerated' + (a.agents ? ' by ' + esc(a.agents.map(function (k) { return G_[k] ? G_[k].name : k; }).join(', ')) : '') + (a.date ? ' on ' + esc(day(a.date)) : '') +
+      (a.base ? ' from the model of <code>' + esc(String(a.base).slice(0, 7)) + '</code>' : '') + (a.files && a.files.length ? ', for ' + a.files.length + ' changed file' + (a.files.length > 1 ? 's' : '') : '') + '. The commit itself had no up-to-date model.');
+    else if (v.origin === 'worktree') row('model', 'uncommitted changes in the working tree');
+    else if (!v.page) row('model', 'committed' + (v.modelCommit && v.modelCommit !== v.sha ? ', last changed in <code>' + esc(String(v.modelCommit).slice(0, 7)) + '</code>' : ' in this commit'));
+    if (v.stats) row('size', v.stats.nodes + ' boxes · ' + v.stats.edges + ' arrows · ' + v.stats.scenarios + ' scenarios · ' + v.stats.triples + ' triples');
+    var t = v.changes && v.changes.triples;
+    if (t) row('triples', '+' + t.added + ' −' + t.removed + (t.presentation ? ' (' + t.presentation + ' of them presentation only, c4v:)' : ''));
+    var full = v.message && String(v.message).indexOf('\n') >= 0 ? String(v.message) : '';
+    var d = p ? diffOf(v) : null;
+    return (full ? '<pre class="hd-full">' + esc(full) + '</pre>' : '') + (rows.length ? '<dl class="hd-dl">' + rows.join('') + '</dl>' : '') +
+      (p ? '<p class="hd-h">Changes from ' + esc(label(p)) + ' (' + allEntries(d).length + ') · click one to go there</p>' + changeList(d, v.key, null, 'hd-ch') : '');
+  }
+  function cardHtml(v) {
+    var j = V.indexOf(v), ci = V.indexOf(cur), ai = A ? V.indexOf(A) : -1, open = drawer.x.indexOf(v.key) >= 0, bid = 'hd-b-' + j, lb = label(v);
+    var chips = (v.page ? '<span class="hd-chip">this page</span>' : '<span class="hd-chip k-' + esc(v.kind || 'commit') + '">' + esc(KINDS[v.kind] || v.kind || 'commit') + '</span>') +
+      (v.tags || []).filter(function (x) { return x !== lb; }).map(function (x) { return '<span class="hd-chip k-tag">tag ' + esc(x) + '</span>'; }).join('') +
+      (v.pr && v.kind !== 'pr' && lb !== '#' + v.pr.number ? '<span class="hd-chip k-pr">PR #' + esc(v.pr.number) + '</span>' : '') +
+      (v === cur ? '<span class="hd-badge">' + (A ? 'B · to' : 'shown') + '</span>' : '') + (v === A ? '<span class="hd-badge from">A · from</span>' : '');
+    return '<li class="hd-v' + (v === cur ? ' cur' : '') + (v === A ? ' from' : '') + (A && j > Math.min(ai, ci) && j <= Math.max(ai, ci) ? ' rng' : '') + '" data-hk="' + esc(v.key) + '"' + (v === cur ? ' aria-current="true"' : '') + '>' +
+      '<button type="button" class="hd-x" data-hact="x" aria-expanded="' + open + '" aria-controls="' + bid + '" title="' + (open ? 'Fold' : 'Unfold') + ': full message, details and every change">' +
+        '<i aria-hidden="true">▶</i><span class="hd-l1"><b class="hd-lbl">' + esc(lb) + '</b>' + (v.sha && lb !== v.key ? '<span class="hd-sha">' + esc(v.key) + '</span>' : '') + chips + '</span>' +
+        '<span class="hd-msg">' + esc(firstLine(v)) + '</span></button>' +
+      '<div class="hd-acts">' + actsHtml(v) + '</div>' +
+      '<div class="hd-meta">' + (v.date ? '<b>' + esc(day(v.date)) + '</b>' : '') + (v.page ? '' : '<span>' + esc(versionWho(v)) + '</span>') + originHtml(v) +
+        (v.pr ? '<span>PR #' + esc(v.pr.number) + (v.pr.title && v.kind !== 'pr' ? ' · ' + esc(clip(v.pr.title, 60)) : '') + (prUrl(v) ? ' · ' + link(prUrl(v), 'open ↗') : '') + '</span>' : '') + '</div>' +
+      '<div class="hd-sum">' + sumHtml(v) + '</div>' +
+      '<div class="hd-body" id="' + bid + '"' + (open ? '>' + bodyHtml(v) : ' hidden>') + '</div></li>';
+  }
+  function drawerHtml() {
+    return '<div class="hd-head"><h2 id="hd-title">Versions</h2><span class="muted">' + V.length + ' · newest first' + (HD.resolution ? ' · one per ' + esc({ merges: 'merge or direct commit', all: 'model commit', tags: 'release', prs: 'pull request', refs: 'ref', squash: 'range' }[HD.resolution] || HD.resolution) : '') + '</span>' +
+      '<span class="spacer"></span><span class="hd-status" role="status" aria-live="polite"></span>' +
+      '<button type="button" class="btn" data-hact="close" title="Close (Esc)" aria-label="Close the version list">✕</button>' +
+      (HD.demo ? '<p class="hd-banner"><b>Demo data</b>The commits are real commits of a demonstration repository; the authors are fictional and the dates invented.</p>' : '') + '</div>' +
+      '<ol class="hd-list" aria-labelledby="hd-title">' + V.slice().reverse().map(cardHtml).join('') + '</ol>';
+  }
+  // the drawer lies over the views: up to 80 % of their height (at least 320px, at most 720px); when the views are short
+  // (a phone, with the bottom sheet open) it may also cover the toolbar, up to 420px, rather than become a sliver
+  function fitDrawer() {
+    var d = bar.querySelector('.hb-drawer'), sg = document.getElementById('stage'); if (!d || d.hidden || !sg) return;
+    var ui = parseFloat(getComputedStyle(root).getPropertyValue('--ui')) || 1, h = sg.clientHeight - 10, room = bar.getBoundingClientRect().top - 8;
+    d.style.maxHeight = Math.round(Math.max(120, h >= 360 ? Math.min(h, 720, Math.max(320, h * 0.8)) : Math.min(room, 420)) / ui) + 'px';
+  }
+  var stageRO = window.ResizeObserver && document.getElementById('stage') ? new ResizeObserver(function () { fitDrawer(); }) : null;
+  if (stageRO) stageRO.observe(document.getElementById('stage'));
+  function keepVisible(l, c) {   // scroll the list (not the page) so that card c shows, from its top when it is tall
+    if (!l || !c) return;
+    var top = c.offsetTop - 8, bottom = c.offsetTop + c.offsetHeight + 8;
+    if (top < l.scrollTop || bottom - top > l.clientHeight) l.scrollTop = top;
+    else if (bottom > l.scrollTop + l.clientHeight) l.scrollTop = bottom - l.clientHeight;
+  }
+  // reveal: bring the shown version's card into view (on opening, or when the version shown changed); else keep the scroll
+  function renderDrawer(reveal) {
+    var d = bar.querySelector('.hb-drawer'), tg = bar.querySelector('.hb-toggle'); if (!d) return;
+    if (tg) { tg.setAttribute('aria-expanded', String(drawer.open)); tg.querySelector('i').textContent = drawer.open ? '▾' : '▴'; }
+    if (!drawer.open) { d.hidden = true; d.innerHTML = ''; return; }
+    d.hidden = false; d.innerHTML = drawerHtml(); fitDrawer();
+    var l = d.querySelector('.hd-list'); l.scrollTop = drawer.scroll;
+    if (reveal) keepVisible(l, d.querySelector('.hd-v.cur'));
+  }
+  function setDrawer(open, focus) {
+    drawer.open = !!open && !editing; renderDrawer(true); env.hash();
+    if (!focus) return;
+    var f = drawer.open ? bar.querySelector('.hd-v.cur .hd-x') || bar.querySelector('.hd-x') : bar.querySelector('.hb-toggle');
+    if (f) f.focus({ preventScroll: true });
+  }
+  function toggleCard(k) {
+    var i = drawer.x.indexOf(k); if (i >= 0) drawer.x.splice(i, 1); else drawer.x.push(k);
+    var li = bar.querySelector('.hd-v[data-hk="' + String(k).replace(/["\\]/g, '\\$&') + '"]'), v = find(k);
+    if (li && v) { var tmp = document.createElement('ol'); tmp.innerHTML = cardHtml(v); var nl = tmp.firstChild; li.parentNode.replaceChild(nl, li); nl.querySelector('.hd-x').focus({ preventScroll: true }); keepVisible(nl.parentNode, nl); }
+    env.hash();
+  }
+  // copy a SHA: the clipboard API, else the old way (a sandboxed frame may refuse both: then the SHA is shown to copy by hand)
+  var copyT = 0;
+  function copy(sha, btn) {
+    var out = bar.querySelector('.hd-status');
+    function done(ok) {
+      if (out) out.textContent = ok ? 'Copied ' + sha : 'Copying is blocked here; the SHA is ' + sha;
+      if (btn) { btn.textContent = ok ? '✓ copied' : 'copy SHA'; clearTimeout(copyT); copyT = setTimeout(function () { btn.textContent = 'copy SHA'; }, 1600); }
+    }
+    function legacy() {
+      var ta = document.createElement('textarea'), ok = false;
+      ta.value = sha; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      ta.remove(); if (btn) btn.focus({ preventScroll: true });
+      return ok;
+    }
+    try { if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) { navigator.clipboard.writeText(sha).then(function () { done(true); }, function () { done(legacy()); }); return; } } catch (e) { /* fall through */ }
+    done(legacy());
+  }
+
+  // the history bar
   function renderBar() {
     var idx = V.indexOf(cur), ai = A ? V.indexOf(A) : -1, lo = Math.min(idx, ai < 0 ? idx : ai), hi = Math.max(idx, ai);
     var info = A ? '<b>' + esc(label(A)) + '</b> → <b>' + esc(label(cur)) + '</b> · ' + esc(K.summary(diff))
       : '<b>' + esc(cur.key) + '</b> · ' + esc(day(cur.date)) + ' · ' + esc(versionWho(cur)) + (cur.title ? ' · ' + esc(clip(cur.title, 60)) : '');
     bar.hidden = false;
-    bar.innerHTML = '<b class="hb-title">History</b>' + (HD.demo ? '<span class="hb-demo" title="The commits are real commits of a demonstration repository; the authors are fictional.">demo data</span>' : '') +
-      '<button type="button" class="btn" data-hgo="prev" aria-label="Previous version ([)"' + (idx > 0 ? '' : ' disabled') + '>◀</button>' +
+    bar.innerHTML = '<div class="hb-row" role="toolbar" aria-label="Architecture history: versions">' +
+      '<button type="button" class="btn hb-toggle" data-hgo="drawer" aria-expanded="false" aria-controls="hist-drawer" title="Every version in detail: message, authors, pull request, what it changed (H)">' +
+        '<i aria-hidden="true">▴</i><b class="hb-title">History</b><span class="hb-n">' + V.length + '</span></button>' +
+      (HD.demo ? '<span class="hb-demo" title="The commits are real commits of a demonstration repository; the authors are fictional.">demo<span class="hb-t"> data</span></span>' : '') +
+      '<button type="button" class="btn hb-step" data-hgo="prev" aria-label="Previous version ([)" title="Previous version ([)"' + (idx > 0 ? '' : ' disabled') + '>‹</button>' +
       '<div class="hb-track" role="group" aria-label="Versions">' + V.map(function (v, j) {
         return '<button type="button" class="hv' + (v === cur ? ' cur' : '') + (v === A ? ' from' : '') + (A && j > lo && j <= hi ? ' rng' : '') + (v === home ? ' home' : '') +
           '" data-hver="' + esc(v.key) + '" aria-pressed="' + (v === cur) + '" title="' + esc((v.key) + (v.date ? ' · ' + day(v.date) : '') + ' · ' + versionWho(v) + (v.title ? ' · ' + v.title : '') + (v.changes ? ' · ' + v.changes.summary : '')) +
-          (A ? ' (Shift + click: compare from here)' : '') + '"><i></i><span>' + esc(label(v)) + '</span></button>';
+          ' (Shift + click: compare from here)"><i></i><span>' + esc(label(v)) + '</span></button>';
       }).join('') + '</div>' +
-      '<button type="button" class="btn" data-hgo="next" aria-label="Next version (])"' + (idx < V.length - 1 ? '' : ' disabled') + '>▶</button>' +
-      '<button type="button" class="btn" data-hgo="play">' + (playing ? '❚❚ pause' : '▶ play') + '</button>' +
-      '<button type="button" class="btn" data-hgo="cmp" aria-pressed="' + !!A + '" title="Compare two versions (C)">⇄ compare</button>' +
+      '<button type="button" class="btn hb-step" data-hgo="next" aria-label="Next version (])" title="Next version (])"' + (idx < V.length - 1 ? '' : ' disabled') + '>›</button>' +
+      '<button type="button" class="btn" data-hgo="play" aria-label="' + (playing ? 'Pause' : 'Play through the versions') + '">' + (playing ? '❚❚<span class="hb-t"> pause</span>' : '▶<span class="hb-t"> play</span>') + '</button>' +
+      '<button type="button" class="btn" data-hgo="cmp" aria-pressed="' + !!A + '" title="Compare two versions (C)" aria-label="Compare two versions">⇄<span class="hb-t"> compare</span></button>' +
       (A ? '<label class="hb-from"><span>from</span><select data-hgo="from" aria-label="Compare from">' + V.map(function (v) { return '<option value="' + esc(v.key) + '"' + (v === A ? ' selected' : '') + '>' + esc(label(v) + (label(v) !== v.key ? ' · ' + v.key : '')) + '</option>'; }).join('') + '</select></label>' : '') +
-      '<span class="hb-info">' + info + '</span>';
+      '<span class="hb-info">' + info + '</span></div>' +
+      '<div class="hb-drawer" id="hist-drawer" role="region" aria-label="Every version in detail" hidden></div>';
     var t = bar.querySelector('.hb-track'), c = bar.querySelector('.hv.cur');
     if (t && c) t.scrollLeft = Math.max(0, c.offsetLeft - t.clientWidth / 2 + c.offsetWidth / 2);
+    on(bar.querySelector('.hb-drawer'), 'scroll', function (ev) { if (ev.target.classList && ev.target.classList.contains('hd-list')) drawer.scroll = ev.target.scrollTop; }, true);
+    renderDrawer(drawer.shown !== cur.key); drawer.shown = cur.key;
+    // a restart started from the bar or the drawer: the focus goes back to the same control
+    if (drawer.focus) {
+      var f = bar.querySelector(drawer.focus); drawer.focus = null;
+      if (f && f.disabled) f = f.closest('.hd-v') ? f.closest('.hd-v').querySelector('.hd-x') : null;
+      if (f) f.focus({ preventScroll: true });
+    }
+  }
+  function focusSel() {
+    var a = document.activeElement; if (!a || !bar.contains(a) || !a.dataset) return null;
+    var li = a.closest('[data-hk]'), q = function (s) { return String(s).replace(/["\\]/g, '\\$&'); };
+    if (a.dataset.hver) return '[data-hver="' + q(a.dataset.hver) + '"]';
+    if (a.dataset.hgo) return '.hb-row [data-hgo="' + q(a.dataset.hgo) + '"]';
+    if (li && a.dataset.hact) return '.hd-v[data-hk="' + q(li.dataset.hk) + '"] [data-hact="' + q(a.dataset.hact) + '"]';
+    return null;
   }
 
   // moving: run the engine again on what was picked (after the current event, like the editor)
   var goT = 0, playT = 0;
   function go(next) {
     clearTimeout(goT);
+    if (!drawer.focus) drawer.focus = focusSel();
     goT = setTimeout(function () {
       var X = window.ARCH_EXPLORER; if (!X || !X.teardown) return;
       var cam = X.api && X.api.cam ? X.api.cam() : null;
       X.teardown(); window.archEngine({ cam: cam, hist: next });
     }, 0);
   }
-  function show(v, a, play) { go({ ver: v === home && !a ? undefined : v.key, cmp: a ? a.key : undefined, play: !!play }); }
+  // nav: a change to go to once the version is drawn (see goChange)
+  function show(v, a, play, nav) { go({ ver: v === home && !a ? undefined : v.key, cmp: a ? a.key : undefined, play: !!play, nav: nav || undefined }); }
   function step(d, play) {
     var j = V.indexOf(cur) + d, k = A ? V.indexOf(A) + d : -1;
     if (j < 0 || j >= V.length || (A && (k < 0 || k >= V.length))) return false;
@@ -3235,25 +3566,99 @@ window.archHistoryUI = function (env) {
     var j = V.indexOf(cur);
     if (j > 0) show(cur, cur.prev && find(cur.prev) ? find(cur.prev) : V[j - 1]); else if (V.length > 1) show(V[1], V[0]);
   }
+
+  /* going to a change. In the comparison on screen it is drawn (a removed box or arrow as a ghost) unless it is a removed
+     scenario or a ghost that could not be drawn: those are shown in the earlier version. A change of another version
+     first shows that version (or, in compare mode or for a removed element, compares it with the version before it). */
+  function firstStep(x) {
+    var s = x.stepChanges; if (!s || !s.added) return null;
+    var at = s.added.concat(s.changed).map(function (y) { return y.at; });
+    if (!at.length) at = s.removed.map(function (y) { return y.at; });
+    return at.length ? Math.min.apply(null, at) - 1 : null;
+  }
+  function edgeAt(s) {   // the arrow in the model drawn: the k-th from → to edge, or the ghost of a removed one
+    var M = window.MODEL || {}, n = 0, hit = -1, gone = s.change === 'removed';
+    (M.edges || []).forEach(function (e, i) {
+      if (hit >= 0 || !e || String(e.from) !== s.from || String(e.to) !== s.to) return;
+      if (!!(status && status.edgeIndex && status.edgeIndex[i] === 'removed') !== gone) return;
+      n++; if (gone || n === (s.k || 1)) hit = i;
+    });
+    return hit;
+  }
+  function targetOf(s) {
+    if (s.kind === 'box' || s.kind === 'state') return { box: s.key };
+    if (s.kind === 'arrow' || s.kind === 'transition') { var i = edgeAt(s); return i >= 0 ? { edge: i } : { box: s.from }; }
+    if (s.kind === 'scenario') return { scenario: s.key, step: s.step };
+    if (s.kind === 'variant') return { variant: s.key };
+    return null;
+  }
+  function goChange(ref) {
+    var p = String(ref).split('|'), L = listOf(p[0]), x = allEntries(L.d)[+p[1]], v = L.v;
+    if (!x || !v || !canGo(x)) return;
+    var spec = { kind: x.kind, key: x.key, change: x.change, from: x.from, to: x.to, k: x.k, step: firstStep(x) };
+    var gone = x.change === 'removed', drawable = !gone || (ghosts && /^(box|state|arrow|transition)$/.test(x.kind));
+    var inCmp = !!A && (p[0] === 'cmp' || allEntries(diff).some(function (y) { return y.kind === x.kind && y.key === x.key && y.change === x.change; }));
+    if (drawer.open && p[0] !== 'cmp' && p[0] !== 'ver') { drawer.open = false; drawer.focus = '.hb-toggle'; renderDrawer(); }
+    if ((inCmp && drawable) || (!A && v === cur && !gone)) {   // on screen now
+      var tg = drawer.focus === '.hb-toggle' ? bar.querySelector('.hb-toggle') : null; drawer.focus = null;
+      if (tg) tg.focus({ preventScroll: true });
+      env.nav(targetOf(spec)); return;
+    }
+    if (inCmp) { show(A, null, false, spec); return; }
+    var pv = prevOf(v);
+    if (gone && !/^(box|state|arrow|transition)$/.test(x.kind)) { if (pv) show(pv, null, false, spec); return; }
+    show(v, (gone || A) && pv ? pv : null, false, spec);
+  }
+  function moveFocus(t, key) {   // arrow keys in the drawer's version list and in the change lists
+    var sel = t.classList.contains('hd-x') ? '.hd-x' : t.hasAttribute('data-hnav') ? '[data-hnav]' : null; if (!sel) return false;
+    var scope = sel === '.hd-x' ? t.closest('.hd-list') : t.closest('[role="list"]'); if (!scope) return false;
+    var all = Array.prototype.slice.call(scope.querySelectorAll(sel)), i = all.indexOf(t);
+    var j = key === 'Home' ? 0 : key === 'End' ? all.length - 1 : i + (key === 'ArrowDown' ? 1 : -1);
+    if (i < 0 || j < 0 || j >= all.length) return false;
+    all[j].focus(); return true;
+  }
+
   on(bar, 'click', function (ev) {
-    var b = ev.target.closest('[data-hver]'), g = ev.target.closest('[data-hgo]');
-    if (b) { var v = find(b.dataset.hver); if (!v) return; if (A && ev.shiftKey) show(cur, v === cur ? null : v); else show(v, A && v !== A ? A : null); return; }
+    var b = ev.target.closest('[data-hver]'), g = ev.target.closest('[data-hgo]'), n = ev.target.closest('[data-hnav]'), h = ev.target.closest('[data-hact]');
+    if (b) { var v = find(b.dataset.hver); if (!v) return; if (ev.shiftKey) { if (v !== cur || A) show(cur, v === cur ? null : v); } else show(v, A && v !== A ? A : null); return; }
+    if (n) { goChange(n.dataset.hnav); return; }
+    if (h) {
+      var li = h.closest('[data-hk]'), w = find(li ? li.dataset.hk : null), what = h.dataset.hact;
+      if (what === 'close') setDrawer(false, true);
+      else if (!w) return;
+      else if (what === 'x') toggleCard(w.key);
+      else if (what === 'show') show(w, null);
+      else if (what === 'a') show(cur, w);
+      else if (what === 'b') show(w, A);
+      else if (what === 'copy') copy(w.sha, h);
+      else if (what === 'cmp') { if (w === cur) { if (prevOf(w)) show(cur, prevOf(w)); } else if (V.indexOf(w) < V.indexOf(cur)) show(cur, w); else show(w, cur); }
+      return;
+    }
     if (!g || g.tagName === 'SELECT') return;
-    var w = g.dataset.hgo;
-    if (w === 'prev') step(-1); else if (w === 'next') step(1);
-    else if (w === 'play') { if (playing) show(cur, A, false); else if (!step(1, true)) show(A ? V[1] : V[0], A ? V[0] : null, true); }
-    else if (w === 'cmp') toggleCompare();
+    var x = g.dataset.hgo;
+    if (x === 'drawer') setDrawer(!drawer.open, true);
+    else if (x === 'prev') step(-1); else if (x === 'next') step(1);
+    else if (x === 'play') { if (playing) show(cur, A, false); else if (!step(1, true)) show(A ? V[1] : V[0], A ? V[0] : null, true); }
+    else if (x === 'cmp') toggleCompare();
   });
   on(bar, 'change', function (ev) { if (ev.target.dataset.hgo === 'from') { var v = find(ev.target.value); show(cur, v && v !== cur ? v : null); } });
   var pnl = document.getElementById('panel');
   if (pnl) on(pnl, 'click', function (ev) {
+    var n = ev.target.closest('[data-hnav]'); if (n) { goChange(n.dataset.hnav); return; }
     var g = ev.target.closest('[data-hgo]'); if (!g) return;
     var w = g.dataset.hgo;
     if (w === 'off') show(cur, null); else if (w === 'home') show(home, null); else if (w === 'cmp-prev' && cur.prev) show(cur, find(cur.prev));
   });
+  // registered before the engine's own keys: Esc closes the drawer first; in the lists, arrows move and Enter / Space stay with the button
   on(document, 'keydown', function (ev) {
-    if (/INPUT|TEXTAREA|SELECT/.test(ev.target.tagName) || ev.ctrlKey || ev.metaKey || ev.altKey || (window.ARCH_EDIT && window.ARCH_EDIT.active)) return;
+    var t = ev.target, edit = !!(window.ARCH_EDIT && window.ARCH_EDIT.active);
+    if (ev.key === 'Escape' && drawer.open && !edit) { ev.preventDefault(); ev.stopImmediatePropagation(); setDrawer(false, true); return; }
+    if (/INPUT|TEXTAREA|SELECT/.test(t.tagName) || ev.ctrlKey || ev.metaKey || ev.altKey || edit) return;
+    var inList = t.closest && (t.closest('.hb-drawer') || t.closest('[data-hnav]'));
+    if (inList && (ev.key === ' ' || ev.key === 'Enter')) { ev.stopImmediatePropagation(); return; }
+    if (inList && /^(ArrowDown|ArrowUp|Home|End)$/.test(ev.key)) { if (moveFocus(t, ev.key)) { ev.preventDefault(); ev.stopImmediatePropagation(); } return; }
     if (ev.key === '[') step(-1); else if (ev.key === ']') step(1); else if (ev.key === 'c' || ev.key === 'C') toggleCompare();
+    else if (ev.key === 'h' || ev.key === 'H') setDrawer(!drawer.open, true);
   });
 
   function cls(s) { return s ? ' h-' + KIND[s] : ''; }
@@ -3272,12 +3677,29 @@ window.archHistoryUI = function (env) {
     edgeMarker: function (raw) { var s = edgeStatus(raw); return s ? 'h-' + KIND[s] : null; },
     markers: ['h-add', 'h-del', 'h-chg'],
     panelTop: panelTop, panelFor: panelFor,
-    hash: function () { if (editing) return []; var p = []; if (A) p.push('ver=' + encodeURIComponent(cur.key), 'cmp=' + encodeURIComponent(A.key)); else if (cur !== home) p.push('ver=' + encodeURIComponent(cur.key)); return p; },
-    ready: function () { if (playing) playT = setTimeout(function () { if (!step(1, true)) show(cur, A, false); }, 1900); },
-    stop: function () { clearTimeout(playT); clearTimeout(goT); },
+    hash: function () {
+      if (editing) return [];
+      var p = []; if (A) p.push('ver=' + encodeURIComponent(cur.key), 'cmp=' + encodeURIComponent(A.key)); else if (cur !== home) p.push('ver=' + encodeURIComponent(cur.key));
+      if (drawer.open) { p.push('hist=open'); if (drawer.x.length) p.push('hx=' + drawer.x.map(encodeURIComponent).join(',')); }
+      return p;
+    },
+    ready: function () {
+      if (playing) playT = setTimeout(function () { if (!step(1, true)) show(cur, A, false); }, 1900);
+      if (pendingNav) { var t = targetOf(pendingNav); pendingNav = null; if (t) env.nav(t); }
+    },
+    stop: function () { clearTimeout(playT); clearTimeout(goT); clearTimeout(copyT); if (stageRO) stageRO.disconnect(); },
     // for the agent tools (tools script), through ARCH_EXPLORER.history: the timeline as data, a comparison, and moving the page
     api: {
-      versions: function () { return V.map(function (v) { var o = { key: v.key, label: label(v), date: day(v.date) || null, by: versionWho(v), shown: v === cur, compareFrom: v === A }; if (v.title) o.title = v.title; if (v.prev) o.prev = v.prev; if (v.page) o.page = true; if (v.changes && v.changes.summary) o.summary = v.changes.summary; return o; }); },
+      versions: function () {
+        return V.map(function (v) {
+          var o = { key: v.key, label: label(v), kind: v.page ? 'page' : v.kind || 'commit', date: day(v.date) || null, by: versionWho(v), shown: v === cur, compareFrom: v === A };
+          if (v.sha) o.sha = v.sha; if (v.origin) o.origin = v.origin; if (v.title) o.title = v.title; if (v.pr && v.pr.number != null) o.pr = v.pr.number;
+          if (v.prev) o.prev = v.prev; if (v.page) o.page = true; if (v.changes && v.changes.summary) o.summary = v.changes.summary;
+          return o;
+        });
+      },
+      // the version drawer: open or close it (true / false), or ask whether it is open (no argument)
+      drawer: function (open) { if (open !== undefined) setDrawer(!!open, false); return drawer.open; },
       compare: function (a, b) {
         var x = find(a), y = find(b); if (!x || !y) return null;
         var d = K.diff(modelOf(x), modelOf(y)), list = chain(x, y);
@@ -3732,7 +4154,8 @@ function setThemeAttr() { if (theme === 'auto') root.removeAttribute('data-theme
 setThemeAttr();
 // versions embedded (the "history" script): the version or comparison the reader picked is drawn instead of the page's model
 var HU = null;
-try { HU = window.archHistoryUI && window.MODEL ? window.archHistoryUI({ prev: PREV, on: on }) : null; } catch (e) { HU = null; if (window.console) console.error('[architecture-explorer] history: ' + e.message); }
+// hash: the history's own state changed (its drawer), write the URL again; nav: go to an element (goTo below), once booted
+try { HU = window.archHistoryUI && window.MODEL ? window.archHistoryUI({ prev: PREV, on: on, hash: function () { writeHash(); }, nav: function (t) { return booted ? goTo(t) : false; } }) : null; } catch (e) { HU = null; if (window.console) console.error('[architecture-explorer] history: ' + e.message); }
 if (HU && HU.model) window.MODEL = HU.model;
 var MODEL = window.MODEL;
 if (!MODEL || typeof MODEL !== 'object') { fatal('The MODEL block did not load', ['window.MODEL is undefined: the MODEL script block probably has a JavaScript syntax error (see the browser console).']); return; }
@@ -4178,6 +4601,59 @@ on(document.getElementById('minimap'), 'click', function (ev) {
 });
 
 /* ======================================================================
+   folding the details panel and the minimap away (the handle on the views' right edge or I; the minimap's corner button
+   or O). Both live on <html> (panel-closed, mm-min), so a restart keeps them; they are remembered for this reader and
+   written to the URL (#panel=closed, #mm=min), which wins when it names them. Folding the panel gives the views (and
+   the history bar) the whole width; the map keeps what it showed: re-fitted if it was fitted, else the same centre and
+   zoom, animated. The panel does not open again by itself when a box is selected: the reader folded it to make room
+   and selects boxes all the time; the handle shows a dot while something is selected. Under 820px the panel is a
+   bottom sheet: folded it keeps one line, and a click on that line unfolds it.
+   ====================================================================== */
+var PANEL_KEY = 'architecture-explorer-panel', MM_KEY = 'architecture-explorer-minimap';
+var panelHandle = document.getElementById('panel-handle'), mmToggle = document.getElementById('mm-toggle');
+function panelOpen() { return !root.classList.contains('panel-closed'); }
+function mmMin() { return root.classList.contains('mm-min'); }
+function narrow() { return !!(window.matchMedia && window.matchMedia('(max-width: 820px)').matches); }
+function syncFold() {
+  var open = panelOpen(), min = mmMin();
+  if (panelHandle) {
+    var t = open ? 'Hide the details panel' : 'Show the details panel';
+    panelHandle.setAttribute('aria-expanded', String(open)); panelHandle.firstChild.textContent = open ? '›' : '‹';
+    panelHandle.title = t + ' (I)'; panelHandle.setAttribute('aria-label', t);
+    panelHandle.classList.toggle('has-sel', !!selected || !!seqSel);
+  }
+  if (mmToggle) {
+    var m = min ? 'Show the minimap' : 'Minimize the minimap';
+    mmToggle.setAttribute('aria-expanded', String(!min)); mmToggle.textContent = min ? '▣ minimap' : '–';
+    mmToggle.title = m + ' (O)'; mmToggle.setAttribute('aria-label', m);
+  }
+  var sb = document.querySelector('#panel .sheet-toggle'); if (sb) { sb.textContent = open ? 'details ▾' : 'details ▴'; sb.setAttribute('aria-expanded', String(open)); }
+}
+// keep: do not remember the choice for this reader (the MCP view folds the panel inline by itself)
+function setPanel(open, keep) {
+  open = !!open; if (open === panelOpen()) return;
+  var z0 = stageSize(), onMap = booted && view === 'map', f = onMap ? fitAll() : null;
+  var fitted = !!f && Math.abs(f.s - cam.s) < f.s * 0.02 && Math.abs(f.x - cam.x) < 4 && Math.abs(f.y - cam.y) < 4;
+  var wx = (z0.W / 2 - cam.x) / cam.s, wy = (z0.H / 2 - cam.y) / cam.s;
+  root.classList.toggle('panel-closed', !open);
+  if (!keep) { try { localStorage.setItem(PANEL_KEY, open ? 'open' : 'closed'); } catch (e) { /* storage off: the URL still has it */ } }
+  syncFold();
+  if (onMap) { var z1 = stageSize(); if (z1.W !== z0.W || z1.H !== z0.H) relayout(function () { return fitted ? fitAll() : { s: cam.s, x: z1.W / 2 - wx * cam.s, y: z1.H / 2 - wy * cam.s }; }); }
+  writeHash();
+}
+function setMinimap(min, keep) {
+  min = !!min; if (min === mmMin()) return;
+  root.classList.toggle('mm-min', min);
+  if (!keep) { try { localStorage.setItem(MM_KEY, min ? 'min' : 'full'); } catch (e) { /* storage off */ } }
+  syncFold(); if (!min && booted) minimap();
+  writeHash();
+}
+if (panelHandle) on(panelHandle, 'click', function () { setPanel(!panelOpen()); });
+if (mmToggle) on(mmToggle, 'click', function () { setMinimap(!mmMin()); });
+// the folded bottom sheet is its own handle: a click anywhere on it unfolds it (and does nothing else)
+on(document.getElementById('panel'), 'click', function (ev) { if (!panelOpen() && narrow()) { ev.preventDefault(); ev.stopPropagation(); setPanel(true); } }, true);
+
+/* ======================================================================
    actions
    ====================================================================== */
 function focusOn(n) { return function () { var b = target.get(n.id); return centerOn(b, Math.min(fitTo(b, 50).s, Math.max(cam.s, 0.55))); }; }
@@ -4295,6 +4771,48 @@ function reveal(n) {
   relayout(function () { var r = target.get(n.id), b = { x: r.x - 160, y: r.y - 120, w: r.w + 320, h: r.h + 240 }; return centerOn(b, Math.min(fitTo(b).s, 1.1)); });
   syncLevel(); renderPanel(); crumb();
 }
+/* go to an element named from outside the map (the history's change lists, agent tools). t is one of
+     { box: id }          its ancestors open, selected, centred (reveal, as search does)
+     { edge: i }          the i-th edge of MODEL.edges: the boxes around both ends open, both ends selected (so the usual
+                          selection fading applies), the arrow that carries it highlighted (a lifted one if it is merged), centred
+     { scenario: id, step: i }  the Dynamic view on that scenario, at a level that draws step i (0-based), on that step
+     { variant: id }      the variant filter
+   Returns false when the element is not in the model drawn. */
+function goTo(t) {
+  if (!t) return false;
+  if (t.box != null) { if (!byId[t.box]) return false; reveal(byId[t.box]); return true; }
+  if (t.edge != null) {
+    var e = EDGES[t.edge]; if (!e || !byId[e.from] || !byId[e.to]) return false;
+    var a = byId[e.from], b = byId[e.to];
+    if (view !== 'map') setView('map');
+    [a, b].forEach(function (n) { ancestors(n).forEach(function (p) { expanded.add(p.id); seqView.delete(p.id); }); });
+    setSel(a === b ? [a] : [a, b]); seqSel = null;
+    relayout(function () { var r = bbox([a.id, b.id]), bb = { x: r.x - 120, y: r.y - 100, w: r.w + 240, h: r.h + 200 }; return centerOn(bb, Math.min(fitTo(bb).s, 1.1)); });
+    var x = agg.filter(function (y) { return y.raw.indexOf(e) >= 0; })[0], prev = pinKey;
+    pinKey = x ? x.key : null; showLabel(prev, pinKey);
+    syncLevel(); renderPanel(); crumb();
+    return true;
+  }
+  if (t.scenario != null) {
+    var si = -1; SCEN.forEach(function (s, i) { if (s.id === t.scenario) si = i; });
+    if (si < 0 || !HAS_DYN) return false;
+    stopPlay(); dyn.sc = si; dyn.step = 0;
+    var steps = SCEN[si].steps, raw = t.step != null && steps.length ? steps[Math.max(0, Math.min(steps.length - 1, t.step))] : null;
+    if (raw) {   // the level shown first, then L1 … Ln, then "as opened on the map": the first that draws the step
+      var tries = [dyn.level].concat(LEVELS.map(String), ['map']), keep = dyn.level, hit = -1;
+      for (var k = 0; k < tries.length && hit < 0; k++) { dyn.level = tries[k]; dynSteps().steps.forEach(function (s, i) { if (hit < 0 && s.raw.indexOf(raw) >= 0) hit = i; }); }
+      if (hit < 0) dyn.level = keep; else { dyn.step = hit; autoStyle(); }
+    }
+    syncDyn(); setView('dynamic'); writeHash();
+    return true;
+  }
+  if (t.variant != null) {
+    var c = null; VCH.forEach(function (ch) { if (VBY[ch].id === t.variant) c = ch; });
+    if (!c) return false;
+    setMode(c); return true;
+  }
+  return false;
+}
 function select(n) { selected = n; multi = []; seqSel = null; redraw(); renderPanel(); crumb(); }
 /* Several boxes selected (Ctrl / ⌘ / Shift + click, or + Enter on a focused box): their ids in `multi`, the most recent
    last, which is also `selected`, the box the rest of the engine reads. `multi` counts only while it holds `selected`,
@@ -4358,10 +4876,11 @@ function repoUrl(n) {
   return u;
 }
 function linkLabel(n) { return n.url ? 'Open link' : (SRC.linkLabel || TPL.label); }
-function sheetBtn() { return '<button type="button" class="btn sheet-toggle" data-act="sheet">details ▾</button>'; }
+function sheetBtn() { var o = panelOpen(); return '<button type="button" class="btn sheet-toggle" data-act="sheet" aria-controls="panel" aria-expanded="' + o + '" title="Fold or unfold the details (I)">details ' + (o ? '▾' : '▴') + '</button>'; }
 function chip(c) { return '<span class="chip tone-' + VBY[c].tone + '">' + esc(VBY[c].name) + '</span>'; }
 function renderPanel() {
   writeHash();
+  if (panelHandle) panelHandle.classList.toggle('has-sel', !!selected || !!seqSel);   // the folded panel's handle: details wait
   if (editing()) { window.ARCH_EDIT.panel(panel, selected); return; }
   if (view === 'dynamic' && !selected) { renderStepPanel(); return; }
   if (view === 'map' && !selected && seqSel) { if (renderSeqPanel()) return; seqSel = null; }
@@ -4383,7 +4902,10 @@ function renderPanel() {
       (HAS_DYN ? '<kbd>S</kbd><span>show the sequence inside the selected box, or its boxes again</span>' : '') +
       '<kbd>M · B' + (HAS_DYN ? ' · D' : '') + '</kbd><span>Map · Pinned board' + (HAS_DYN ? ' · Dynamic' : '') + '</span>' +
       (HAS_DYN ? '<kbd>← →  space</kbd><span>step / play a dynamic diagram</span>' : '') +
-      '<kbd>/</kbd><span>find a box by name</span><kbd>F</kbd><span>fit everything</span><kbd>L · E · T</kbd><span>arrow labels · arrow style · colour theme</span><kbd>Esc</kbd><span>clear the selection</span></div>' +
+      '<kbd>/</kbd><span>find a box by name</span><kbd>F</kbd><span>fit everything</span><kbd>L · E · T</kbd><span>arrow labels · arrow style · colour theme</span>' +
+      '<kbd>I</kbd><span>hide or show this panel (the handle on the right edge too)</span><kbd>O</kbd><span>minimize or restore the minimap</span>' +
+      (HU ? '<kbd>[ ] · C · H</kbd><span>previous / next version · compare two · every version in detail (the history bar)</span>' : '') +
+      '<kbd>Esc</kbd><span>clear the selection' + (HU ? ', or close the version list' : '') + '</span></div>' +
       '<h3>Legend</h3><div class="legend">' + legend() + '</div>' +
       (NV ? '<h3>' + esc(VAR_LABEL) + ' filter</h3><p>Pick one in the toolbar to fade the boxes and arrows it never touches. The dots on each box show where it applies: ' + VCH.map(chip).join(' ') + '. Dashed arrows only exist in some of them.</p>' : '');
     return;
@@ -4507,7 +5029,7 @@ on(panel, 'click', function (ev) {
   if (!act) return;
   if (act.dataset.act === 'toggle') toggle(selected);
   if (act.dataset.act === 'focus') reveal(selected);
-  if (act.dataset.act === 'sheet') panel.classList.toggle('min');
+  if (act.dataset.act === 'sheet') setPanel(!panelOpen());
   if (act.dataset.act === 'pin') togglePin(selected);
   if (act.dataset.act === 'back') { selected = null; renderPanel(); }
   if (act.dataset.act === 'step-prev') { stopPlay(); goStep(dyn.step - 1); }
@@ -4813,6 +5335,8 @@ on(document, 'keydown', function (ev) {
   else if (ev.key === 'l' || ev.key === 'L') lblBtn.click();
   else if (view === 'map' && (ev.key === 'e' || ev.key === 'E')) edgesBtn.click();
   else if (ev.key === 't' || ev.key === 'T') cycleTheme();
+  else if (ev.key === 'i' || ev.key === 'I') setPanel(!panelOpen());
+  else if (ev.key === 'o' || ev.key === 'O') setMinimap(!mmMin());
   else if (ev.key === 'm' || ev.key === 'M') setView('map');
   else if (ev.key === 'b' || ev.key === 'B') setView('pins');
   else if (HAS_DYN && (ev.key === 'd' || ev.key === 'D')) setView('dynamic');
@@ -5416,7 +5940,8 @@ on(document, 'click', function (ev) { if (!ev.target.closest('.export') && !expo
 /* ======================================================================
    URL state. The hash mirrors what is on screen, so any view can be linked, reloaded or screenshotted:
    #level=3  #open=api,orders  #sel=place-order  #variant=cloud  #labels=0  #theme=dark
-   #view=pins  #view=dynamic&scenario=checkout&at=3&style=seq&step=4
+   #view=pins  #view=dynamic&scenario=checkout&at=3&style=seq&step=4  #panel=closed  #mm=min
+   with a history: #ver=<key>  #cmp=<key>  #hist=open  #hx=<key>,…  (the history script)
    read-only extras: zoom=<id> fits the camera to one box, pins=a,b sets the pinned board for this visit
    ====================================================================== */
 function readHash() {
@@ -5442,7 +5967,9 @@ function writeHash() {
   if (!showLabels) p.push('labels=0');
   if (C.edgeStyle() !== EDGES_DEFAULT) p.push('edges=' + C.edgeStyle());
   if (theme !== THEME_DEFAULT) p.push('theme=' + theme);
-  if (HU) p.push.apply(p, HU.hash());   // ver=, cmp= (history)
+  if (!panelOpen()) p.push('panel=closed');
+  if (mmMin()) p.push('mm=min');
+  if (HU) p.push.apply(p, HU.hash());   // ver=, cmp=, hist=open, hx= (history)
   try { history.replaceState(null, '', '#' + p.join('&')); } catch (e) {}
 }
 function idList(s) { return String(s || '').split(',').map(function (x) { return x.trim(); }).filter(function (id) { return byId[id]; }); }
@@ -5453,6 +5980,14 @@ function openWithAncestors(id) { expanded.add(id); ancestors(byId[id]).forEach(f
    ====================================================================== */
 var H = readHash();
 if (THEMES.indexOf(H.theme) >= 0) { hashTheme = theme = H.theme; applyTheme(); }
+// the folded panel and minimap: the URL, else (a restart) what <html> already says, else this reader's last choice;
+// before the first fit, since the panel takes room from the views
+(function () {
+  function saved(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  root.classList.toggle('panel-closed', H.panel === 'closed' || (H.panel !== 'open' && (PREV ? !panelOpen() : saved(PANEL_KEY) === 'closed')));
+  root.classList.toggle('mm-min', H.mm === 'min' || (H.mm !== 'full' && (PREV ? mmMin() : saved(MM_KEY) === 'min')));
+  syncFold();
+})();
 if (H.open !== undefined) idList(H.open).forEach(openWithAncestors);
 else if (H.level) openToLevel(Math.max(1, Math.min(MAXL, +H.level || 1)));
 else if (VIEW.open) VIEW.open.forEach(openWithAncestors);
@@ -5517,7 +6052,9 @@ window.ARCH_EXPLORER = { ready: true, errors: [], warnings: CHECK.warnings,
     view: function () { return view; }, redraw: function () { if (view === 'map') redraw(); }, refreshPanel: function () { renderPanel(); },
     // for the agent tools (tools script): select several boxes (their parents open), pick a colour theme
     selectIds: function (ids) { var l = (ids || []).map(function (id) { return byId[id]; }).filter(Boolean); if (view !== 'map') setView('map'); setSel(l); l.forEach(function (n) { ancestors(n).forEach(function (a) { expanded.add(a.id); seqView.delete(a.id); }); }); seqSel = null; relayout(); afterSel(); },
-    setTheme: pickTheme },
+    setTheme: pickTheme,
+    // the details panel and the minimap folded away (keep: do not remember it for this reader); go to an element (goTo)
+    panelOpen: panelOpen, setPanel: setPanel, minimapMinimized: mmMin, setMinimap: setMinimap, goTo: goTo },
   // the versions embedded in the page (history script): list, compare, show; null without a history
   history: HU && HU.api ? HU.api : null,
   // let go of everything this run attached, so that archEngine() can run again on another MODEL

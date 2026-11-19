@@ -5,7 +5,8 @@ html.c4-widget body { box-sizing: border-box; overflow: hidden;
   padding: var(--c4w-inset-top, 0px) var(--c4w-inset-right, 0px) var(--c4w-inset-bottom, 0px) var(--c4w-inset-left, 0px); }
 html.c4-widget .app { height: 100%; }
 /* inline in the conversation (html.c4-inline): a compact toolbar so the map keeps most of the height. The secondary
-   toggles (labels, edges, size; also on the L, E keys) are left for the expanded view, the details sheet starts folded. */
+   toggles (labels, edges, size; also on the L, E keys) are left for the expanded view; the bridge starts the details
+   panel (or sheet) and the minimap folded. The history bar keeps its own row under the map, inline and expanded. */
 html.c4-inline .bar { gap: 8px 12px; padding-top: 8px; padding-bottom: 8px; }
 html.c4-inline .brand { width: auto; margin-right: 4px; }
 html.c4-inline .brand small { display: none; }
