@@ -1,6 +1,9 @@
 {
   "name": "c4-model-agentic-plugin",
   "owner": { "name": "caviri" },
+  "metadata": {
+    "description": "Claude Code plugin that explores a codebase and generates an explainer deck and an interactive C4 model architecture explorer as self-contained HTML."
+  },
   "plugins": [
     {
       "name": "c4-model-agentic-plugin",
