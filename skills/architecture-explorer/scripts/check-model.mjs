@@ -15,6 +15,7 @@ import vm from 'node:vm';
 const args = process.argv.slice(2);
 const opt = (name) => { const i = args.indexOf(name); return i >= 0 ? args.splice(i, 2)[1] : null; };
 const root = opt('--root');
+const edgesOpt = opt('--edges');   // orthogonal | straight: report on that arrow style instead of the model's view.edges
 const strict = args.includes('--strict'), noLayout = args.includes('--no-layout'), verbose = args.includes('--verbose');
 const file = args.find((a) => !a.startsWith('--'));
 if (!file) { console.error('Usage: node check-model.mjs path/to/index.html [--root path/to/repo] [--strict] [--no-layout]'); process.exit(2); }
@@ -75,7 +76,9 @@ if (root && M && Array.isArray(M.nodes)) {
 let behindTotal = 0;
 if (C && !noLayout) {
   const nm = (n) => n.name, arrow = (x) => nm(x.a) + ' → ' + nm(x.b);
-  const seen = new Set(); let bends = 0, crosses = 0;
+  const seen = new Set(); let bends = 0, crosses = 0, overlaps = 0;
+  if (edgesOpt) C.setEdgeStyle(edgesOpt);
+  const style = C.edgeStyle();
   const groups = [{ label: '(top level)', node: null, open: [], size: C.ROOTS.length }].concat(
     C.NODES.filter((n) => n.kids.length).sort((a, b) => C.depthOf(a) - C.depthOf(b))
       .map((n) => ({ label: 'inside "' + n.name + '"', node: n, open: C.ancestors(n).concat([n]).map((a) => a.id), size: n.kids.length })));
@@ -90,12 +93,13 @@ if (C && !noLayout) {
     for (const d of A.detours) if (once('d' + d.x.key)) { bends++; lines.push('  bend    ' + arrow(d.x) + '  goes around ' + d.around.map((n) => '"' + nm(n) + '"').join(', ')); }
     for (const b of A.behind) if (once('b' + b.x.key)) { behindTotal++; lines.push('  BEHIND  ' + arrow(b.x) + '  still passes behind ' + b.boxes.map((n) => '"' + nm(n) + '"').join(', ')); }
     for (const [p, q] of A.crossings) if (once('c' + p.key + '|' + q.key)) { crosses++; lines.push('  cross   ' + arrow(p) + '  ×  ' + arrow(q)); }
+    for (const [p, q] of (A.overlaps || []).filter(([p, q]) => touches(p) && touches(q))) if (once('o' + p.key + '|' + q.key)) { overlaps++; lines.push('  OVERLAP ' + arrow(p) + '  lies on  ' + arrow(q)); }
     const count = (tag) => lines.filter((l) => l.startsWith('  ' + tag)).length;
-    info.push('LAYOUT   ' + g.label + ': ' + g.size + ' boxes' + (lines.length ? ', ' + count('bend') + ' bent, ' + count('cross') + ' crossings, ' + count('BEHIND') + ' behind' : ', clean'));
+    info.push('LAYOUT   ' + g.label + ': ' + g.size + ' boxes' + (lines.length ? ', ' + (style === 'straight' ? count('bend') + ' bent, ' : count('OVERLAP') + ' overlapping, ') + count('cross') + ' crossings, ' + count('BEHIND') + ' behind' : ', clean'));
     info.push(...(verbose || lines.length <= 10 ? lines : lines.slice(0, 10).concat(['  … ' + (lines.length - 10) + ' more (run with --verbose)'])));
   }
-  info.push('LAYOUT   total: ' + bends + ' bent around a box, ' + crosses + ' crossings, ' + behindTotal + ' left behind a box' +
-    (bends + crosses ? '  (to straighten: put the two ends in neighbouring cells with at: [col, row] on every box of that group)' : ''));
+  info.push('LAYOUT   total (' + style + ' arrows): ' + (style === 'straight' ? bends + ' bent around a box, ' : overlaps + ' lying on another arrow, ') + crosses + ' crossings, ' + behindTotal + ' left behind a box' +
+    (bends + crosses ?'  (to straighten: put the two ends in neighbouring cells with at: [col, row] on every box of that group)' : ''));
   if (behindTotal) warnings.push(behindTotal + ' arrow(s) could not be routed around a box (see BEHIND lines): move one end next to the other with "at".');
 }
 

@@ -113,11 +113,14 @@ The whole page is driven by one data block, `window.MODEL`, holding nodes, relat
 scenarios and state machines. Layout is automatic; positions can be pinned where needed.
 
 - **Map**: open boxes in place from context (L1) to containers, components and code (L4), with
-  pan, zoom, a minimap and search. Arrows route around boxes instead of passing behind them.
+  pan, zoom, a minimap and search.
+- **Arrow styles**: squared arrows that run in the gaps between boxes on separate lanes, so they
+  do not lie on top of each other, or straight arrows that bend around boxes. Squared is the
+  default; switch with the `edges` button or the `E` key, or set `view.edges` in the model.
 - **Details panel**: description, technology, source link, what a node uses and what uses it.
 - **State machines**: a lifecycle is drawn as states and transitions inside the box that owns it.
-- **Scenarios**: step through a flow as a collaboration diagram, a sequence diagram or a table,
-  or draw the sequence inside a box on the map.
+- **Scenarios**: step through or play a flow as a collaboration diagram, a sequence diagram or a
+  table, or draw the sequence inside a box on the map. A picker lists every scenario.
 - **Pinned board**: collect the nodes you care about into one view.
 - **Light and dark themes**, keyboard shortcuts, and every view addressable through the URL.
 

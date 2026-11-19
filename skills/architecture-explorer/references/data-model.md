@@ -221,6 +221,7 @@ source: { repoUrl: 'https://github.com/org/repo', branch: 'main' }
 |---|---|
 | `startLevel` | `1`–`4`. The map opens with everything above this level expanded. Default `2` (containers visible). |
 | `open` | Array of node ids to open instead (their ancestors open too). Use it to start on the one interesting container rather than on all of them. |
+| `edges` | Arrow style on the map: `'orthogonal'` (default; right-angled arrows in the gutters, one lane each) or `'straight'` (centre to centre, bending round boxes). The reader can switch with the `edges` button or `E`. See features.md, "Arrow styles". |
 
 ## `defaultPins`, `levelNames`, `legend`
 

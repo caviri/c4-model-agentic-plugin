@@ -9,7 +9,8 @@ The explorer is one HTML file made of five script blocks: `model` (the data), `v
 - **Nested boxes.** The map starts at `view.startLevel`. A box with children shows a `+ N inside` badge; clicking the badge or double-clicking the box opens it in place, and its children appear inside a dashed boundary. `− close` collapses it and everything opened below it. Layout and camera animate (skipped under `prefers-reduced-motion`).
 - **Level buttons** `L1`–`L4` (keys `1`–`4`) open every box above that level and fit the result. Only levels that exist in the model are shown. The highlighted button follows what is actually open.
 - **Edge lifting.** Each edge is declared once, between specific elements. It is drawn between the nearest visible ancestors of its ends, so closed boxes carry the relationships of their contents. Edges that land on the same pair merge into one arrow, labelled with the edges' `summary` if one is given, else `first label +N`. An edge that ends up inside a single box is hidden.
-- **Arrow routing.** An arrow is a straight line between box centres unless a closed box lies on it; then it bends around the corners of the boxes in the way, with rounded bends. See "How layout is decided".
+- **Arrow style.** `edges` in the toolbar (`E`) switches between right-angled arrows that run in the gutters on separate lanes (default) and straight ones. See "Arrow styles".
+- **Arrow routing (straight style).** An arrow is a straight line between box centres unless a closed box lies on it; then it bends around the corners of the boxes in the way, with rounded bends. See "How layout is decided".
 - **Lifecycles.** Boxes of type `state` are drawn as pills (dot = initial, double border = final), their transitions as arrows, a self-transition as a loop.
 - **Selection.** Clicking a box selects it: its arrows stay bright, the rest fade, and the panel shows its details. Clicking empty canvas or `Esc` clears it.
 - **Pan and zoom.** Drag to pan, wheel or pinch to zoom at the pointer, `+` / `−` / fit buttons, `F` to fit. Below 34% zoom, sub-lines, arrow labels and variant dots hide to keep the overview legible.
@@ -39,6 +40,7 @@ A second view (`B`). Pin any box with `P` or the panel button. The board draws o
 
 A third view (`D`), present only when `MODEL.scenarios` is non-empty. For the chosen scenario:
 
+- **Scenario** from the drop-down, or **☰ all scenarios** (`S`): a modal listing every scenario with its `desc`, the elements it passes through at the container level, and its length. Write a `desc` for every scenario; the modal is where readers choose by it.
 - **Draw at** `L1`–`L4`, `map` (whatever is open on the map) or `pins` (your pinned boxes). Steps are lifted to that granularity; steps internal to one box are folded and counted; consecutive steps between the same pair merge.
 - **As** a collaboration diagram (boxes in columns by call depth, numbered arrows), a sequence diagram (sticky participant header and sticky step list), or a step table. Collaboration is the default at L1 and L2; from L3 on, and for `map` and `pins`, the sequence diagram is the default until the reader picks a style.
 - Collaboration columns follow message flow: the first sender is column 0 and each receiver sits one column right of whoever first sent to it. A participant that first appears as a sender (a worker picking up a job) is placed one column left of what it sends to. This only reads well if steps are written in the direction messages travel.
@@ -52,6 +54,7 @@ Present only when `MODEL.scenarios` is non-empty; no model fields are needed. An
 - **Messages** are the scenario steps that cross the box's border or run between two of its children, lifted to those lifelines. Steps that stay inside one child are folded and counted in the scenario bar; consecutive steps between the same two lifelines merge.
 - **Scenario bar** `‹ ›` cycles through the scenarios that pass through this box. The details panel lists them too ("Sequence inside").
 - **Click a message** to pick it: the panel shows the step, its underlying interactions with source paths, `◀ ▶` and **Open in Dynamic** (the same scenario on the Dynamic tab, one level below the box, on that step). `←` `→` step, `Esc` clears.
+- **▶ play** in the scenario bar (or space once a message is picked) walks through the messages, one every 1.5 s, panning the map to keep the current one in view. Any other action stops it.
 - **Click a lifeline card** to select that element. A selected element keeps its own messages bright and fades the rest. Its panel offers `⇅ Sequence inside` again, which drills down: the child shows its own sequence and the parent goes back to boxes.
 - `▦ boxes` goes back to the children as boxes, `− close` or a double-click closes the box, `S` toggles the selected box, and a level button (`1`–`4`) resets every box to boxes.
 - For layout and arrows a box showing its sequence counts as closed: map arrows attach to its border and route around it.
@@ -65,8 +68,8 @@ Present only when `MODEL.scenarios` is non-empty; no model fields are needed. An
 | `F`, `+`, `−` | Fit, zoom in, zoom out |
 | `M`, `B`, `D` | Map, Pinned board, Dynamic |
 | `P` | Pin or unpin the selected box |
-| `S` | Sequence inside the selected box, or its boxes again (Map) |
-| `L`, `T` | Arrow labels, colour theme |
+| `S` | Sequence inside the selected box, or its boxes again (Map) · all scenarios (Dynamic) |
+| `L`, `E`, `T` | Arrow labels, arrow style (right-angled / straight), colour theme |
 | `Esc` | Clear the selection |
 | `←` `→` `space` | Previous step, next step, play (Dynamic) |
 | `Tab`, `Enter`, `Space` on a box | Focus, select, open or close |
@@ -86,6 +89,7 @@ The URL hash mirrors what is on screen and is read at load, so any state can be 
 | `sel=place-order` | Selected box; its ancestors are opened |
 | `variant=cloud` | Variant filter, by variant id |
 | `labels=0` | Arrow labels off |
+| `edges=straight` / `edges=orthogonal` | Arrow style, when different from the model's `view.edges` |
 | `theme=dark` / `light` | Theme for this visit (not saved) |
 | `view=pins` / `view=dynamic` | The other two views (`#pins` and `#dynamic` alone also work) |
 | `scenario=checkout` `at=3` `style=seq` `step=4` | Dynamic view: scenario id, level (`1`–`4`, `map`, `pins`), style (`collab`, `seq`, `list`), step number from 1 |
@@ -110,7 +114,7 @@ For automated checks the page sets `data-explorer="ready"` or `"error"` on `<htm
 
 | Script | What it does |
 |---|---|
-| `check-model.mjs index.html` | Syntax of every script, the validator, and a LAYOUT report: for each group of boxes (that box open, the rest closed) the arrows that bend around a box (`bend`), the arrows that could not be routed and still run behind a box (`BEHIND`, a warning), and crossings (`cross`). `--verbose` lists everything, `--no-layout` skips it. |
+| `check-model.mjs index.html` | Syntax of every script, the validator, and a LAYOUT report: for each group of boxes (that box open, the rest closed) the arrows that bend around a box (`bend`), the arrows that could not be routed and still run behind a box (`BEHIND`, a warning), and crossings (`cross`). The report is for the model's arrow style (`view.edges`, default orthogonal); with orthogonal arrows `bend` lines are replaced by `OVERLAP` (two unrelated arrows left on the same line because a gutter is full). `--edges straight` or `--edges orthogonal` reports on the other style, `--verbose` lists everything, `--no-layout` skips it. |
 | `check-model.mjs index.html --root <repo>` | Also checks that every `path` exists in the repository, that directories end in `/`, and that each `line` is inside its file. |
 | `screenshot.mjs index.html [outDir] [state …]` | PNGs of the page in the given URL states with headless Chrome or Edge, after confirming the page booted. Finds the browser itself; `--browser <path>` or `CHROME_PATH` overrides. |
 | `build-explorer.mjs model.js index.html` | Template + model → page, runs the check, writes `architecture.jsonld` and, when `rete` is available, `architecture.rete`. |
@@ -131,14 +135,39 @@ For automated checks the page sets `data-explorer="ready"` or `"error"` on `<htm
    | `ext` | 224 × 96 |
    | `state` | 200 × 68 |
 
-3. Column width is the widest box in the column, row height the tallest in the row. Gaps: 112 px between columns, 76 px between rows; at the top level 90 px between boxes and 110 px between rows. An open box is its children's grid plus a 66 px header and 30 px padding.
+3. Column width is the widest box in the column, row height the tallest in the row. Gaps: 112 px between columns, 76 px between rows; at the top level 90 px between boxes and 110 px between rows. An open box is its children's grid plus an 84 px header and 30 px padding (60 px title strip, then room for one arrow lane above the first row).
 4. Opening a box pushes its siblings apart rather than overlaying them. Sizes are computed bottom-up, positions top-down.
 5. Top level: the row holding the system is centred; boxes in the other rows slide sideways to line up with what they talk to.
-6. Arrows run centre to centre, clipped at the box edge. If a closed box lies on that line, the arrow takes the shortest path around box corners (14 px clearance, a small penalty per bend) and is drawn with rounded bends. Routes are computed once per layout change and follow the boxes while the layout animates. A pair of arrows running both ways is drawn as two parallel lines. If a box is completely walled in, the arrow stays straight and `check-model.mjs` reports it as `BEHIND`.
+6. Arrows are drawn in one of two styles (next section). In both, routes are computed once per layout change, are stored relative to boxes rather than as coordinates, and so follow the boxes while the layout animates. If a box is completely walled in, the arrow falls back to a straight line and `check-model.mjs` reports it as `BEHIND`.
+
+### Arrow styles: `orthogonal` and `straight`
+
+Set the default with `view.edges` in the model (`'orthogonal'` if omitted). The reader switches with the `edges` button or `E`; the URL carries `edges=straight` or `edges=orthogonal` when it differs from the model's default. The style applies to the Map only: the pinned board, the dynamic diagrams and a sequence shown inside a box are drawn as before.
+
+**`orthogonal`** (default, button reads `edges: square`). Right-angled arrows that do not lie on top of each other:
+
+- Each arrow leaves and enters a box perpendicular to a side. Sides come from the relative position of the two boxes: bottom → top when they are in different rows, right → left when they share a row.
+- Arrows that use the same side of a box get separate ports spread along it, ordered by where their other end is.
+- The path runs in the gutters: on lines 18 px outside the boxes, found as the shortest route with few bends. It never crosses a closed box, and it keeps off the 60 px title strip of open boxes.
+- Stretches of different arrows that fall on the same gutter line are moved onto parallel lanes 9 px apart, staying at least 6 px from any box. When a gutter is full, arrows that share an end box may share a lane (they read as one trunk); unrelated arrows are only stacked if nothing else is left, and `check-model.mjs` reports that as `OVERLAP`.
+- A label sits on a segment of its own arrow, the roomiest one first, and slides along it to avoid boxes, titles and other labels.
+
+**`straight`**. Centre to centre, clipped at the box edge. If a closed box lies on the line, the arrow takes the shortest path around box corners (14 px clearance) with rounded bends. A pair of arrows running both ways is drawn as two parallel lines.
+
+When to pick which:
+
+| | `orthogonal` | `straight` |
+|---|---|---|
+| Dense groups, hubs, many arrows between the same rows | Clear: one lane per arrow, nothing coincides | Arrows share nearly the same line and cut diagonally across boxes |
+| Small diagrams, 3 to 6 boxes with few arrows | Fine, slightly more formal | Shortest and lightest |
+| Following one arrow by eye | Follow the lane; select a box to highlight its arrows | Direct line, easy when few |
+| Crossings | Right-angle crossings in the gutters, usually no fewer in number | Diagonal crossings anywhere |
+
+Limits of the orthogonal style: a gutter holds about six lanes between rows and about ten between columns, so a group with more parallel arrows than that will stack some; boxes stacked exactly above each other with several arrows between them get small jogs where ports do not line up; in a very busy gutter labels can still touch each other; long-distance arrows take visible detours along the gutters. More room comes from fewer boxes per row (`at`), not from a setting.
 
 What this means for placing boxes:
 
-- **Adjacency rule.** An arrow is straight when nothing sits between its two ends: same row with no box between them, same column with no box between them, or a diagonal that misses the other boxes. Neighbouring cells are always straight. Everything else bends, which is legible but busier.
+- **Adjacency rule.** In both styles the shortest, cleanest arrows are between neighbouring cells. With `straight`, an arrow is straight when nothing sits between its two ends: same row with no box between them, same column with no box between them, or a diagonal that misses the other boxes. Neighbouring cells are always straight. Everything else bends, which is legible but busier.
 - **Label room.** The 112 px gap between two horizontal neighbours holds a label of 14 to 16 characters on a line. Vertical neighbours have room for any label. Long labels on short horizontal arrows are the usual cause of overlap: shorten the label, or stack the two boxes vertically.
 - **Entry on top, stores at the bottom.** Automatic layout already pulls boxes reached from outside the group to the top row and boxes that only reach out to the bottom row.
 - **Cross-cutting hubs** (auth, ORM/session, logging, a shared client) are used by most siblings. Three ways to handle one, in order of preference:

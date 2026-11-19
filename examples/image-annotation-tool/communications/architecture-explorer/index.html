@@ -593,6 +593,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .seqin .e.hot { stroke-width: 1.8; } .seqin .e.cur { stroke-width: 2.6; }
 .has-sel .seqin .seq-msg:not(.hot):not(.cur) { opacity: .3; }
 .lowzoom .seqin .lbl, .lowzoom .seq-bar text, .lowzoom .sp-tag { display: none; }
+.seq-play.on rect { fill: var(--accent); stroke: var(--accent); } .seq-play.on text { fill: var(--bg); }
 
 /* ---------- panel ---------- */
 .panel { border-left: 1px solid var(--line); background: var(--surface); overflow: auto; min-width: 0;
@@ -705,6 +706,28 @@ table.steps tr { cursor: pointer; }
 table.steps tr:hover td { background: var(--bg); }
 table.steps tr.cur td { background: var(--accent-soft); }
 
+/* ---------- scenario picker (Dynamic) ---------- */
+#sc-modal { padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font-family: var(--f-body);
+  width: min(720px, calc(100vw - 32px)); max-height: min(82vh, 780px); box-shadow: 0 24px 60px var(--shadow); }
+#sc-modal::backdrop { background: rgba(10, 18, 26, .45); }
+.scm { padding: 18px 20px 20px; }
+.scm-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin: 0; }
+.scm-head h2 { font-family: var(--f-display); font-size: 22px; margin: 2px 0 0; }
+.scm-intro { font-size: 14px; line-height: 1.55; color: var(--muted); margin: 8px 0 14px; }
+.scm-list { display: grid; gap: 8px; }
+.scm-item { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 12px; text-align: left; background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; cursor: pointer; color: var(--ink); font: 14px var(--f-body); }
+.scm-item:hover, .scm-item:focus-visible { border-color: var(--accent); outline: none; }
+.scm-item.cur { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.scm-n { font: 600 12px var(--f-mono); width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--bg); display: grid; place-items: center; }
+.scm-body { display: grid; gap: 5px; min-width: 0; }
+.scm-body b { font-family: var(--f-display); font-size: 16px; }
+.scm-body b i { font: 500 10.5px var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-left: 8px; font-style: normal; }
+.scm-desc { line-height: 1.5; }
+.scm-path { font: 12px/1.5 var(--f-mono); color: var(--muted); overflow-wrap: anywhere; }
+.scm-path em { font-style: normal; color: var(--accent); padding: 0 2px; }
+.scm-meta { font: 11.5px var(--f-mono); color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
 /* ---------- model error screen ---------- */
 .fatal { position: fixed; inset: 0; z-index: 99; overflow: auto; background: var(--bg); color: var(--ink); padding: 32px max(24px, 8vw); font-family: var(--f-body); }
 .fatal h1 { font-family: var(--f-display); font-size: 24px; margin: 0 0 8px; }
@@ -747,6 +770,7 @@ table.steps tr.cur td { background: var(--accent-soft); }
     <div class="group">
       <div class="search"><input id="q" type="search" placeholder="Find a box ( / )" autocomplete="off" aria-label="Find an element"><div id="search-hits" hidden></div></div>
       <button type="button" class="btn" id="btn-labels" aria-pressed="true" title="Arrow labels (L)">labels</button>
+      <button type="button" class="btn" id="btn-edges" title="Arrow style: right-angled or straight (E)">edges</button>
       <button type="button" class="btn" id="btn-theme" title="Colour theme: auto, light, dark (T)">theme: auto</button>
       <div class="export"><button type="button" class="btn" id="btn-export" aria-haspopup="true" aria-expanded="false" title="Download the model as an RDF graph">export ▾</button>
         <div id="export-menu" hidden>
@@ -783,6 +807,8 @@ table.steps tr.cur td { background: var(--accent-soft); }
    <section class="view" id="v-dynamic" hidden>
     <div class="vbar">
       <select id="dyn-sc" aria-label="Scenario"></select>
+      <button type="button" class="btn" id="dyn-pick" aria-haspopup="dialog" title="All scenarios, with what each one shows (S)">☰ all scenarios</button>
+      <dialog id="sc-modal" aria-labelledby="sc-modal-title"></dialog>
       <div class="group"><span>Draw at</span><div class="seg" id="dyn-level"></div></div>
       <div class="group"><span>As</span><div class="seg" id="dyn-style">
         <button type="button" data-st="collab" aria-pressed="true">collaboration</button><button type="button" data-st="seq">sequence</button><button type="button" data-st="list">steps</button></div></div>
@@ -949,6 +975,7 @@ window.validateArchModel = function (M) {
     if (!M.view || typeof M.view !== 'object') E.push('view must be an object.');
     else {
       if (M.view.startLevel !== undefined && [1, 2, 3, 4].indexOf(M.view.startLevel) < 0) E.push('view.startLevel must be 1, 2, 3 or 4.');
+      if (M.view.edges !== undefined && ['orthogonal', 'straight'].indexOf(M.view.edges) < 0) E.push('view.edges must be "orthogonal" or "straight".');
       if (M.view.open !== undefined) {
         if (!Array.isArray(M.view.open)) E.push('view.open must be an array of node ids.');
         else M.view.open.forEach(function (id) { if (!byId[id]) E.push('view.open: "' + id + '" is not a node id.'); });
@@ -1070,7 +1097,7 @@ window.archCore = function (MODEL) {
   // closed box size per type [width, height]; an open box is as large as the grid of its children plus a header
   var SIZE = { person: [250, 104], system: [300, 124], container: [260, 108], store: [240, 108], component: [264, 96], code: [272, 84], ext: [224, 96], sibling: [250, 104], state: [200, 68] };
   // HEAD header of an open box · PAD inner padding · GX/GY gaps between cells · RGX/RGY gaps at the top level
-  var HEAD = 66, PAD = 30, GX = 112, GY = 76, RGX = 90, RGY = 110;
+  var HEAD = 84, PAD = 30, GX = 112, GY = 76, RGX = 90, RGY = 110;   // HEAD leaves an arrow lane (18px above the first row) below the 60px title strip
   var expanded = new Set();
   // boxes that show a sequence inside instead of their children: id → scenario index. Such a box is closed as far as
   // layout and arrows are concerned (its children are not placed, arrows attach to its border); "expanded" wins over it.
@@ -1111,7 +1138,7 @@ window.archCore = function (MODEL) {
       n._h = HEAD + g.h + PAD;
     } else if (isSeq(n)) {
       var s = n._seq = innerSeq(n, seqView.get(n.id));
-      n._w = Math.max(2 * SEQ.PADX + s.parts.length * SEQ.LW, textW(n.name, 11.5) + 260 + NV * 14, textW(SCEN[s.sc].name, 7.4) + 320);
+      n._w = Math.max(2 * SEQ.PADX + s.parts.length * SEQ.LW, textW(n.name, 11.5) + 260 + NV * 14, textW(SCEN[s.sc].name, 7.4) + 410);
       n._h = HEAD + SEQ.BAR + SEQ.PH + SEQ.GAP + Math.max(0, s.steps.length - 1) * SEQ.ROW + SEQ.FOOT;
     } else {
       n._w = SIZE[n.t][0]; n._h = SIZE[n.t][1];
@@ -1332,11 +1359,14 @@ window.archCore = function (MODEL) {
      the corners of nearby boxes, with a small penalty per bend). The route is stored as box corners, not coordinates,
      so it follows the boxes while the layout animates. */
   var RM = 14;
+  // edge style: 'orthogonal' (right-angled, in the gutters, one lane per arrow) or 'straight' (centre to centre, bending round boxes)
+  var edgeStyle = MODEL.view && MODEL.view.edges === 'straight' ? 'straight' : 'orthogonal';
   function route(geo, agg) {
+    if (edgeStyle === 'orthogonal') return routeOrtho(geo, agg);
     var closed = [];
     geo.forEach(function (r, id) { if (!isOpen(byId[id])) closed.push({ n: byId[id], r: r }); });
     agg.forEach(function (x) {
-      x.via = []; x.blockers = [];
+      x.via = []; x.blockers = []; x.segs = null;
       if (x.loop) return;
       var ra = geo.get(x.a.id), rb = geo.get(x.b.id);
       if (!ra || !rb) return;
@@ -1384,14 +1414,165 @@ window.archCore = function (MODEL) {
   }
   // the points an arrow runs through for a given geometry: border of a, bend corners, border of b
   function pathPoints(x, geo) {
+    if (x.segs) { var op = orthoPoints(x, geo); if (op) return op; }
     var ra = geo.get(x.a.id), rb = geo.get(x.b.id), mid = [];
     (x.via || []).forEach(function (v) { var r = geo.get(v.id); if (r) mid.push([v.sx < 0 ? r.x - RM : r.x + r.w + RM, v.sy < 0 ? r.y - RM : r.y + r.h + RM]); });
     var S = ctr(ra), G = ctr(rb), first = mid.length ? mid[0] : G, last = mid.length ? mid[mid.length - 1] : S;
     return [clip(ra, first[0], first[1])].concat(mid, [clip(rb, last[0], last[1])]);
   }
+  /* ---------------- orthogonal routing ----------------
+     Every arrow leaves and enters a box at right angles to one of its sides and runs only horizontally or vertically.
+     1. sides: chosen from the relative position of the two boxes (above/below first, else left/right);
+     2. ports: arrows sharing a side of a box are spread along it, ordered by where their other end lies;
+     3. path: shortest route with few bends (A*) over a grid of lines 18px outside every nearby box, i.e. in the gutters;
+     4. lanes: stretches of different arrows that fall on the same gutter line are moved onto parallel tracks.
+     A route is a list of segments, each tied to a box edge (box id, fraction along it, offset), never to coordinates,
+     so it is recomputed from the boxes on every animation frame and stays right-angled while they move. */
+  var OM = 18, LANE = 9, OBEND = 70;
+  function lineAt(s, geo) { var r = geo.get(s.line.id); return r ? (s.o === 'v' ? r.x + r.w * s.line.f : r.y + r.h * s.line.f) + s.line.off + (s.extra || 0) : null; }
+  function orthoPoints(x, geo) {
+    var ra = geo.get(x.a.id), rb = geo.get(x.b.id), S = x.segs, n = S.length, c = S.map(function (s) { return lineAt(s, geo); }), pts = [], i;
+    if (!ra || !rb || c.some(function (v) { return v === null; })) return null;
+    function sidePt(r, side, s, v) { return s.o === 'v' ? [v, side === 't' ? r.y : side === 'b' ? r.y + r.h : r.y + r.h / 2] : [side === 'l' ? r.x : side === 'r' ? r.x + r.w : r.x + r.w / 2, v]; }
+    pts.push(sidePt(ra, x.sa, S[0], c[0]));
+    for (i = 0; i < n - 1; i++) pts.push(S[i].o === 'v' ? [c[i], c[i + 1]] : [c[i + 1], c[i]]);
+    pts.push(sidePt(rb, x.sb, S[n - 1], c[n - 1]));
+    return pts;
+  }
+  function routeOrtho(geo, agg) {
+    var closed = [], opened = [], bySide = {};
+    geo.forEach(function (r, id) { (isOpen(byId[id]) ? opened : closed).push({ n: byId[id], r: r }); });
+    // 1. sides
+    agg.forEach(function (x) {
+      x.via = []; x.blockers = []; x.segs = null; x.sa = null;
+      if (x.loop) return;
+      var ra = geo.get(x.a.id), rb = geo.get(x.b.id);
+      if (!ra || !rb) return;
+      var vgap = Math.max(rb.y - ra.y - ra.h, ra.y - rb.y - rb.h), hgap = Math.max(rb.x - ra.x - ra.w, ra.x - rb.x - rb.w), ca = ctr(ra), cb = ctr(rb);
+      var vert = vgap >= 2 * OM ? true : hgap >= 2 * OM ? false : Math.abs(cb[1] - ca[1]) >= Math.abs(cb[0] - ca[0]);
+      x.sa = vert ? (cb[1] >= ca[1] ? 'b' : 't') : (cb[0] >= ca[0] ? 'r' : 'l');
+      x.sb = vert ? (cb[1] >= ca[1] ? 't' : 'b') : (cb[0] >= ca[0] ? 'l' : 'r');
+      [[x.a, x.sa, cb, 'fa', ra], [x.b, x.sb, ca, 'fb', rb]].forEach(function (e) { var k = e[0].id + '|' + e[1]; (bySide[k] = bySide[k] || []).push({ x: x, key: e[3], side: e[1], o: e[2], r: e[4] }); });
+    });
+    // 2. ports
+    Object.keys(bySide).forEach(function (k) {
+      var list = bySide[k], horiz = list[0].side === 't' || list[0].side === 'b', len = horiz ? list[0].r.w : list[0].r.h;
+      list.sort(function (p, q) { return horiz ? (p.o[0] - q.o[0] || p.o[1] - q.o[1]) : (p.o[1] - q.o[1] || p.o[0] - q.o[0]); });
+      var step = list.length > 1 ? Math.min(30, 0.76 * len / (list.length - 1)) : 0;
+      list.forEach(function (p, i) { p.x[p.key] = 0.5 + (i - (list.length - 1) / 2) * step / len; });
+    });
+    // 3. paths
+    function uniq(list) { list.sort(function (p, q) { return p.c - q.c; }); return list.filter(function (l, i) { return i === 0 || l.c - list[i - 1].c > 0.5; }); }
+    function nearest(list, c) { var b = 0; for (var i = 1; i < list.length; i++) if (Math.abs(list[i].c - c) < Math.abs(list[b].c - c)) b = i; return b; }
+    agg.forEach(function (x) {
+      if (!x.sa) return;
+      var ra = geo.get(x.a.id), rb = geo.get(x.b.id), xl = [], yl = [];
+      var box = { x: Math.min(ra.x, rb.x) - 260, y: Math.min(ra.y, rb.y) - 260, w: Math.max(ra.x + ra.w, rb.x + rb.w) - Math.min(ra.x, rb.x) + 520, h: Math.max(ra.y + ra.h, rb.y + rb.h) - Math.min(ra.y, rb.y) + 520 };
+      var near = closed.filter(function (o) { return o.n !== x.a && o.n !== x.b && !within(o.n, x.a) && !within(o.n, x.b) && hit(o.r, box); });
+      var solids = near.map(function (o) { return inflate(o.r, OM - 4); });
+      if (!isOpen(x.a)) solids.push(inflate(ra, OM - 4));
+      if (!isOpen(x.b)) solids.push(inflate(rb, OM - 4));
+      // the title strip of an open box is kept free too, with one line just below it to pass along
+      opened.forEach(function (o) {
+        if (o.n === x.a || o.n === x.b || !hit(o.r, box)) return;
+        solids.push({ x: o.r.x + 6, y: o.r.y + 4, w: Math.min(o.r.w - 12, 360), h: 56 });
+        if (within(x.a, o.n) || within(x.b, o.n)) yl.push({ c: o.r.y + 60 + 6, id: o.n.id, f: 0, off: 66 });   // that lane is for the box's own arrows, not for traffic passing through
+      });
+      function lines(id, r) {
+        xl.push({ c: r.x - OM, id: id, f: 0, off: -OM }, { c: r.x + r.w + OM, id: id, f: 1, off: OM });
+        yl.push({ c: r.y - OM, id: id, f: 0, off: -OM }, { c: r.y + r.h + OM, id: id, f: 1, off: OM });
+      }
+      function port(id, r, side, f) { if (side === 't' || side === 'b') xl.push({ c: r.x + r.w * f, id: id, f: f, off: 0 }); else yl.push({ c: r.y + r.h * f, id: id, f: f, off: 0 }); }
+      function stub(r, side, f) { return side === 't' ? [r.x + r.w * f, r.y - OM] : side === 'b' ? [r.x + r.w * f, r.y + r.h + OM] : side === 'l' ? [r.x - OM, r.y + r.h * f] : [r.x + r.w + OM, r.y + r.h * f]; }
+      port(x.a.id, ra, x.sa, x.fa); port(x.b.id, rb, x.sb, x.fb);          // ports first: on a tie uniq() keeps them
+      near.forEach(function (o) { lines(o.n.id, o.r); }); lines(x.a.id, ra); lines(x.b.id, rb);
+      xl = uniq(xl); yl = uniq(yl);
+      var s0 = stub(ra, x.sa, x.fa), e0 = stub(rb, x.sb, x.fb), si = nearest(xl, s0[0]), sj = nearest(yl, s0[1]), ei = nearest(xl, e0[0]), ej = nearest(yl, e0[1]);
+      var dA = x.sa === 't' || x.sa === 'b' ? 1 : 0, dB = x.sb === 't' || x.sb === 'b' ? 1 : 0, W = xl.length, N = W * yl.length * 2;
+      function free(i1, j1, i2, j2) {
+        var x1 = Math.min(xl[i1].c, xl[i2].c), x2 = Math.max(xl[i1].c, xl[i2].c), y1 = Math.min(yl[j1].c, yl[j2].c), y2 = Math.max(yl[j1].c, yl[j2].c);
+        for (var k = 0; k < solids.length; k++) {
+          var s = solids[k];
+          if (j1 === j2 ? (s.y < y1 && y1 < s.y + s.h && x1 < s.x + s.w && s.x < x2) : (s.x < x1 && x1 < s.x + s.w && y1 < s.y + s.h && s.y < y2)) return false;
+        }
+        return true;
+      }
+      var g = [], prev = [], heap = [], q;
+      for (q = 0; q < N; q++) { g.push(Infinity); prev.push(-1); }
+      function push(f, id) { var i = heap.length; heap.push([f, id]); while (i > 0) { var p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; var t = heap[p]; heap[p] = heap[i]; heap[i] = t; i = p; } }
+      function pop() {
+        var top = heap[0], last = heap.pop();
+        if (heap.length) { heap[0] = last; var i = 0; for (;;) { var l = 2 * i + 1, r = l + 1, m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; var t = heap[m]; heap[m] = heap[i]; heap[i] = t; i = m; } }
+        return top;
+      }
+      function hd(i, j) { return Math.abs(xl[i].c - xl[ei].c) + Math.abs(yl[j].c - yl[ej].c); }
+      var start = ((sj * W + si) << 1) | dA, goal = ((ej * W + ei) << 1) | dB, found = false;
+      g[start] = 0; push(hd(si, sj), start);
+      while (heap.length) {
+        var cur = pop(), id = cur[1];
+        if (id === goal) { found = true; break; }
+        if (cur[0] - 1e-6 > g[id] + hd((id >> 1) % W, Math.floor((id >> 1) / W))) continue;
+        var d = id & 1, i0 = (id >> 1) % W, j0 = Math.floor((id >> 1) / W);
+        var turn = id ^ 1;
+        if (g[id] + OBEND < g[turn]) { g[turn] = g[id] + OBEND; prev[turn] = id; push(g[turn] + hd(i0, j0), turn); }
+        for (var sgn = -1; sgn <= 1; sgn += 2) {
+          var i1 = d ? i0 : i0 + sgn, j1 = d ? j0 + sgn : j0;
+          if (i1 < 0 || j1 < 0 || i1 >= W || j1 >= yl.length || !free(i0, j0, i1, j1)) continue;
+          var nid = ((j1 * W + i1) << 1) | d, cost = g[id] + (d ? Math.abs(yl[j1].c - yl[j0].c) : Math.abs(xl[i1].c - xl[i0].c));
+          if (cost < g[nid]) { g[nid] = cost; prev[nid] = id; push(cost + hd(i1, j1), nid); }
+        }
+      }
+      if (!found) return;                              // walled in: falls back to a straight line, reported as BEHIND
+      var chain = []; for (q = goal; q >= 0; q = prev[q]) chain.unshift(q);
+      function ln(d, i, j) { var l = d ? xl[i] : yl[j]; return { id: l.id, f: l.f, off: l.off }; }
+      var segs = [{ o: dA ? 'v' : 'h', line: ln(dA, si, sj), extra: 0 }];
+      for (q = 1; q < chain.length; q++) {
+        var a0 = chain[q - 1], b0 = chain[q], db = b0 & 1;
+        if ((a0 >> 1) === (b0 >> 1)) continue;         // a turn on the spot: the next move starts the new segment
+        var o = db ? 'v' : 'h', last = segs[segs.length - 1];
+        if (last.o !== o) segs.push({ o: o, line: ln(db, (b0 >> 1) % W, Math.floor((b0 >> 1) / W)), extra: 0 });
+      }
+      if (segs[segs.length - 1].o !== (dB ? 'v' : 'h')) segs.push({ o: dB ? 'v' : 'h', line: ln(dB, ei, ej), extra: 0 });
+      x.segs = segs;
+    });
+    // 4. lanes: inner segments of different arrows on one gutter line get parallel tracks, moving away from the box the line belongs to
+    var groups = {};
+    agg.forEach(function (x) {
+      if (!x.segs) return;
+      var pts = orthoPoints(x, geo);
+      x.segs.forEach(function (s, i) {
+        var p = pts[i], q2 = pts[i + 1], ax = s.o === 'v' ? 1 : 0;
+        s.lo = Math.min(p[ax], q2[ax]); s.hi = Math.max(p[ax], q2[ax]); s.c = p[1 - ax];
+        s.fixed = i === 0 || i === x.segs.length - 1;   // the stubs at the ports stay where they are; the others make way
+        s.ea = x.a; s.eb = x.b;
+        (groups[s.o] = groups[s.o] || []).push(s);
+      });
+    });
+    Object.keys(groups).forEach(function (k) {
+      var placedSegs = [];
+      groups[k].sort(function (p, q) { return (q.fixed ? 1 : 0) - (p.fixed ? 1 : 0) || p.c - q.c || p.lo - q.lo; }).forEach(function (s) {
+        // when a gutter is full, arrows that share an end box may share a lane (they read as one trunk); strangers never do by choice
+        var dir = s.line.off < 0 ? -1 : 1, t = 0, lax = false, clash = function (c) { return placedSegs.some(function (u) { return Math.abs(u.c - c) < LANE - 3 && u.lo < s.hi + 8 && s.lo < u.hi + 8 && !(lax && (u.ea === s.ea || u.eb === s.eb || u.ea === s.eb || u.eb === s.ea)); }); };
+        // a lane must stay inside the gutter: never closer than 6px to a closed box
+        var inBox = function (c) { return closed.some(function (o) { var r = o.r; return k === 'v' ? (r.x - 6 < c && c < r.x + r.w + 6 && s.lo < r.y + r.h && r.y < s.hi) : (r.y - 6 < c && c < r.y + r.h + 6 && s.lo < r.x + r.w && r.x < s.hi); }); };
+        if (!s.fixed) {
+          var order = [0, 1, 2, -1, 3, 4, 5, 6], pick = null, oi, pass;
+          for (pass = 0; pass < 2 && pick === null; pass++) { lax = pass === 1; for (oi = 0; oi < order.length; oi++) { var cc = s.c + dir * order[oi] * LANE; if (!clash(cc) && !inBox(cc)) { pick = order[oi]; break; } } }
+          t = pick || 0;
+        } else {
+          // two stubs in one line (ports of boxes stacked exactly above each other): slide this port a little along its side
+          var fo = [0, 1, -1, 2, -2], fi;
+          for (fi = 0; fi < fo.length; fi++) if (!clash(s.c + fo[fi] * LANE)) { t = fo[fi] * dir; break; }
+        }
+        s.extra = dir * t * LANE; s.c += s.extra;
+        placedSegs.push(s);
+      });
+    });
+    return agg;
+  }
   // layout quality for one geometry: which arrows had to bend, which still run behind a box, which cross
   function analyse(geo, agg) {
-    var closed = [], out = { arrows: 0, detours: [], behind: [], crossings: [] }, paths = [];
+    var closed = [], out = { style: edgeStyle, arrows: 0, detours: [], behind: [], crossings: [], overlaps: [] }, paths = [];
     geo.forEach(function (r, id) { if (!isOpen(byId[id])) closed.push({ n: byId[id], r: r }); });
     agg.forEach(function (x) {
       if (x.loop || !geo.get(x.a.id) || !geo.get(x.b.id)) return;
@@ -1413,8 +1594,21 @@ window.archCore = function (MODEL) {
       for (var s = 0; s + 1 < A.pts.length && !crossed; s++) for (var t = 0; t + 1 < B.pts.length && !crossed; t++) if (segSeg(A.pts[s], A.pts[s + 1], B.pts[t], B.pts[t + 1])) crossed = true;
       if (crossed) out.crossings.push([A.x, B.x]);
     }
+    // right-angled arrows only: stretches of two different arrows lying on top of each other
+    // (two arrows that share an end box may share a trunk; that is not counted)
+    if (edgeStyle === 'orthogonal') for (i = 0; i < paths.length; i++) for (j = i + 1; j < paths.length; j++) {
+      var P = paths[i].pts, Q = paths[j].pts, over = false, X1 = paths[i].x, X2 = paths[j].x;
+      if (X1.a === X2.a || X1.b === X2.b || X1.a === X2.b || X1.b === X2.a) continue;
+      for (s = 0; s + 1 < P.length && !over; s++) for (t = 0; t + 1 < Q.length && !over; t++) {
+        var pv = Math.abs(P[s][0] - P[s + 1][0]) < 0.01, qv = Math.abs(Q[t][0] - Q[t + 1][0]) < 0.01, ax = pv ? 1 : 0;
+        if (pv !== qv || Math.abs(P[s][1 - ax] - Q[t][1 - ax]) > 3) continue;
+        if (Math.min(Math.max(P[s][ax], P[s + 1][ax]), Math.max(Q[t][ax], Q[t + 1][ax])) - Math.max(Math.min(P[s][ax], P[s + 1][ax]), Math.min(Q[t][ax], Q[t + 1][ax])) > 10) over = true;
+      }
+      if (over) out.overlaps.push([paths[i].x, paths[j].x]);
+    }
     return out;
   }
+  function setEdgeStyle(s) { if (s === 'straight' || s === 'orthogonal') edgeStyle = s; return edgeStyle; }
 
   // level N = every box above level N is open, so the boxes of level N are the deepest ones showing; the last level opens everything
   function levelSet(lv) { return NODES.filter(function (n) { return n.kids.length && (n.lv < lv || lv >= MAXL); }).map(function (n) { return n.id; }); }
@@ -1426,7 +1620,8 @@ window.archCore = function (MODEL) {
     parentOf: parentOf, ancestors: ancestors, depthOf: depthOf, within: within, expanded: expanded, isOpen: isOpen, visible: visible, rep: rep,
     seqView: seqView, isSeq: isSeq, innerSeq: innerSeq, SEQ: SEQ,
     layout: layout, aggregate: aggregate, route: route, pathPoints: pathPoints, analyse: analyse, mergeInto: mergeInto, finishMerged: finishMerged,
-    sameKind: sameKind, joinLabels: joinLabels, clip: clip, hit: hit, levelSet: levelSet, openToLevel: openToLevel };
+    sameKind: sameKind, joinLabels: joinLabels, clip: clip, hit: hit, levelSet: levelSet, openToLevel: openToLevel,
+    setEdgeStyle: setEdgeStyle, edgeStyle: function () { return edgeStyle; } };
 };
 /* END CORE */
 </script>
@@ -1728,7 +1923,7 @@ function drawNode(n, r) {
    core during layout). It is rebuilt only when what it shows changes, and fades in while the box grows. */
 function seqKey(n) {
   var S = n._seq;
-  return [S.sc, S.parts.map(function (p) { return p.n.id; }).join(','), S.steps.length, n._w, seqSel && seqSel.id === n.id ? seqSel.step : -1, selected ? selected.id : ''].join('|');
+  return [S.sc, S.parts.map(function (p) { return p.n.id; }).join(','), S.steps.length, n._w, seqSel && seqSel.id === n.id ? seqSel.step : -1, selected ? selected.id : '', seqPlaying(n) ? 'play' : ''].join('|');
 }
 function drawSeqInner(el, n, r) {
   var g = el.querySelector('.seqin'), key = seqKey(n);
@@ -1755,6 +1950,11 @@ function buildSeqInner(n) {
     });
     tx += 64;
   }
+  // ▶ play: steps through the messages, 1.5 s each (space while a message is picked)
+  var pb = mk('g', { 'class': 'closebtn seq-play' + (seqPlaying(n) ? ' on' : ''), 'data-seqact': 'play' }, bar);
+  mk('rect', { rx: 6 }, pb); mk('text', { 'text-anchor': 'middle' }, pb).textContent = seqPlaying(n) ? '❚❚ pause' : '▶ play';
+  svgEl('title', {}, pb, seqPlaying(n) ? 'Pause (space)' : 'Play the messages one by one (space)'); setBtn(pb, tx, top + 2, 76, 22);
+  tx += 90;
   var t = svgEl('text', { x: tx, y: top + 18 }, bar);
   svgEl('tspan', { 'class': 'seq-kick' }, t, 'SCENARIO' + (many ? ' ' + (n.seqScen.indexOf(S.sc) + 1) + '/' + n.seqScen.length : ''));
   svgEl('tspan', { 'class': 'seq-scname', dx: 10 }, t, sc.name);
@@ -1821,11 +2021,11 @@ function pointAt(pts, f) {
   return pts[0];
 }
 // polyline with rounded bends
-function roundedPath(pts) {
+function roundedPath(pts, rad) {
   var d = 'M' + pts[0][0].toFixed(1) + ',' + pts[0][1].toFixed(1);
   for (var i = 1; i < pts.length - 1; i++) {
     var p = pts[i - 1], w = pts[i], n = pts[i + 1];
-    var d1 = Math.hypot(w[0] - p[0], w[1] - p[1]) || 1, d2 = Math.hypot(n[0] - w[0], n[1] - w[1]) || 1, c = Math.min(26, d1 / 2, d2 / 2);
+    var d1 = Math.hypot(w[0] - p[0], w[1] - p[1]) || 1, d2 = Math.hypot(n[0] - w[0], n[1] - w[1]) || 1, c = Math.min(rad || 26, d1 / 2, d2 / 2);
     d += ' L' + (w[0] - (w[0] - p[0]) / d1 * c).toFixed(1) + ',' + (w[1] - (w[1] - p[1]) / d1 * c).toFixed(1) +
       ' Q' + w[0].toFixed(1) + ',' + w[1].toFixed(1) + ' ' + (w[0] + (n[0] - w[0]) / d2 * c).toFixed(1) + ',' + (w[1] + (n[1] - w[1]) / d2 * c).toFixed(1);
   }
@@ -1834,7 +2034,8 @@ function roundedPath(pts) {
 }
 function drawEdges(geo) {
   var seen = new Set(), placed = [], boxes = [], keys = new Set(agg.map(function (x) { return x.key; }));
-  geo.forEach(function (r, id) { if (!isOpen(byId[id])) boxes.push(r); });
+  // labels keep clear of closed boxes and of the title strip of open ones
+  geo.forEach(function (r, id) { if (!isOpen(byId[id])) boxes.push(r); else boxes.push({ x: r.x + 10, y: r.y + 6, w: Math.min(r.w - 20, 340), h: 52 }); });
   agg.forEach(function (x) {
     var ra = geo.get(x.a.id), rb = geo.get(x.b.id);
     if (!ra || !rb) return;
@@ -1863,20 +2064,41 @@ function drawEdges(geo) {
       pts = [[x1, y0 - 38], [x2, y0 - 38]];
     } else {
       pts = C.pathPoints(x, geo);
-      if (pts.length === 2 && keys.has(x.b.id + '>' + x.a.id)) {
+      if (!x.segs && pts.length === 2 && keys.has(x.b.id + '>' + x.a.id)) {
         // a pair of arrows running both ways is drawn as two parallel lines instead of one on top of the other
         var ca = [ra.x + ra.w / 2, ra.y + ra.h / 2], cb = [rb.x + rb.w / 2, rb.y + rb.h / 2];
         var ddx = cb[0] - ca[0], ddy = cb[1] - ca[1], len = Math.hypot(ddx, ddy) || 1, ox = -ddy / len * 9, oy = ddx / len * 9;
         var q1 = clip(ra, cb[0] + ox, cb[1] + oy), q2 = clip(rb, ca[0] + ox, ca[1] + oy);
         pts = [[q1[0] + ox, q1[1] + oy], [q2[0] + ox, q2[1] + oy]];
       }
-      d = roundedPath(pts);
+      d = roundedPath(pts, x.segs ? 8 : 26);
     }
     o.path.setAttribute('d', d);
     var w = Math.max.apply(null, o.lines.map(function (l) { return l.length; })) * 6.7 + 14, hgt = o.lines.length * 13 + 7, at = pointAt(pts, 0.5);
-    for (var ti = 0; ti < TRIES.length; ti++) {
-      var q = pointAt(pts, TRIES[ti]), lr = { x: q[0] - w / 2 - 4, y: q[1] - hgt / 2 - 4, w: w + 8, h: hgt + 8 };
-      if (!boxes.some(function (b) { return hit(lr, b); }) && !placed.some(function (b) { return hit(lr, b); })) { at = q; break; }
+    var spots = [];
+    if (x.segs) {
+      // right-angled arrow: the label sits on one of its own segments, the roomiest first (a segment long enough to hold it beats a longer path position)
+      var ranked = [];
+      for (var si = 0; si + 1 < pts.length; si++) {
+        var horiz = Math.abs(pts[si][1] - pts[si + 1][1]) < 0.01, slen = Math.hypot(pts[si + 1][0] - pts[si][0], pts[si + 1][1] - pts[si][1]);
+        ranked.push({ i: si, len: slen, room: slen - (horiz ? w : hgt) });
+      }
+      ranked.sort(function (p, q) { return (q.room >= 12 ? 1 : 0) - (p.room >= 12 ? 1 : 0) || q.len - p.len; });
+      ranked.forEach(function (sg) {
+        // slide along the segment in steps, from its middle outwards
+        var steps = Math.max(1, Math.min(12, Math.floor(sg.len / 44))), fr = [0.5];
+        for (var k = 1; k <= steps / 2; k++) { fr.push(0.5 + k / (steps + 1), 0.5 - k / (steps + 1)); }
+        fr.forEach(function (f) { spots.push([pts[sg.i][0] + (pts[sg.i + 1][0] - pts[sg.i][0]) * f, pts[sg.i][1] + (pts[sg.i + 1][1] - pts[sg.i][1]) * f]); });
+      });
+      if (spots.length) at = spots[0];
+    }
+    TRIES.forEach(function (f) { spots.push(pointAt(pts, f)); });
+    // first free spot wins; if none is free, the one that covers the least (a box counts more than another label)
+    var bestBad = Infinity;
+    for (var ti = 0; ti < spots.length; ti++) {
+      var q = spots[ti], lr = { x: q[0] - w / 2 - 4, y: q[1] - hgt / 2 - 4, w: w + 8, h: hgt + 8 };
+      var bad = boxes.filter(function (b) { return hit(lr, b); }).length * 3 + placed.filter(function (b) { return hit(lr, b); }).length;
+      if (bad < bestBad) { bestBad = bad; at = q; if (!bad) break; }
     }
     placed.push({ x: at[0] - w / 2, y: at[1] - hgt / 2, w: w, h: hgt });
     var rect = o.lab.children[0];
@@ -2030,13 +2252,45 @@ function cycleSeq(n, d) {
   seqView.set(n.id, list[(i + d + list.length) % list.length]); if (seqSel && seqSel.id === n.id) seqSel = null;
   relayout(null); renderPanel();
 }
-function pickSeqStep(n, i) {
+function pickSeqStep(n, i, auto) {
   var S = n._seq; if (!isSeq(n) || !S || !S.steps.length) return;
+  if (!auto) stopSeqPlay();
   seqSel = { id: n.id, step: Math.max(0, Math.min(S.steps.length - 1, i)) }; selected = null;
-  redraw(); renderPanel(); crumb();
+  redraw(); seqFollow(n); renderPanel(); crumb();
+}
+/* playing the sequence inside a box: one message every 1.5 s. Anything that drops the picked message
+   (Esc, another selection, a scenario switch, closing the box, a level button, leaving the map) ends it on the next tick. */
+var seqPlay = null;        // { id, timer }
+function seqPlaying(n) { return !!(seqPlay && seqPlay.id === n.id && seqSel && seqSel.id === n.id); }
+function stopSeqPlay() { if (seqPlay) { clearInterval(seqPlay.timer); seqPlay = null; } }
+function toggleSeqPlay(n) {
+  if (seqPlaying(n)) { stopSeqPlay(); redraw(); renderPanel(); return; }
+  stopSeqPlay();
+  var S = n._seq; if (!isSeq(n) || !S || !S.steps.length) return;
+  var from = seqSel && seqSel.id === n.id && seqSel.step < S.steps.length - 1 ? seqSel.step : -1;
+  seqPlay = { id: n.id, timer: setInterval(function () {
+    if (view !== 'map' || !seqSel || seqSel.id !== n.id || !isSeq(n)) { stopSeqPlay(); if (view === 'map') { redraw(); renderPanel(); } return; }
+    if (seqSel.step >= n._seq.steps.length - 1) { stopSeqPlay(); redraw(); renderPanel(); return; }
+    pickSeqStep(n, seqSel.step + 1, true);
+  }, 1500) };
+  pickSeqStep(n, from + 1, true);
+}
+// keep the picked message on screen: pan (no zoom) when it is outside the canvas
+function seqFollow(n) {
+  var r = cur.get(n.id) || target.get(n.id), S = n._seq, s = seqSel && S.steps[seqSel.step];
+  if (!r || !s || anim) return;
+  var z = stageSize(), y = r.y + C.GAPS.HEAD + SEQ.BAR + SEQ.PH + SEQ.GAP + seqSel.step * SEQ.ROW;
+  var ia = S.parts.findIndex(function (p) { return p.n === s.a; }), ib = S.parts.findIndex(function (p) { return p.n === s.b; });
+  var x = r.x + (n._w - S.parts.length * SEQ.LW) / 2 + ((ia + ib) / 2 + 0.5) * SEQ.LW;
+  var sx = cam.x + x * cam.s, sy = cam.y + y * cam.s, moved = false;
+  if (sy < 90 || sy > z.H - 70) { cam.y = z.H / 2 - y * cam.s; moved = true; }
+  if (sx < 60 || sx > z.W - 60) { cam.x = z.W / 2 - x * cam.s; moved = true; }
+  if (moved) applyCam();
 }
 function seqAct(n, act) {
-  if (act === 'seq') showSeq(n);
+  if (act !== 'play') stopSeqPlay();
+  if (act === 'play') toggleSeqPlay(n);
+  else if (act === 'seq') showSeq(n);
   else if (act === 'boxes') showBoxes(n);
   else if (act === 'sc-prev') cycleSeq(n, -1);
   else if (act === 'sc-next') cycleSeq(n, 1);
@@ -2120,7 +2374,7 @@ function renderPanel() {
       (HAS_DYN ? '<kbd>S</kbd><span>show the sequence inside the selected box, or its boxes again</span>' : '') +
       '<kbd>M · B' + (HAS_DYN ? ' · D' : '') + '</kbd><span>Map · Pinned board' + (HAS_DYN ? ' · Dynamic' : '') + '</span>' +
       (HAS_DYN ? '<kbd>← →  space</kbd><span>step / play a dynamic diagram</span>' : '') +
-      '<kbd>/</kbd><span>find a box by name</span><kbd>F</kbd><span>fit everything</span><kbd>L · T</kbd><span>arrow labels · colour theme</span><kbd>Esc</kbd><span>clear the selection</span></div>' +
+      '<kbd>/</kbd><span>find a box by name</span><kbd>F</kbd><span>fit everything</span><kbd>L · E · T</kbd><span>arrow labels · arrow style · colour theme</span><kbd>Esc</kbd><span>clear the selection</span></div>' +
       '<h3>Legend</h3><div class="legend">' + legend() + '</div>' +
       (NV ? '<h3>' + esc(VAR_LABEL) + ' filter</h3><p>Pick one in the toolbar to fade the boxes and arrows it never touches. The dots on each box show where it applies: ' + VCH.map(chip).join(' ') + '. Dashed arrows only exist in some of them.</p>' : '');
     return;
@@ -2205,6 +2459,7 @@ panel.addEventListener('click', function (ev) {
   if (act.dataset.act === 'seq-next' && seqSel) pickSeqStep(box, seqSel.step + 1);
   if (act.dataset.act === 'seq-dyn') seqToDynamic(box);
   if (act.dataset.act === 'seq-box') select(box);
+  if (act.dataset.act === 'seq-play') toggleSeqPlay(box);
 });
 // a message picked in the sequence inside a box; false when there is nothing to show any more
 function renderSeqPanel() {
@@ -2216,7 +2471,7 @@ function renderSeqPanel() {
     '<span class="ptag">Sequence inside ' + esc(n.name) + '</span><h2>' + esc(sc.name) + '</h2>' + (sc.desc ? '<p>' + esc(sc.desc) + '</p>' : '') +
     '<h3>Step ' + s.n + ' of ' + S.steps.length + '</h3>' +
     '<p style="font-size:16px"><b>' + esc(s.a.name) + '</b> ' + (s.ret ? '⇠ replies to' : '→') + ' <b>' + esc(s.b.name) + '</b></p>' +
-    '<div class="actions"><button type="button" class="btn" data-act="seq-prev">◀ previous</button><button type="button" class="btn" data-act="seq-next">next ▶</button>' +
+    '<div class="actions"><button type="button" class="btn" data-act="seq-prev">◀ previous</button><button type="button" class="btn" data-act="seq-play">' + (seqPlaying(n) ? '❚❚ pause' : '▶ play') + '</button><button type="button" class="btn" data-act="seq-next">next ▶</button>' +
       '<button type="button" class="btn" data-act="seq-dyn">Open in Dynamic</button><button type="button" class="btn" data-act="seq-box">About ' + esc(n.name) + '</button></div>' +
     (NV ? '<h3>' + esc(VAR_LABEL) + '</h3><div class="chips">' + s.modes.split('').map(chip).join('') + '</div>' : '') +
     '<h3>Underlying interactions (' + s.raw.length + ')</h3><div class="rel">' + s.raw.map(function (r) {
@@ -2298,7 +2553,7 @@ svg.addEventListener('keydown', function (ev) {
   var g = ev.target.closest && ev.target.closest('.nd'); if (!g) return;
   var n = byId[g.dataset.id];
   if (ev.key === 'Enter') { ev.preventDefault(); select(n); }
-  if (ev.key === ' ') { ev.preventDefault(); toggle(n); }
+  if (ev.key === ' ' && !(seqSel && seqSel.id === n.id)) { ev.preventDefault(); toggle(n); }   // with a message picked, space plays the sequence instead
 });
 function centerZoom(f) { zoomAt(f, svg.clientWidth / 2, svg.clientHeight / 2); }
 document.getElementById('z-in').onclick = function () { centerZoom(1.25); };
@@ -2308,6 +2563,11 @@ document.querySelectorAll('#levels button').forEach(function (b) { b.onclick = f
 document.querySelectorAll('#modes button').forEach(function (b) { b.onclick = function () { setMode(b.dataset.mode); }; });
 var lblBtn = document.getElementById('btn-labels');
 lblBtn.onclick = function () { showLabels = !showLabels; svg.classList.toggle('labels', showLabels); lblBtn.setAttribute('aria-pressed', String(showLabels)); writeHash(); };
+/* arrow style: right-angled (orthogonal) or straight. Only the map's arrows are affected, not the pinned board or the diagrams. */
+var edgesBtn = document.getElementById('btn-edges'), EDGES_DEFAULT = C.edgeStyle();
+function syncEdges() { edgesBtn.textContent = 'edges: ' + (C.edgeStyle() === 'orthogonal' ? 'square' : 'straight'); }
+edgesBtn.onclick = function () { C.setEdgeStyle(C.edgeStyle() === 'orthogonal' ? 'straight' : 'orthogonal'); syncEdges(); aggregate(); redraw(); writeHash(); };
+syncEdges();
 
 /* theme: auto follows the OS; light / dark force it. Remembered per browser. */
 var THEME_KEY = 'architecture-explorer-theme', THEMES = ['auto', 'light', 'dark'], theme = 'auto', hashTheme = null, themeBtn = document.getElementById('btn-theme');
@@ -2347,6 +2607,7 @@ document.addEventListener('keydown', function (ev) {
   else if (ev.key === 'Escape' && selected) { if (view === 'map') select(null); else { selected = null; if (view === 'pins') renderPins(); renderPanel(); } }
   else if ((ev.key === 'p' || ev.key === 'P') && selected) togglePin(selected);
   else if (ev.key === 'l' || ev.key === 'L') lblBtn.click();
+  else if (view === 'map' && (ev.key === 'e' || ev.key === 'E')) edgesBtn.click();
   else if (ev.key === 't' || ev.key === 'T') themeBtn.click();
   else if (ev.key === 'm' || ev.key === 'M') setView('map');
   else if (ev.key === 'b' || ev.key === 'B') setView('pins');
@@ -2358,7 +2619,9 @@ document.addEventListener('keydown', function (ev) {
   else if (view === 'map' && (ev.key === 's' || ev.key === 'S') && (selected || seqSel)) { var sb = selected || byId[seqSel.id]; if (isSeq(sb)) showBoxes(sb); else showSeq(sb); }
   else if (view === 'map' && seqSel && ev.key === 'ArrowRight') { ev.preventDefault(); pickSeqStep(byId[seqSel.id], seqSel.step + 1); }
   else if (view === 'map' && seqSel && ev.key === 'ArrowLeft') { ev.preventDefault(); pickSeqStep(byId[seqSel.id], seqSel.step - 1); }
-  else if (view === 'map' && seqSel && ev.key === 'Escape') { seqSel = null; redraw(); renderPanel(); crumb(); }
+  else if (view === 'map' && seqSel && ev.key === 'Escape') { stopSeqPlay(); seqSel = null; redraw(); renderPanel(); crumb(); }
+  else if (view === 'map' && seqSel && ev.key === ' ') { ev.preventDefault(); toggleSeqPlay(byId[seqSel.id]); }
+  else if (view === 'dynamic' && (ev.key === 's' || ev.key === 'S')) openScModal();
 });
 window.addEventListener('resize', function () { mmView(); });
 
@@ -2663,6 +2926,49 @@ function togglePlay() {
 var scSel = document.getElementById('dyn-sc');
 scSel.innerHTML = SCEN.map(function (s, i) { return '<option value="' + i + '">' + esc(s.name) + '</option>'; }).join('');
 scSel.onchange = function () { dyn.sc = +scSel.value; dyn.step = 0; stopPlay(); renderDyn(); renderPanel(); };
+/* scenario picker: a modal listing every scenario with its description, the elements it passes through (at the
+   container level) and its length. Picking one draws it, exactly like the drop-down. */
+var scModal = document.getElementById('sc-modal');
+function scPath(s) {
+  var lv = Math.min(2, MAXL), out = [];
+  s.steps.forEach(function (st) {
+    [st.from, st.to].forEach(function (id) {
+      var n = byId[id], ch = ancestors(n).concat([n]), r = n;
+      for (var i = 0; i < ch.length; i++) if (ch[i].lv >= lv) { r = ch[i]; break; }
+      if (out.indexOf(r) < 0) out.push(r);
+    });
+  });
+  return out;
+}
+function openScModal() {
+  stopPlay();
+  scModal.innerHTML = '<div class="scm"><form method="dialog" class="scm-head"><div><span class="ptag">Dynamic diagrams · ' + SCEN.length + ' scenario' + (SCEN.length > 1 ? 's' : '') + '</span>' +
+    '<h2 id="sc-modal-title">Pick a scenario</h2></div><button class="btn" value="close" aria-label="Close">✕</button></form>' +
+    '<p class="scm-intro">A scenario is one runtime flow through ' + esc(PROJECT.name) + ', written as ordered steps between the boxes of the map. ' +
+    'The Dynamic tab draws it at the level you choose, folding whatever stays inside one box, as a collaboration diagram, a sequence diagram or a step list.' +
+    (MAXL > 1 ? ' On the Map, <b>⇅ sequence</b> in an open box draws the same steps inside that box.' : '') + '</p>' +
+    '<div class="scm-list">' + SCEN.map(function (s, i) {
+      var path = scPath(s), cur = i === dyn.sc, modes = '';
+      s.steps.forEach(function (st) { st.modes.split('').forEach(function (c) { if (modes.indexOf(c) < 0) modes += c; }); });
+      return '<button type="button" class="scm-item' + (cur ? ' cur' : '') + '" data-sc="' + i + '"' + (cur ? ' aria-current="true"' : '') + '>' +
+        '<span class="scm-n">' + (i + 1) + '</span><span class="scm-body">' +
+        '<b>' + esc(s.name) + (cur ? '<i>showing</i>' : '') + '</b>' +
+        '<span class="scm-desc' + (s.desc ? '' : ' none') + '">' + esc(s.desc || 'No description in the model.') + '</span>' +
+        '<span class="scm-path">' + path.map(function (n) { return esc(n.name); }).join('<em>›</em>') + '</span>' +
+        '<span class="scm-meta">' + s.steps.length + ' step' + (s.steps.length > 1 ? 's' : '') + ' · ' + path.length + ' element' + (path.length > 1 ? 's' : '') +
+          (NV && modes.length < NV ? ' · only in ' + modes.split('').map(chip).join(' ') : '') + '</span>' +
+        '</span></button>';
+    }).join('') + '</div></div>';
+  scModal.showModal();
+  var c = scModal.querySelector('.scm-item.cur'); if (c) c.focus();
+}
+scModal.addEventListener('click', function (ev) {
+  var b = ev.target.closest('[data-sc]');
+  if (b) { dyn.sc = +b.dataset.sc; dyn.step = 0; stopPlay(); syncDyn(); renderDyn(); renderPanel(); scModal.close(); return; }
+  if (ev.target === scModal) scModal.close();   // a click on the backdrop
+});
+scModal.addEventListener('keydown', function (ev) { ev.stopPropagation(); });   // the page's shortcuts stay off while it is open; Esc still closes it
+document.getElementById('dyn-pick').onclick = openScModal;
 function syncDyn() {
   document.querySelectorAll('#dyn-level button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.lv === dyn.level)); });
   document.querySelectorAll('#dyn-style button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.st === dyn.style)); });
@@ -2774,6 +3080,7 @@ function writeHash() {
   if (sqs.length) p.push('seq=' + sqs.map(function (id) { return enc(id) + ':' + enc(SCEN[seqView.get(id)].id); }).join(','));
   if (seqSel && view === 'map') p.push('seqstep=' + enc(seqSel.id) + ':' + (seqSel.step + 1));
   if (!showLabels) p.push('labels=0');
+  if (C.edgeStyle() !== EDGES_DEFAULT) p.push('edges=' + C.edgeStyle());
   if (hashTheme) p.push('theme=' + hashTheme);
   try { history.replaceState(null, '', '#' + p.join('&')); } catch (e) {}
 }
@@ -2801,6 +3108,7 @@ if (H.seq) H.seq.split(',').forEach(function (kv) {
   seqView.set(n.id, si >= 0 ? si : n.seqScen[0]);
 });
 if (H.pins !== undefined) pins = idList(H.pins);
+if (H.edges) { C.setEdgeStyle(H.edges); syncEdges(); }
 if (H.labels === '0') { showLabels = false; svg.classList.remove('labels'); lblBtn.setAttribute('aria-pressed', 'false'); }
 if (H.variant) VCH.forEach(function (c) { if (VBY[c].id === H.variant) mode = c; });
 if (mode !== 'all') { svg.setAttribute('data-mode', mode); document.querySelectorAll('#modes button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.mode === mode)); }); }

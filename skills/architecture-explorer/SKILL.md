@@ -56,7 +56,7 @@ This copies the template, replaces the block between `/* BEGIN MODEL */` and `/*
 Then work the output until it is clean:
 
 - Fix every `ERROR`. Reconsider every `WARNING` (text that does not fit a box or an arrow, missing descriptions, a path that is a directory without a trailing `/`).
-- Read the `LAYOUT` lines. `BEHIND` must be fixed. For `bend` and `cross`, decide whether a different grid would remove them; if so add `at: [col, row]` to every node of that group, putting the two ends in neighbouring cells, and rebuild. Some bends around a shared hub are expected.
+- Read the `LAYOUT` lines (they describe the default right-angled arrow style; `view.edges: 'straight'` in the model switches the default, see `features.md` "Arrow styles"). `BEHIND` must be fixed and `OVERLAP` should be: both mean a group is too crowded for its gutters. For `cross` (and `bend` in the straight style), decide whether a different grid would remove them; if so add `at: [col, row]` to every node of that group, putting the two ends in neighbouring cells, and rebuild. Some crossings around a shared hub are expected.
 
 Keep `model.js` next to `index.html` as the editable source for later updates.
 
