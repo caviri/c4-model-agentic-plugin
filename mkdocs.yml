@@ -1,0 +1,116 @@
+site_name: c4-model-agentic-plugin
+site_description: >-
+  A Claude Code plugin that explores any codebase and generates a reveal.js explainer deck and an
+  interactive C4 architecture explorer with an RDF export.
+site_url: https://caviri.github.io/c4-model-agentic-plugin/
+repo_url: https://github.com/caviri/c4-model-agentic-plugin
+repo_name: caviri/c4-model-agentic-plugin
+edit_uri: edit/main/docs/
+copyright: Licensed under Apache-2.0
+
+# The reference pages include the skills' own guides (pymdownx.snippets), and docs/hooks.py copies the
+# example's generated explorer and deck into the built site, so neither is duplicated in docs/.
+hooks:
+  - docs/hooks.py
+exclude_docs: |
+  hooks.py
+  __pycache__/
+  overrides/
+  requirements.txt
+
+theme:
+  name: material
+  custom_dir: docs/overrides
+  font:
+    text: IBM Plex Sans
+    code: IBM Plex Mono
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - How it works: how-it-works.md
+  - Guides:
+      - Architecture explorer: explorer.md
+      - Project deck: deck.md
+      - RDF export: rdf.md
+  - Example:
+      - example/index.md
+      - Architecture explorer: example/explorer.md
+      - Project deck: example/deck.md
+      - Project brief: example/brief.md
+  - Reference:
+      - reference/index.md
+      - Explorer:
+          - Data model: reference/explorer-data-model.md
+          - Features and layout: reference/explorer-features.md
+          - RDF graph: reference/explorer-rdf-graph.md
+      - Deck:
+          - Structure: reference/deck-structure.md
+          - Animated or static: reference/deck-animations.md
+          - Code slides: reference/deck-code-slides.md
+          - Diagrams and images: reference/deck-diagrams.md
+      - Exploration:
+          - Playbook: reference/explore-playbook.md
+          - Question bank: reference/explore-questions.md
+          - Brief template: reference/explore-brief-template.md
+  - Development: development.md

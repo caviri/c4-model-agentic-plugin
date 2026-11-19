@@ -9,6 +9,8 @@ HTML pages:
 
 Each output is a single HTML file. The reader needs no server and no build step.
 
+**Documentation and live example:** [caviri.github.io/c4-model-agentic-plugin](https://caviri.github.io/c4-model-agentic-plugin/)
+
 ![Architecture explorer, container level](docs/img/explorer-map.png)
 
 ## Install

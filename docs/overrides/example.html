@@ -1,0 +1,63 @@
+{#-
+  Example pages (docs/example/explorer.md, docs/example/deck.md): the docs header and tabs on top, then the
+  example bar, then the page the plugin generated, in a frame that fills the rest of the window.
+  Front matter: demo (site path of the generated page), demo_id (tab to mark), source + source_label (file on
+  GitHub), hint (one line on how to use it), theme_sync (pass the docs light/dark choice to the explorer).
+-#}
+{% extends "main.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+  <style>
+    /* this page only: no sidebars, no footer, the frame takes the full width */
+    .md-main__inner { max-width: none; margin: 0; }
+    .md-content { max-width: none; }
+    .md-footer, .md-top { display: none; }
+  </style>
+{% endblock %}
+
+{% block container %}
+  {%- set m = page.meta -%}
+  {%- set tabs = [
+    ("Overview", "example/", "overview"),
+    ("Architecture explorer", "example/explorer/", "explorer"),
+    ("Project deck", "example/deck/", "deck"),
+    ("Project brief", "example/brief/", "brief")
+  ] -%}
+  <div class="md-content ex" data-md-component="content">
+    <nav class="ex-bar" aria-label="Example pages">
+      <div class="ex-title"><span class="ex-kicker">Example output</span><b>Image Annotation Tool</b></div>
+      <div class="ex-tabs">
+        {%- for label, href, id in tabs %}
+        <a href="{{ base_url }}/{{ href }}"{% if m.demo_id == id %} aria-current="page"{% endif %}>{{ label }}</a>
+        {%- endfor %}
+      </div>
+      {% if m.hint %}<span class="ex-hint">{{ m.hint }}</span>{% endif %}
+      <div class="ex-links">
+        <a href="{{ base_url }}/{{ m.demo }}" target="_blank" rel="noopener" title="Open the page on its own">Full screen ↗</a>
+        {% if m.source %}<a href="{{ config.repo_url }}/blob/main/{{ m.source }}" target="_blank" rel="noopener" title="The file it was built from">{{ m.source_label or "Source" }} ↗</a>{% endif %}
+      </div>
+    </nav>
+    <iframe class="ex-frame" src="{{ base_url }}/{{ m.demo }}" title="{{ page.title }}" allow="fullscreen" allowfullscreen{% if m.theme_sync %} data-theme-sync{% endif %}></iframe>
+  </div>
+  <script>
+    (function () {
+      var f = document.querySelector('.ex-frame');
+      // fill the window below the bar, so the page itself never scrolls
+      function fit() { f.style.height = Math.max(420, window.innerHeight - (f.getBoundingClientRect().top + window.scrollY)) + 'px'; }
+      fit(); window.addEventListener('resize', fit); window.addEventListener('load', fit);
+      // keys go to the page in the frame straight away (arrows for the deck, shortcuts for the explorer)
+      f.addEventListener('load', function () { try { f.contentWindow.focus(); } catch (e) {} });
+      if (!f.hasAttribute('data-theme-sync')) return;
+      // the explorer follows the docs' light / dark choice (same origin when published; ignored elsewhere)
+      function sync() {
+        try {
+          var d = f.contentDocument; if (!d || !d.documentElement) return;
+          d.documentElement.setAttribute('data-theme', document.body.getAttribute('data-md-color-scheme') === 'slate' ? 'dark' : 'light');
+        } catch (e) {}
+      }
+      f.addEventListener('load', sync);
+      new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['data-md-color-scheme'] });
+    })();
+  </script>
+{% endblock %}

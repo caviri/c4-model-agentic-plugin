@@ -1,0 +1,53 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap");
+
+/* Colours and type follow the explorer and the deck: accent blue, IBM Plex for text and code, Space Grotesk for titles. */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #1d4f7a;
+  --md-primary-fg-color--light: #2d6aa0;
+  --md-primary-fg-color--dark: #143a5a;
+  --md-accent-fg-color: #0e7490;
+  --md-typeset-a-color: #1d4f7a;
+  --c4-surface: #ffffff; --c4-bg: #f4f6f9; --c4-line: #d3dbe4; --c4-muted: #5a6878; --c4-ink: #142231;
+  --c4-accent: #1d4f7a; --c4-accent-soft: #e2edf7;
+}
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #16212d;
+  --md-primary-fg-color--light: #1b2734;
+  --md-primary-fg-color--dark: #0e151d;
+  --md-accent-fg-color: #4fc3d9;
+  --md-typeset-a-color: #8fb8de;
+  --md-default-bg-color: #0e151d;
+  --md-code-bg-color: #16212d;
+  --c4-surface: #16212d; --c4-bg: #0e151d; --c4-line: #2a3847; --c4-muted: #9aa8b7; --c4-ink: #e5ebf1;
+  --c4-accent: #8fb8de; --c4-accent-soft: #1b3045;
+}
+
+.md-header__title, .md-typeset h1, .md-typeset h2, .md-typeset h3 { font-family: "Space Grotesk", var(--md-text-font-family); }
+.md-typeset h1 { font-weight: 700; letter-spacing: -0.01em; color: var(--md-default-fg-color); }
+.md-typeset h2 { font-weight: 700; }
+.md-typeset kbd { font-size: .75em; }
+
+/* screenshots */
+.md-typeset img.shot, .md-typeset .shot img { border: 1px solid var(--c4-line); border-radius: .4rem; }
+
+/* home page */
+.md-typeset .hero-lead { font-size: 1.05rem; line-height: 1.55; color: var(--md-default-fg-color--light); max-width: 40rem; }
+.md-typeset .grid.cards > ul > li > p > img, .md-typeset .grid.cards > ul > li img { border-radius: .3rem; border: 1px solid var(--c4-line); }
+
+/* ---------- the example bar (docs/overrides/example.html) ---------- */
+.ex-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem 1rem; padding: .5rem 1rem;
+  background: var(--c4-surface); border-bottom: 1px solid var(--c4-line); font-size: .68rem; }
+.ex-title { display: flex; flex-direction: column; line-height: 1.25; margin-right: .25rem; }
+.ex-kicker { font-family: var(--md-code-font-family); font-size: .55rem; letter-spacing: .14em; text-transform: uppercase; color: var(--c4-muted); }
+.ex-title b { font-family: "Space Grotesk", var(--md-text-font-family); font-size: .82rem; color: var(--c4-ink); }
+.ex-tabs { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--c4-line); border-radius: .45rem; overflow: hidden; background: var(--c4-bg); }
+.ex-tabs a { padding: .32rem .7rem; color: var(--c4-muted); font-weight: 600; border-right: 1px solid var(--c4-line); }
+.ex-tabs a:last-child { border-right: 0; }
+.ex-tabs a:hover, .ex-tabs a:focus-visible { color: var(--c4-ink); }
+.ex-tabs a[aria-current="page"] { background: var(--c4-accent); color: var(--c4-bg); }
+.ex-hint { flex: 1 1 14rem; color: var(--c4-muted); font-family: var(--md-code-font-family); font-size: .58rem; }
+.ex-links { display: flex; gap: .45rem; margin-left: auto; }
+.ex-links a { font-family: var(--md-code-font-family); font-size: .6rem; padding: .28rem .6rem; border: 1px solid var(--c4-line); border-radius: .45rem; color: var(--c4-ink); white-space: nowrap; }
+.ex-links a:hover, .ex-links a:focus-visible { border-color: var(--c4-accent); color: var(--c4-accent); }
+.ex-frame { display: block; width: 100%; border: 0; background: var(--c4-bg); }
+@media (max-width: 44.9375em) { .ex-hint { display: none; } }
