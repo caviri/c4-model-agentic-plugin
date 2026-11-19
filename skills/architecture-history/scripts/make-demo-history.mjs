@@ -74,7 +74,17 @@ function without(M, ids) {
 }
 const node = (M, id) => M.nodes.find((n) => n.id === id);
 const edge = (M, from, to) => M.edges.find((e) => e.from === from && e.to === to);
-function write(M) { mkdirSync(join(dest, dirname(MODEL_PATH)), { recursive: true }); writeFileSync(join(dest, MODEL_PATH), M === REAL ? realText : 'window.MODEL = ' + JSON.stringify(M, null, 2) + ';\n'); }
+function write(M) {
+  mkdirSync(join(dest, dirname(MODEL_PATH)), { recursive: true });
+  writeFileSync(join(dest, MODEL_PATH), M === REAL ? realText : 'window.MODEL = ' + JSON.stringify(M, null, 2) + ';\n');
+  // the images the model names (img/… next to model.js) go with it, so every version of the demo builds
+  const imgs = new Set(JSON.stringify(M).match(/"src":"[^"]+"/g) || []);
+  for (const m of imgs) {
+    const src = m.slice(7, -1), from = join(example, dirname(MODEL_PATH), src);
+    if (/^[a-z][a-z0-9+.-]*:/i.test(src) || !existsSync(from)) continue;
+    mkdirSync(dirname(join(dest, dirname(MODEL_PATH), src)), { recursive: true }); copyFileSync(from, join(dest, dirname(MODEL_PATH), src));
+  }
+}
 
 const WORKER = ['worker', 'redis', 'queue'], EXPORT = ['export', 'coco', 'enqueue-export'];
 function v01() {

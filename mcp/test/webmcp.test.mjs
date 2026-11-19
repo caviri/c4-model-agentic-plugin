@@ -14,7 +14,7 @@ const chrome = findChrome();
 const skip = !chrome && 'no Chrome or Edge found (set CHROME_PATH)';
 const noFonts = (h) => h.replace(/<link\b[^>]*fonts\.(?:googleapis|gstatic)\.com[^>]*>\s*/gi, '');
 const withoutTools = (h) => h.replace(/<script id="tools">[\s\S]*?<\/script>\s*/, '');
-const READ_AND_VIEW = ['focus_element', 'get_element', 'get_model', 'get_rdf', 'get_view', 'list_elements', 'open_level', 'select_elements', 'set_theme', 'show_scenario'];
+const READ_AND_VIEW = ['focus_element', 'get_element', 'get_model', 'get_rdf', 'get_view', 'list_elements', 'open_level', 'select_elements', 'set_theme', 'show_flows', 'show_scenario'];
 let withFlag, without, files = {};
 
 before(async () => {
@@ -75,7 +75,16 @@ test('explorer: the tools register and answer on the example', { skip }, async (
   assert.match(await call(page, 'set_theme', { theme: 'neon' }), /^Error: Unknown theme/);
   assert.match(await call(page, 'open_level', { level: 3 }), /level 3/);
   await settle();
+  // flows on the map: two scenarios painted in their colours, in the URL, in get_view; [] turns them off
+  const fl = JSON.parse(await call(page, 'show_flows', { ids: ['upload', 'review'] }));
+  assert.deepEqual(fl.shown.map((f) => [f.id, f.color]), [['upload', 'blue'], ['review', 'violet']]);
+  await settle();
+  assert.ok(await page.evaluate(() => location.hash.includes('flows=upload,review') && document.querySelectorAll('#L-flows .fband').length > 0), 'painted and in the URL');
+  assert.deepEqual(JSON.parse(await call(page, 'get_view', {})).flows, ['upload', 'review']);
+  assert.match(await call(page, 'show_flows', { ids: ['nope'] }), /^Error: No scenario "nope"/);
   await page.screenshot({ path: join(OUT, 'webmcp-01-explorer-after-tools.png') });
+  assert.match(await call(page, 'show_flows', { ids: [] }), /No flow is painted/);
+  assert.equal(await page.evaluate(() => document.querySelectorAll('#L-flows *').length), 0);
   assert.deepEqual(errs, []);
   await page.close();
 });

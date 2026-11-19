@@ -8,6 +8,11 @@
 (function () {
   'use strict';
   var root = document.documentElement;
+  /* images: the view's CSP admits no origin but its own document, and the view has no folder next to the model, so the
+     explorer draws data: images only; a web image is a card with its alt text and an "open ↗" link (sent through the host
+     below), a relative path a card that says the file is not here. The server does not fetch images: no request leaves
+     for a URL the model names, and the model the view exports stays the one it was given. */
+  window.ARCH_IMAGE_POLICY = 'embedded';
   var W = window.C4_WIDGET = { version: '__C4_WIDGET_VERSION__', state: 'waiting', source: null, model: null, host: null, errors: [], load: load, embedded: false };
   var current = null, input = null, app = null, caps = {};
 
@@ -52,6 +57,7 @@
       if (v.tab || si >= 0 || v.style) api.setView(v.tab || 'dynamic');
       if (si >= 0) api.setScenario(si);
       if (v.style) api.setDynStyle(v.style);
+      if (Array.isArray(v.flows) && v.flows.length && api.setFlows && !(v.tab && v.tab !== 'map') && si < 0) api.setFlows(v.flows);   // flows painted on the map
     } catch (e) { if (window.console) console.warn('[c4-widget] could not apply the view', v, e); }
   }
   function showError(title, text) {

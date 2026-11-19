@@ -1,7 +1,8 @@
 // The MCP server: tools, resources and prompts for building C4 architecture models in a chat and showing them as an
 // interactive explorer (an MCP Apps view). Stateless: every call carries the whole model; nothing about a user's model
 // is stored. Only public GitHub content is cached (github.mjs).
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import vm from 'node:vm';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
@@ -39,7 +40,7 @@ const DESCRIPTIONS = {
   validate_model: 'Check an architecture MODEL: the explorer\'s own validator (errors must be fixed, warnings reconsidered), the C4 ontology\'s SHACL shapes on its RDF graph, the page\'s layout (arrows behind boxes, crossings), and with repo every node path and line against the repository. Call before show_explorer.',
   export_rdf: 'Convert a MODEL to its RDF graph in the C4 ontology: Turtle (ttl), JSON-LD or N-Triples (nt) as text, or a binary .rete file (one queryable file) as an embedded blob resource. The graph is lossless: model_from_rdf turns it back into the MODEL.',
   model_from_rdf: 'Recreate a MODEL from an RDF graph written by the explorer or export_rdf: Turtle, JSON-LD, N-Triples, or a .rete file as base64. Returns the model as JSON, ready for show_explorer or editing.',
-  show_explorer: 'Draw a MODEL as the interactive C4 architecture explorer inside the chat: boxes that open in place, details, search, pinned board, scenarios as sequence diagrams, exports. Validates it first (errors are returned instead). Pass the complete model every time; view picks what is shown first. Where the chat has no interactive views, the answer is a text summary: then use build_explorer_page.',
+  show_explorer: 'Draw a MODEL as the interactive C4 architecture explorer inside the chat: boxes that open in place, details, search, pinned board, scenarios as sequence diagrams, flows painted on the map, exports. Validates it first (errors are returned instead). Pass the complete model every time; view picks what is shown first (view.flows: scenario ids to paint on the map). Images: the view shows data:image/… URIs only (it loads nothing from outside); an https image appears as a card with an "open" link, a relative path as a card saying the file is not here. Where the chat has no interactive views, the answer is a text summary: then use build_explorer_page.',
   build_explorer_page: 'The standalone explorer page for a MODEL: one self-contained index.html (about 400 KB, no server needed, works offline), returned as an embedded HTML resource to save and open in a browser. Prefer show_explorer where interactive views are supported.',
 };
 const TITLES = {
@@ -255,12 +256,22 @@ const RESOURCES = [
   { uri: 'c4-explorer://ontology/summary.md', name: 'ontology-summary', title: 'Ontology summary (generated)', mimeType: 'text/markdown', gen: () => ontologySummary() },
   { uri: 'c4-explorer://examples/image-annotation-tool/model.json', name: 'example-model', title: 'Example MODEL: image annotation tool', mimeType: 'application/json', gen: () => JSON.stringify(exampleModel(), null, 2) },
 ];
-// model.js is `window.MODEL = { … };` (a JS literal, not JSON): evaluate it in a sandbox, as build-explorer.mjs does
+// model.js is `window.MODEL = { … };` (a JS literal, not JSON): evaluate it in a sandbox, as build-explorer.mjs does.
+// Its images are files next to it (img/…); a chat has no such folder, so the example carries them as data: URIs, as
+// build-explorer.mjs --embed-images would (the view draws data: images only).
 export function exampleModel() {
   const sb = { window: {} };
   vm.createContext(sb, { codeGeneration: { strings: false, wasm: false } });
   vm.runInContext(text(FILES.exampleModel), sb, { timeout: 2000 });
-  return JSON.parse(JSON.stringify(sb.window.MODEL));
+  const m = JSON.parse(JSON.stringify(sb.window.MODEL)), dir = dirname(FILES.exampleModel);
+  const MIME = { svg: 'image/svg+xml', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', avif: 'image/avif' };
+  const owners = [].concat(m.nodes || [], m.edges || [], ...(m.scenarios || []).map((s) => [s].concat(s.steps || [])));
+  for (const o of owners) for (const im of (o && Array.isArray(o.images) ? o.images : [])) {
+    if (!im || typeof im.src !== 'string' || /^[a-z][a-z0-9+.-]*:/i.test(im.src)) continue;
+    const f = resolve(dir, im.src), ext = (im.src.split('.').pop() || '').toLowerCase();
+    if (f.startsWith(dir) && existsSync(f) && MIME[ext]) im.src = 'data:' + MIME[ext] + ';base64,' + readFileSync(f).toString('base64');
+  }
+  return m;
 }
 
 const PROMPTS = [

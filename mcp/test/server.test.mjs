@@ -99,6 +99,22 @@ for (const transport of ['stdio', 'http']) {
       assert.match(textOf(shapeless), /^INVALID[\s\S]*project\.name is required/);
     });
 
+    test('images and flow colours: validated, and carried by the graph (schema:ImageObject, c4v:tone)', async () => {
+      assert.ok(EXAMPLE.nodes.some((n) => n.images && /^data:image\//.test(n.images[0].src)), 'the example carries data: images');
+      const m = JSON.parse(JSON.stringify(EXAMPLE)), n = m.nodes.find((x) => x.id === 'api');
+      n.images = [{ src: 'https://example.org/a.png' }, { src: 'javascript:alert(1)', alt: 'x' }, { src: '../outside.png', alt: 'up' }, { src: 'data:text/html,hi', alt: 'h' }];
+      m.scenarios[0].color = 'pink';
+      const r = await c.callTool({ name: 'validate_model', arguments: { model: m } }), t = textOf(r);
+      assert.match(t, /^INVALID/);
+      assert.match(t, /"api" image 1: alt is required/); assert.match(t, /image 2: src "javascript:alert\(1\)" is not allowed/);
+      assert.match(t, /image 3: src "\.\.\/outside\.png" leaves the folder of model\.js/); assert.match(t, /image 4: a data: URI must hold an image/);
+      assert.match(t, /color must be one of teal, orange, green, violet, rose, blue, gold, brown/);
+      const ttl = textOf(await c.callTool({ name: 'export_rdf', arguments: { model: EXAMPLE, format: 'ttl' } }));
+      assert.match(ttl, /:image:annotate-page:1 a schema:ImageObject/); assert.match(ttl, /c4:illustrative true/); assert.match(ttl, /c4v:tone "teal"/);
+      const show = await c.callTool({ name: 'show_explorer', arguments: { model: EXAMPLE, view: { level: 2, flows: ['annotate'] } } });
+      assert.ok(!show.isError); assert.deepEqual(show.structuredContent.view.flows, ['annotate']);
+    });
+
     test('export_rdf: ttl, jsonld and nt parse back to every triple; rete is a blob that opens', async () => {
       for (const format of ['ttl', 'jsonld', 'nt']) {
         const r = await c.callTool({ name: 'export_rdf', arguments: { model: EXAMPLE, format } });

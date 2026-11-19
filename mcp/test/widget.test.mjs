@@ -130,6 +130,60 @@ test('the host theme, and the editor\'s model.js download renamed for hosts that
   await page.close();
 });
 
+test('images and flows in the view: data: images drawn, web and relative ones as cards, flows painted, no external request', { skip }, async () => {
+  const m = JSON.parse(JSON.stringify(EXAMPLE));
+  const ap = m.nodes.find((n) => n.id === 'annotate-page');
+  assert.match(ap.images[0].src, /^data:image\/svg\+xml;base64,/, 'the server\'s example carries its images as data: URIs');
+  ap.images.push({ src: 'https://example.org/screens/annotate.png', alt: 'A web screenshot that this view must not load', caption: 'on the web' },
+    { src: 'img/not-here.png', alt: 'A file next to model.js' });
+  const view = { level: 3, flows: ['annotate', 'review'] };
+  const result = await client.callTool({ name: 'show_explorer', arguments: { model: m, view } });
+  assert.ok(!result.isError, textOf(result));
+  const { page, inner, errs } = await openHost({ toolInput: { model: m, view }, toolResult: result, theme: 'light', width: 1100 });
+  await inner.waitForFunction(() => window.C4_WIDGET && window.C4_WIDGET.state === 'ready' && window.ARCH_EXPLORER && window.ARCH_EXPLORER.ready, { timeout: 30000 });
+  await inner.click('#c4w-expand');
+  await settle(1200);
+  // the flows from view.flows, painted with their colours; the tool registry's show_flows changes them
+  const fl = await inner.evaluate(() => ({ on: window.ARCH_EXPLORER.api.flows(), bands: document.querySelectorAll('#L-flows .fband').length, legend: !document.getElementById('flowleg').hidden }));
+  assert.deepEqual(fl.on.map((f) => f.id), ['annotate', 'review']); assert.ok(fl.bands > 4, fl.bands + ' bands'); assert.ok(fl.legend);
+  assert.deepEqual(fl.on.map((f) => f.color), ['gold', 'violet'], 'automatic flow colours by scenario order');
+  console.log('SHOT', await shot(page, 'widget-06-flows.png'));
+  const tools = await page.evaluate(async () => (await window.bridge.listTools({})).tools.map((t) => t.name));
+  assert.ok(tools.includes('show_flows'), 'show_flows is an app tool');
+  const r = JSON.parse((await page.evaluate(async () => (await window.bridge.callTool({ name: 'show_flows', arguments: { ids: ['export'] } })).content[0].text)));
+  assert.deepEqual(r.shown.map((f) => [f.id, f.color]), [['export', 'teal']]);
+  assert.match(await page.evaluate(async () => (await window.bridge.callTool({ name: 'show_flows', arguments: { ids: ['nope'] } })).content[0].text), /No scenario "nope"/);
+  assert.deepEqual(JSON.parse(await page.evaluate(async () => (await window.bridge.callTool({ name: 'get_view', arguments: {} })).content[0].text)).flows, ['export']);
+  // the box's images: the data: one drawn, the web one and the relative one as cards; the web card's link goes to the host
+  await inner.evaluate(() => { const a = window.ARCH_EXPLORER.api; a.setFlows([]); a.reveal('annotate-page'); a.select('annotate-page'); });
+  await settle(900);
+  const g = await inner.evaluate(() => ({
+    imgs: Array.from(document.querySelectorAll('#panel .gallery img')).map((i) => ({ data: i.src.startsWith('data:'), w: i.naturalWidth })),
+    cards: Array.from(document.querySelectorAll('#panel .gallery .gph b')).map((b) => b.textContent),
+    open: Array.from(document.querySelectorAll('#panel .gopen')).map((a) => a.getAttribute('href')),
+    external: Array.from(document.querySelectorAll('img')).filter((i) => /^https?:/.test(i.getAttribute('src') || '')).length,
+    illustrative: document.querySelectorAll('#panel .gill').length, badge: !!document.querySelector('#map .nd[data-id="annotate-page"] .ibadge') }));
+  assert.deepEqual(g.imgs.map((i) => i.data), [true]); assert.ok(g.imgs[0].w > 0, 'the embedded SVG decoded');
+  assert.deepEqual(g.cards, ['A web screenshot that this view must not load', 'A file next to model.js']);
+  assert.deepEqual(g.open, ['https://example.org/screens/annotate.png']);
+  assert.equal(g.external, 0, 'no <img> points outside the document');
+  assert.ok(g.illustrative >= 1 && g.badge);
+  await inner.click('#panel .gopen');
+  await page.waitForFunction(() => window.hostLog.links.length >= 1, { timeout: 5000 });
+  assert.deepEqual(await page.evaluate(() => window.hostLog.links), ['https://example.org/screens/annotate.png'], 'the web image opens through the host (ui/open-link)');
+  // the lightbox: opened from the thumbnail, Esc closes it and the focus goes back to the thumbnail
+  await inner.click('#panel .gthumb');
+  await settle(300);
+  assert.equal(await inner.evaluate(() => !document.getElementById('lightbox').hidden && document.activeElement.getAttribute('data-lb')), 'close');
+  console.log('SHOT', await shot(page, 'widget-07-lightbox.png'));
+  await inner.evaluate(() => document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
+  assert.equal(await inner.evaluate(() => document.querySelector('#lightbox .lb-n').textContent), '2 / 3');
+  await inner.evaluate(() => document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  assert.deepEqual(await inner.evaluate(() => [document.getElementById('lightbox').hidden, document.activeElement.classList.contains('gthumb')]), [true, true]);
+  assert.deepEqual(errs, [], 'no console errors: nothing blocked by the CSP, no missing file requested');
+  await page.close();
+});
+
 test('a broken model: the view shows the validation errors', { skip }, async () => {
   const m = brokenModel(), result = await client.callTool({ name: 'show_explorer', arguments: { model: m } });
   assert.equal(result.isError, true);

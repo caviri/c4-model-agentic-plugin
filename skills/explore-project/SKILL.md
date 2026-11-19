@@ -20,6 +20,7 @@ Read, in this order, whatever exists:
 2. Deployment topology: `docker-compose*.yml`, `Dockerfile*`, `k8s/`, `helm/`, `terraform/`, `Procfile`, CI workflows. **These are the most reliable source for containers**: every service, datastore and port is declared here.
 3. Manifests: `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, workspace files. They give languages, frameworks, and the external SDKs that reveal integrations.
 4. Top two levels of the directory tree, and `.env.example` / config schemas, which list every external dependency by name.
+5. Pictures that already exist: screenshots and diagrams linked from the README and `docs/`, design folders (`design/`, `mockups/`, `*.fig` exports), a `website/` or `public/` folder. Note each one's path, what part of the system it shows, and whether it is current. The explorer can attach them to the boxes and steps they show.
 
 After this step you should be able to say in one sentence what the system does and for whom. If
 you cannot, that is the first question for the user.
@@ -35,6 +36,7 @@ question is worth asking. The ones that nearly always matter:
 - **Outputs**: deck, explorer, or both? Animated or static deck?
 - **Emphasis**: which flows or decisions must the reader come away understanding?
 - **Corrections**: after showing your one-sentence summary and container list, "what did I get wrong?"
+- **Screenshots** (only when the explorer is wanted, the repository has no usable pictures, and the app looks runnable locally): "May I run the app on your machine with demo data to take screenshots of its screens? Otherwise I will draw clearly labelled wireframes from the code." Default: wireframes. Never run it without a yes.
 
 If the user is unavailable or says "just go", proceed with the defaults and list the assumptions
 at the top of the brief.
@@ -56,6 +58,7 @@ Structure says what exists; flows say what the project is *about*. Pick the 2–
 matter most (the main user journey, the main background job, the one tricky failure/retry path)
 and trace each end to end through real code: trigger → entrypoint → calls → data written → result.
 Note any state machine (statuses and transitions); it is usually the heart of the domain.
+For flows a user drives through screens, note which screen (page component, route, CLI command) each step happens on: a screenshot or wireframe of it can go on that step in the explorer.
 
 Each flow is also a use case. Record, from evidence only: who starts it (the role check on the
 route), what they want, what triggers it, what must hold first (role checks, error answers such as
@@ -86,6 +89,7 @@ by the user" under Assumptions and continue.
 - **Use the project's vocabulary.** Name things as the code and the team name them.
 - **Do not read everything.** Skip generated code, vendored dependencies, lockfiles, fixtures and build output. For large repositories, fan out read-only subagents per top-level area and merge their findings.
 - **Describe what is, not what should be.** Opinions about the architecture go in a separate, clearly labelled section and only if the user asked for them.
+- **Images: real or labelled.** Reuse pictures from the repository first; capture screenshots only of an app running locally, with the user's agreement and demo data; otherwise make wireframes marked as illustrative, never passed off as screenshots. Never capture secrets, tokens or personal data (blur, crop or skip the screen). Write alt text that says what the image shows. Details: the architecture-explorer skill, "Images".
 
 ## Next
 

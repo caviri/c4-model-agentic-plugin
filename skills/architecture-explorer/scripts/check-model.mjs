@@ -5,12 +5,13 @@
 //   3. LAYOUT report: runs the page's own layout and arrow routing and lists, per group of boxes,
 //      arrows that had to bend around a box, arrows that still run behind a box, and crossings, and counts
 //      label collisions: arrow labels the page cannot place in full and draws as a marker (listed with --verbose),
-//   4. with --root <repo>: every node `path` exists in the repository and every `line` is inside the file.
+//   4. with --root <repo>: every node `path` exists in the repository and every `line` is inside the file,
+//   5. every relative image path (images[].src such as img/screen.png) is a file next to the page.
 // Usage: node check-model.mjs path/to/index.html [--root path/to/repo] [--strict] [--no-layout] [--verbose]
 //   --strict     treat warnings (including arrows left behind boxes) as failures
 // Exit code 0 = ok, 1 = errors (or warnings with --strict), 2 = usage / unreadable file.
 import { readFileSync, existsSync, statSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
 import vm from 'node:vm';
 
 const args = process.argv.slice(2);
@@ -53,6 +54,22 @@ if (!errors.length) {
       if (!res.errors.length) { vm.runInContext(part.core.code, sb, { filename: 'core.js', timeout: 20000 }); C = sb.window.archCore(M); }
     }
   } catch (e) { errors.push('The MODEL block threw while evaluating: ' + e.message); M = M || null; }
+}
+
+// ---- images: a relative src (img/screen.png) must be next to the page (build-explorer.mjs copies it there)
+if (M && Array.isArray(M.nodes)) {
+  const pageDir = dirname(resolve(file)), owners = [];
+  M.nodes.forEach((n) => n && owners.push(['Node "' + n.id + '"', n]));
+  (Array.isArray(M.edges) ? M.edges : []).forEach((e, i) => e && owners.push(['edges[' + i + ']', e]));
+  (Array.isArray(M.scenarios) ? M.scenarios : []).forEach((s) => { if (!s) return; owners.push(['Scenario "' + s.id + '"', s]); (Array.isArray(s.steps) ? s.steps : []).forEach((st, j) => st && owners.push(['Scenario "' + s.id + '" step ' + (j + 1), st])); });
+  let n = 0;
+  for (const [where, o] of owners) for (const im of Array.isArray(o.images) ? o.images : []) {
+    if (!im || typeof im.src !== 'string' || !im.src || /^[a-z][a-z0-9+.-]*:/i.test(im.src) || /^[\\/]/.test(im.src)) continue;
+    n++;
+    const abs = resolve(pageDir, im.src.replace(/[?#].*$/, ''));
+    if (!existsSync(abs)) errors.push(where + ': image "' + im.src + '" is not next to the page (' + abs + '). build-explorer.mjs copies images there from the folder of model.js.');
+  }
+  if (n) info.push('IMAGES   ' + n + ' relative image' + (n > 1 ? 's' : '') + ' checked next to the page');
 }
 
 // ---- paths against the repository

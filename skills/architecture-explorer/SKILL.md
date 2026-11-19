@@ -35,9 +35,20 @@ From the project understanding, decide:
 - Lifecycles: if a status field drives the domain, model it as a state machine (`type: 'state'` nodes, `data-model.md` "State machines").
 - Two to four scenarios from the key flows, as ordered steps written in the direction messages travel. Each is also a use case: add `actor` (a `person` node), `goal`, `trigger`, `preconditions` and `outcome` where the code shows them (`data-model.md`, "Use cases"): the role check on the route gives the actor, error answers give preconditions, the last writes give the outcome. Leave a field out rather than guess.
 - Whether a `variants` dimension exists (runtime modes, editions). Usually not.
+- Whether pictures would help a reader: the screens a user sees, a diagram from the docs. They go on the box they show (a page component, a CLI), on a step (what the user sees at that step) or on a scenario. See "Images" below; a model without images is fine.
 - Whether the user wants facts the model has no field for (deployment, ownership, data classification). Those go into the graph through the `rdf` hook, never as new `c4:` terms (step 2).
 
 Keep within the size guidance in `features.md` (roughly 4 to 9 boxes per group). Group or merge rather than exceed it.
+
+### Images
+
+Optional `images` on nodes, edges, scenarios and steps (`data-model.md`, "Images"). Get them in this order, and stop at the first that works:
+
+1. **Reuse what the repository has.** Screenshots and diagrams in the README, `docs/`, design folders or a website folder. Copy the ones that show a part of the model into `communications/architecture-explorer/img/` (or link a stable `https://raw.githubusercontent.com/…` URL), with a `credit` that says where each came from.
+2. **Capture screenshots, only if the app runs locally and the user agrees.** Ask first: running someone's app can start services, write data or call paid APIs. Use demo or seed data, never a real account. Capture with headless Chrome the way `scripts/screenshot.mjs` does (`chrome --headless=new --screenshot=img/<screen>.png --window-size=1440,900 <url>`), one screen per image, about 1440 px wide, into `communications/architecture-explorer/img/`. `kind: 'screenshot'`; the caption says which version and data it shows.
+3. **Otherwise draw illustrative wireframes**: simple hand-made SVGs from the page's code (its headings, fields and buttons), with `illustrative: true`, `kind: 'illustration'`, a caption that says "illustrative wireframe, not a screenshot", and a visible label inside the picture. Never present a mock-up as a screenshot, and never make one look like real data.
+
+Always: never capture or embed secrets, tokens, personal data or real user content; blur or crop them out, or leave the screen out. Write `alt` text that says what the image shows that matters here ("the review queue: three tasks, Reject disabled until a comment is typed"), not "screenshot of the page". Keep files small (PNG or SVG, under about 500 KB); the build copies `img/` next to the page, or `--embed-images` puts them inside it.
 
 ### 2. Write the model
 
@@ -64,6 +75,8 @@ Then work the output until it is clean:
 - Fix every `ERROR`. Reconsider every `WARNING` (text that does not fit a box or an arrow, missing descriptions, a path that is a directory without a trailing `/`).
 - Read the `LAYOUT` lines (they describe the default right-angled arrow style; `view.edges: 'straight'` in the model switches the default, see `features.md` "Arrow styles"). `BEHIND` must be fixed and `OVERLAP` should be: both mean a group is too crowded for its gutters. For `cross` (and `bend` in the straight style), decide whether a different grid would remove them; if so add `at: [col, row]` to every node of that group, putting the two ends in neighbouring cells, and rebuild. Some crossings around a shared hub are expected.
 
+Images: relative `src` paths must exist next to `model.js`; the build reports a missing one as an error and copies them next to the page (`IMAGES` line). For a page that has to travel as one file (an attachment, a chat upload), add `--embed-images`: the images go into the page as data URIs.
+
 Keep `model.js` next to `index.html` as the editable source for later updates. Commit it with the code: its git history is what the `architecture-history` skill turns into versions, and a page rebuilt with `--history communications/architecture-history/history.json` gets a history bar with a version list and a compare mode (`features.md`, "Versions and compare mode"). When `communications/architecture-history/history.json` already exists, rebuild with it, after re-running `arch-history.mjs timeline` so the history includes the latest model.
 
 Without Node: copy the template to `index.html` and replace the text between the two markers with the model by hand. Edit nothing outside the markers. Then open the page; model errors are listed on screen.
@@ -82,6 +95,7 @@ Without Node: copy the template to `index.html` and replace the text between the
 
   It must end with `OK round trip complete`. It converts the model to N-Triples, Turtle and JSON-LD and back, rebuilds the page from the graph alone, and (with Chrome or Edge) compares screenshots of both pages. Turtle and JSON-LD need the `rete-graph` npm package to parse; without it they are reported as `SKIP`, which is acceptable, the N-Triples round trip is not. `NORMAL` lines list harmless normalisations (a string `tech` becomes a list), not failures.
 - [ ] The graph passes the SHACL shapes, when a SHACL engine is at hand: `pyshacl -s "${CLAUDE_PLUGIN_ROOT}/ontology/c4-shapes.ttl" -df turtle communications/architecture-explorer/architecture.ttl` (or `rete-graph`'s `shacl()`, see `rdf-graph.md`). Without one, a build with no warnings about component or container placement is the best available check; say that you could not run the shapes.
+- [ ] Every image has meaningful `alt` text, mock-ups say `illustrative: true` and say so in their caption, and no image shows secrets or personal data.
 - [ ] Look at the page. Take screenshots of the states that matter and read them:
 
   ```bash
@@ -89,7 +103,8 @@ Without Node: copy the template to `index.html` and replace the text between the
     communications/architecture-explorer/index.html communications/architecture-explorer/screenshots \
     "level=2" "open=<container-id>&zoom=<container-id>" "open=<lifecycle-id>&zoom=<lifecycle-id>" \
     "view=dynamic&scenario=<scenario-id>&style=seq&at=3" "view=pins" \
-    "level=2&seq=<container-id>:<scenario-id>&zoom=<container-id>"
+    "level=2&seq=<container-id>:<scenario-id>&zoom=<container-id>" "level=2&flows=<scenario-id>,<scenario-id>" \
+    "sel=<id of a box with images>"
   ```
 
   The last state draws the scenario inside the container on the map. Check that its lifelines are that container's components; if they are not, the scenario's steps name the container instead of its parts.
@@ -104,12 +119,12 @@ Delete the `screenshots` folder afterwards unless the user wants it. If you coul
 
 ### 5. Report
 
-Tell the user where the files are (`index.html`, `model.js`, `architecture.jsonld`, `architecture.ttl`, and `architecture.rete` if it was built), how to open the page (double-click; no server needed), what the model covers (counts per level, lifecycles, scenarios and which have use-case fields), the round-trip and SHACL results, and what was left out or could not be confirmed.
+Tell the user where the files are (`index.html`, `model.js`, `img/` if there are images, `architecture.jsonld`, `architecture.ttl`, and `architecture.rete` if it was built), where each image came from (reused, captured, or drawn as an illustrative wireframe), how to open the page (double-click; no server needed), what the model covers (counts per level, lifecycles, scenarios and which have use-case fields), the round-trip and SHACL results, and what was left out or could not be confirmed.
 
 ## Rules
 
 - Only the MODEL block changes. If the user asks for a behaviour or style change, see "Extending and switching off" in `features.md`, make the smallest edit, and mention it.
-- The page needs no network. Two things reach out, both optional: the web-font links in `<head>` (remove the three `<link>` lines for a network-silent page) and the `.rete` export, which fetches its builder only when the reader clicks it.
+- The page needs no network. Images given as `https` URLs load from the web; relative ones from next to the page. Two other things reach out, both optional: the web-font links in `<head>` (remove the three `<link>` lines for a network-silent page) and the `.rete` export, which fetches its builder only when the reader clicks it.
 - Updating an existing explorer: edit `model.js` and rebuild, so template improvements are picked up. If only `index.html` exists, edit its MODEL block in place.
 - Readers can edit the model in the page itself (`✎ edit`) and download it as `model.js` or as the whole page. If the user hands you such a file, it is the source: rebuild from it, then check its paths and lines against the code as usual, since the page cannot.
 - If the user hands you only a graph (`architecture.ttl`, `.jsonld`, `.nt` or `.rete`), recreate the page from it: `build-explorer.mjs architecture.ttl index.html`, or `model-from-rdf.mjs architecture.ttl model.js` to get an editable model first (`rdf-graph.md`, "Recreating the diagrams from the graph").

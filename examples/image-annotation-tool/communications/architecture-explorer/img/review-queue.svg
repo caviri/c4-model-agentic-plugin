@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500" font-family="system-ui, Segoe UI, sans-serif" font-size="14" fill="#333">
+  <title>Illustrative wireframe of the review queue page (not a screenshot)</title>
+  <rect width="800" height="500" fill="#fff"/>
+  <rect width="800" height="40" fill="#eceff3"/>
+  <text x="20" y="25">Image Annotation Tool - signed in as reviewer</text>
+  <rect x="688" y="9" width="92" height="22" rx="4" fill="#fff" stroke="#999"/><text x="734" y="25" text-anchor="middle">Sign out</text>
+  <text x="20" y="80" font-size="24" font-weight="700">Review queue (3)</text>
+  <g font-size="13">
+    <rect x="20" y="96" width="300" height="52" rx="4" fill="#e2edf7" stroke="#1d4f7a"/><rect x="28" y="102" width="56" height="40" fill="#c9ced6"/><text x="94" y="127">#12 street-0042.jpg (2 boxes)</text>
+    <rect x="20" y="154" width="300" height="52" rx="4" fill="#fff" stroke="#ccc"/><rect x="28" y="160" width="56" height="40" fill="#c9ced6"/><text x="94" y="185">#15 street-0047.jpg (4 boxes)</text>
+    <rect x="20" y="212" width="300" height="52" rx="4" fill="#fff" stroke="#ccc"/><rect x="28" y="218" width="56" height="40" fill="#c9ced6"/><text x="94" y="243">#16 street-0050.jpg (1 box)</text>
+  </g>
+  <rect x="340" y="96" width="440" height="230" fill="#dfe3e8" stroke="#999"/>
+  <path d="M340 270 L450 190 L530 240 L640 150 L780 270 V326 H340 Z" fill="#c9ced6"/>
+  <rect x="416" y="172" width="118" height="92" fill="none" stroke="#2563eb" stroke-width="3"/><text x="420" y="168" fill="#2563eb" font-size="12">car</text>
+  <rect x="620" y="200" width="120" height="80" fill="none" stroke="#2563eb" stroke-width="3"/><text x="624" y="196" fill="#2563eb" font-size="12">car</text>
+  <rect x="340" y="336" width="440" height="62" rx="4" fill="#fff" stroke="#999"/><text x="350" y="356" font-size="13" fill="#888">Comment (required when rejecting)</text>
+  <rect x="340" y="410" width="100" height="28" rx="4" fill="#3f7d20"/><text x="390" y="429" text-anchor="middle" fill="#fff">Approve</text>
+  <rect x="450" y="410" width="90" height="28" rx="4" fill="#f3f3f3" stroke="#bbb"/><text x="495" y="429" text-anchor="middle" fill="#999">Reject</text>
+  <g transform="translate(20 430)"><rect width="260" height="46" rx="6" fill="#fff4e5" stroke="#c2410c" stroke-width="2"/>
+    <text x="130" y="20" text-anchor="middle" font-size="13" font-weight="700" fill="#9a3412">ILLUSTRATIVE WIREFRAME</text>
+    <text x="130" y="37" text-anchor="middle" font-size="12" fill="#9a3412">drawn from the code, not a screenshot</text></g>
+</svg>

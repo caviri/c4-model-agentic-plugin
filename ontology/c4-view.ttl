@@ -66,7 +66,7 @@ c4v:LegendEntry a owl:Class ;
 
 c4v:order a owl:AnnotationProperty ;
     rdfs:label "order"@en ;
-    skos:definition "The position, from 1, of an element, a relationship, a scenario or a variant in the model's list of them. The explorer's automatic layout, merged arrow labels, the scenario picker and the default variant colours follow this order."@en ;
+    skos:definition "The position, from 1, of an element, a relationship, a scenario or a variant in the model's list of them, or of an image (schema:ImageObject) among the images of what it shows. The explorer's automatic layout, merged arrow labels, the scenario picker, the default variant and flow colours, and the order of a gallery follow it."@en ;
     rdfs:range xsd:positiveInteger ;
     rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
 
@@ -107,7 +107,7 @@ c4v:preconditionList a owl:AnnotationProperty ;
 
 c4v:style a owl:AnnotationProperty ;
     rdfs:label "colour style"@en ;
-    skos:definition "The colour of a box or an arrow when it is not the default of its type: highlight (an element a reader must not miss), plain, the look of another type (person, system, container, store, code, ext, sibling, state), or a tone (teal, orange, green, violet, rose). Arrows: ink, accent or a tone. The model field `kind`."@en ;
+    skos:definition "The colour of a box or an arrow when it is not the default of its type: highlight (an element a reader must not miss), plain, the look of another type (person, system, container, store, code, ext, sibling, state), or a tone (teal, orange, green, violet, rose, blue, gold, brown). Arrows: ink, accent or a tone. The model field `kind`."@en ;
     rdfs:range xsd:string ;
     rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
 
@@ -125,7 +125,7 @@ c4v:shortName a owl:AnnotationProperty ;
 
 c4v:tone a owl:AnnotationProperty ;
     rdfs:label "tone"@en ;
-    skos:definition "The colour of a variant: teal, orange, green, violet or rose. Defaults by c4v:order in that sequence."@en ;
+    skos:definition "A colour of the palette: teal, orange, green, violet, rose, blue, gold or brown. On a variant, its colour (by default by c4v:order, in that sequence). On a scenario, its flow colour: the colour of its arrows, numbers and current step in the Dynamic view and of its steps painted on the map (the model field `color`). A scenario without one gets the next of blue, gold, violet, teal, brown, rose, orange, green that no scenario names, in scenario order."@en ;
     rdfs:range xsd:string ;
     rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-view> .
 

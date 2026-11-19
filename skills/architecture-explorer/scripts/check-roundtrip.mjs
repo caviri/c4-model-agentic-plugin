@@ -11,7 +11,7 @@
 //   Without a model: the template's own placeholder model. Turtle and JSON-LD need rete-graph (or n3 / jsonld) to parse,
 //   resolved like model-from-rdf.mjs does; without them those two are reported as skipped.
 // Exit code: 0 = all passed, 1 = a check failed, 2 = usage / unreadable input.
-import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync, existsSync, readdirSync, copyFileSync } from 'node:fs';
 import { dirname, resolve, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -122,7 +122,12 @@ for (const input of cases) {
   }
   if (!back) continue;
 
-  // 3: the page recreated from the graph alone
+  // 3: the page recreated from the graph alone. Relative images (img/…) live next to the model: they go next to the graph
+  // and the pages here, as they would next to a graph handed over with its folder (build-explorer.mjs copies them on)
+  const owners = [].concat(M.nodes || [], M.edges || [], ...(M.scenarios || []).map((s) => [s].concat(s.steps || [])));
+  const rel = [...new Set(owners.flatMap((o) => (o && Array.isArray(o.images) ? o.images : []).map((im) => im && im.src)).filter((s) => typeof s === 'string' && s && !/^[a-z][a-z0-9+.-]*:/i.test(s)))];
+  for (const s of rel) { const from = resolve(dirname(resolve(input)), s); if (existsSync(from)) { mkdirSync(dirname(join(dir, s)), { recursive: true }); copyFileSync(from, join(dir, s)); } }
+  if (rel.length) console.log('IMAGES   ' + rel.length + ' relative image file(s) next to the graph and the pages');
   const pageNorm = join(dir, 'normal.html'), pageBack = join(dir, 'from-rdf', 'index.html'), pageOrig = join(dir, 'original.html');
   writeFileSync(pageNorm, page(modelJs(norm))); writeFileSync(pageOrig, page(code));
   const b = spawnSync(process.execPath, [join(here, 'build-explorer.mjs'), join(dir, 'architecture.nt'), pageBack, '--template', template, '--no-rdf'], { encoding: 'utf8' });
@@ -136,8 +141,11 @@ for (const input of cases) {
   const box = (M.nodes.find((x) => x.type === 'container' && x.kind === 'highlight' && M.nodes.some((k) => k.parent === x.id)) || M.nodes.find((x) => x.type === 'container' && M.nodes.some((k) => k.parent === x.id)) || {}).id;
   const owner = (M.nodes.find((x) => { const k = M.nodes.filter((y) => y.parent === x.id); return k.length && k.every((y) => y.type === 'state'); }) || {}).id;
   const sc = (M.scenarios || [])[0];
+  // and, where the model has them, a box's images in the panel and two flows painted on the map (their colours)
+  const pic = (M.nodes.find((x) => Array.isArray(x.images) && x.images.length) || {}).id;
   const states = ['level=2'].concat(box ? ['open=' + encodeURIComponent(box) + '&zoom=' + encodeURIComponent(box)] : [], owner ? ['open=' + encodeURIComponent(owner) + '&zoom=' + encodeURIComponent(owner)] : [],
-    sc ? ['view=dynamic&scenario=' + encodeURIComponent(sc.id) + '&style=seq'] : []);
+    sc ? ['view=dynamic&scenario=' + encodeURIComponent(sc.id) + '&style=seq'] : [], pic ? ['sel=' + encodeURIComponent(pic)] : [],
+    (M.scenarios || []).length > 1 ? ['level=2&flows=' + M.scenarios.slice(0, 2).map((s) => encodeURIComponent(s.id)).join(',')] : []);
   const shots = {};
   for (const [k, file] of [['original', pageOrig], ['from-rdf', pageBack]]) {
     const out = join(dir, 'shots-' + k);

@@ -14,6 +14,14 @@ const str = (description, max = 2000, extra = {}) => ({ type: 'string', maxLengt
 const strList = (description, maxItems = 200, max = 500) => ({ type: 'array', maxItems, items: { type: 'string', maxLength: max }, description });
 const strOrList = (description) => ({ anyOf: [{ type: 'string', maxLength: 2000 }, { type: 'array', maxItems: 50, items: { type: 'string', maxLength: 2000 } }], description });
 const enumOr = (values, description) => (values ? { type: 'string', enum: values, description } : { type: 'string', description });
+// images on a node, an edge, a scenario or a step (the explorer's validator has the exact rules)
+const images = { type: 'array', maxItems: 20, description: 'Optional pictures: screenshots of what a user sees, diagrams, photos. In this chat\'s view only data:image/… URIs are drawn (keep them under ~300 KB); an https URL shows as a card with an "open" link. Never pass off a mock-up as a screenshot: set illustrative: true and say so in the caption.',
+  items: { type: 'object', required: ['src', 'alt'], additionalProperties: true, properties: {
+    src: str('data:image/png|jpeg|gif|webp|svg+xml|avif URI, an https URL, or a path next to model.js (img/screen.png; not available in a chat).', 1_000_000, { minLength: 1 }),
+    alt: str('Required: what the image shows, for readers who cannot see it (under ~250 characters).', 400, { minLength: 1 }),
+    caption: str('Shown under the image.', 1000), credit: str('Who made it, or where it comes from.', 300),
+    kind: { type: 'string', enum: ['screenshot', 'diagram', 'photo', 'illustration'] },
+    illustrative: { type: 'boolean', description: 'true for a mock-up or wireframe, not a capture of the real thing; the page labels it.' } } } };
 const rdfHook = { type: 'object', description: 'Extension terms for the RDF graph: { "prefix:name": value } in a namespace declared in rdf.prefixes (never c4: or c4v:). Values: literal, { "@id": "prefix:x" }, { "@value", "@type" | "@language" }, or a list.', additionalProperties: true };
 
 export function modelSchema() {
@@ -39,7 +47,7 @@ export function modelSchema() {
       dashed: { type: 'boolean', description: 'Dashed border: optional, planned or conditional.' },
       variants: strList('Variant ids this element exists in; omit for all.', 20, 120),
       at: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'integer', minimum: 0, maximum: 200 }, description: '[column, row] inside the parent. Give it to every sibling of a group or to none; start without it.' },
-      rdf: rdfHook,
+      images, rdf: rdfHook,
     },
   };
   const edge = {
@@ -51,7 +59,7 @@ export function modelSchema() {
       kind: enumOr(E.edgeKinds, 'ink (default), accent (entry points), or a tone.'),
       dashed: { type: 'boolean', description: 'Asynchronous, optional or indirect.' },
       variants: strList('Variant ids in which the relationship exists.', 20, 120),
-      rdf: rdfHook,
+      images, rdf: rdfHook,
     },
   };
   const step = {
@@ -61,6 +69,7 @@ export function modelSchema() {
       label: str('What happens: "validate basket", "201 · order id".', 200, { minLength: 1 }),
       reply: { type: 'boolean', description: 'A response message (written callee → caller).' },
       variants: strList('Variant ids in which this step happens.', 20, 120),
+      images: { ...images, description: 'What the user sees at this step (a screenshot, or a wireframe marked illustrative). ' + images.description },
     },
   };
   const scenario = {
@@ -74,7 +83,8 @@ export function modelSchema() {
       preconditions: strOrList('Use case: what must hold before it starts.'),
       outcome: str('Use case: what holds when it has succeeded.', 1000),
       steps: { type: 'array', minItems: 1, maxItems: LIMITS.steps, items: step, description: 'In execution order, in the direction messages travel.' },
-      rdf: rdfHook,
+      color: enumOr(E.tones, 'Its flow colour on the map and in the Dynamic view; omit it: each scenario gets a distinct tone by order.'),
+      images, rdf: rdfHook,
     },
   };
   return {
@@ -164,7 +174,8 @@ export function toolSchemas() {
         tab: { type: 'string', enum: ['map', 'pins', 'dynamic'], description: 'map, Pinned board, or Dynamic diagrams.' },
         scenario: str('Scenario id to show in the Dynamic tab.', 120),
         style: { type: 'string', enum: ['collab', 'seq', 'list'], description: 'Dynamic diagram style: collaboration, sequence, step list.' },
-        theme: enumOr(E.themes, 'Colour theme for this view.') } },
+        theme: enumOr(E.themes, 'Colour theme for this view.'),
+        flows: strList('Scenario ids to paint on the map, each in its colour (the flows overlay).', 20, 120) } },
       history } },
     build_explorer_page: { type: 'object', additionalProperties: false, required: ['model'], properties: { model, history } },
   };

@@ -50,11 +50,12 @@ Other resources use a `kind:` prefix after the base, which cannot collide with a
 | Relationship (edge number n, from 1) | `<base>rel:<n>` |
 | Scenario | `<base>scenario:<id>` |
 | Step n of a scenario | `<base>step:<scenario id>:<n>` |
+| Image k (from 1) of a node, edge, scenario or step | `<base>image:<node id>:<k>`, `<base>image:rel:<n>:<k>`, `<base>image:scenario:<id>:<k>`, `<base>image:step:<scenario id>:<n>:<k>` |
 | Variant | `<base>variant:<id>` |
 | Legend entry | `<base>legend:<key>` |
 | Extension prefix declaration | `<base>prefix:<name>` |
 
-In Turtle the base is the empty prefix: `:api`, `:rel:4`, `:step:checkout:2`.
+In Turtle the base is the empty prefix: `:api`, `:rel:4`, `:step:checkout:2`, `:image:api:1`.
 
 Optional model field:
 
@@ -80,7 +81,7 @@ Every node is a `c4:Element` and gets every class up to it, so SPARQL without in
 | `code` | `c4:Element`, `c4:CodeElement` |
 | `state` | `c4:Element`, `c4:State` |
 
-Other resources: `c4:Model` (the model), `c4:Relationship` (every edge), `c4:Transition` (additionally, an edge between two states), `c4:Scenario` and `c4:Step`, `c4:Variant`, `c4v:LegendEntry`, `sh:PrefixDeclaration`.
+Other resources: `c4:Model` (the model), `c4:Relationship` (every edge), `c4:Transition` (additionally, an edge between two states), `c4:Scenario` and `c4:Step`, `c4:Variant`, `schema:ImageObject` (every image), `c4v:LegendEntry`, `sh:PrefixDeclaration`.
 
 ## Mapping from MODEL
 
@@ -129,7 +130,24 @@ The JSON-LD term is the key used in the `.jsonld` file; its context maps it to t
 | scenario | a resource `scenario:<id>` | `rdfs:label`, `dcterms:description`, `dcterms:identifier`, `dcterms:isPartOf` (model), `c4:hasStep`, `c4v:order` | |
 | scenario use case: `actor`, `goal`, `trigger`, `preconditions`, `outcome` | `primaryActor`, `goal`, `trigger`, `precondition` (+ `preconditionList`), `outcome` | `c4:primaryActor` (a `c4:Person`), `c4:goal`, `c4:trigger`, `c4:precondition` (+ `c4v:preconditionList` for two or more), `c4:outcome` | |
 | step | a resource `step:<scenario>:<n>` | `c4:inScenario`, `schema:position` (integer from 1), `c4:source`, `c4:target`, `rdfs:label`, `c4:isReply`, `c4:inVariant` | |
+| scenario `color` | `tone` | `c4v:tone` | string, only when set (an automatic flow colour is not written: the same order gives it back) |
+| `images: [...]` on a node, edge, scenario or step | `image` | `schema:image` | IRI of each image, a resource `image:<owner>:<k>` |
+| image | a resource typed `schema:ImageObject` | `schema:contentUrl` (`src`), `c4:altText` (`alt`), `schema:caption`, `schema:creditText` (`credit`), `c4:imageKind` (`kind`), `c4:illustrative` (`true` only), `c4v:order` (its place in the list, from 1) | see below |
 | `rdf: {…}` on a node, edge or scenario | the property name itself | the property it names | see "Extension terms" |
+
+**Images.** `schema:contentUrl` is the image's address as given: an `http(s)` URL is an IRI (`<https://…/screen.png>`); a relative path (`"img/screen.png"^^xsd:anyURI`) or a data URI (`"data:image/png;base64,…"^^xsd:anyURI`) is a literal, since N-Triples allows only absolute IRIs and a store indexes IRIs as keys. A relative path is resolved against the folder of the graph file, as against the folder of `model.js`: hand the graph over with its `img/` folder, or build the page with `--embed-images` first so the graph carries the pictures. **The cost of data URIs:** the graph holds every picture as base64 (a third larger than the file) in one literal per image, so a 300 KB screenshot adds about 400 KB to the Turtle, the JSON-LD, the `.rete` file and every version of a history; SPARQL engines and editors handle such literals but slowly, and `rete` stores them whole. Prefer files (or https URLs) for screenshots, data URIs for small diagrams and wireframes, and `--embed-images` only for a page that must travel alone.
+
+```turtle
+:annotate-page schema:image :image:annotate-page:1 .
+:image:annotate-page:1 a schema:ImageObject ;
+    schema:contentUrl "img/annotate-page.svg"^^xsd:anyURI ;
+    c4:altText "Wireframe of the Annotate page: …" ;
+    schema:caption "Illustrative wireframe drawn from AnnotatePage.tsx, not a screenshot: the example project was never run." ;
+    schema:creditText "Wireframe drawn for the plugin example" ;
+    c4:imageKind "illustration" ;
+    c4:illustrative true ;
+    c4v:order 1 .
+```
 
 Lists (`c4v:noteList`, `c4v:defaultPins`, …) are `rdf:List`s: `( "a" "b" )` in Turtle, `{"@list": […]}` in JSON-LD (the context declares `"@container": "@list"`), `_:l1 rdf:first … ; rdf:rest …` in N-Triples.
 
@@ -204,7 +222,7 @@ Prefixed names are used where the local part is a valid Turtle local name; anyth
 
 ## Checking a graph with SHACL
 
-`ontology/c4-shapes.ttl` holds the constraints every exported graph meets: each element has one label, one id, a level from 1 to 4 and one parent; a relationship has exactly one source and one target element and a label; a step has a position, a source, a target and its scenario; a container is part of a software system and a component part of a container; a transition connects states; the primary actor of a use case is a person; every element, relationship, scenario and variant has its `c4v:order`; list members have the right type. Only SHACL Core, without `sh:or`/`sh:not` (rete-graph 0.7.4 skips those silently).
+`ontology/c4-shapes.ttl` holds the constraints every exported graph meets: each element has one label, one id, a level from 1 to 4 and one parent; an image (`schema:ImageObject`) has one address, one non-empty `c4:altText`, at most one caption, credit and kind (one of four), its `c4v:order`, and belongs to exactly one element, relationship, scenario or step; a relationship has exactly one source and one target element and a label; a step has a position, a source, a target and its scenario; a container is part of a software system and a component part of a container; a transition connects states; the primary actor of a use case is a person; every element, relationship, scenario and variant has its `c4v:order`; list members have the right type. Only SHACL Core, without `sh:or`/`sh:not` (rete-graph 0.7.4 skips those silently).
 
 ```sh
 pyshacl -s ${CLAUDE_PLUGIN_ROOT}/ontology/c4-shapes.ttl -df turtle architecture.ttl
@@ -248,12 +266,12 @@ In JavaScript, with the template's `rdf` script loaded:
 - `tech` and `preconditions` always come back as lists (a single string becomes a one-element list);
 - `path: '.'` comes back as `''` (both are the repository root in the graph; the validator warns about `'.'`);
 - a variant `name` equal to its `id` is dropped (that is the default), as are `variants` without items;
-- absolute `url` and `source.repoUrl` come back with characters an IRI cannot hold percent-encoded;
+- absolute `url`, `source.repoUrl` and an image's `http(s)` `src` come back with characters an IRI cannot hold percent-encoded (the validator rejects such image URLs anyway);
 - extension values (`rdf` objects): a one-element list comes back as the value, lists come back sorted and without duplicates (RDF has no order there), names in their shortest form (`prefix:local`, `:<node id>`), and typed literals JSON can carry exactly (`xsd:string`, canonical `xsd:integer`, `xsd:double`, `xsd:boolean`) as plain JSON values.
 
 Not reproducible: nothing the explorer draws. What is lost is formatting of `model.js` itself (comments, quotes, key order) and fields the explorer does not read.
 
-**The check.** `scripts/check-roundtrip.mjs [model.js | page.html …]` proves it for a model: MODEL → N-Triples, Turtle and JSON-LD → MODEL′ equals `normalizeModel(MODEL)` for each, each parses back to exactly `tripleCount()` triples, the page recreated from the graph alone (`build-explorer.mjs --from-rdf`) is byte-identical to the page built from the normal form, and, with Chrome or Edge, screenshots of the original page and the recreated one match (map at level 2, the main container opened, a lifecycle, a sequence diagram). It prints the fields the normal form changed (`NORMAL`). Run it before declaring a model done.
+**The check.** `scripts/check-roundtrip.mjs [model.js | page.html …]` proves it for a model: MODEL → N-Triples, Turtle and JSON-LD → MODEL′ equals `normalizeModel(MODEL)` for each, each parses back to exactly `tripleCount()` triples, the page recreated from the graph alone (`build-explorer.mjs --from-rdf`) is byte-identical to the page built from the normal form, and, with Chrome or Edge, screenshots of the original page and the recreated one match (map at level 2, the main container opened, a lifecycle, a sequence diagram). It also screenshots a box's image gallery and two flows painted on the map when the model has them, after copying the model's relative images next to the graph and the pages. It prints the fields the normal form changed (`NORMAL`). Run it before declaring a model done.
 
 ## SPARQL queries
 

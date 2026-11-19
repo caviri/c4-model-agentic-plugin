@@ -61,6 +61,7 @@ classDiagram
   Scenario --> Step : hasStep
   Step --> Element : source / target
   Scenario --> Person : primaryActor
+  Element --> ImageObject : schema image
   Element --> Variant : inVariant
 ```
 
@@ -83,6 +84,24 @@ A scenario can also be read as a **use case** (beyond core C4, after Cockburn's 
 | `c4:trigger` | `trigger` | the event that starts it |
 | `c4:precondition` | `preconditions` | what must hold before it starts, one value each |
 | `c4:outcome` | `outcome` | what holds when it has succeeded |
+
+Each scenario also has a **flow colour** in the view module, `c4v:tone` (the model's `color`), used for its arrows and step numbers in the Dynamic view and for its steps painted on the map. It is written only when the model sets one; without it the explorer gives each scenario a distinct tone by order, so a graph without `c4v:tone` redraws the same colours.
+
+## Images
+
+Elements, relationships, scenarios and steps can have pictures: a screenshot of what a user sees at a step, a diagram, a photo, or a mock-up. Each is a `schema:ImageObject`, linked with `schema:image` and described with schema.org where schema.org has the term, and with three core terms where it does not:
+
+| Property | Model field | Meaning |
+|---|---|---|
+| `schema:contentUrl` | `src` | its address: an http(s) IRI, or an `xsd:anyURI` literal for a path next to the model or a `data:` URI |
+| `c4:altText` | `alt` | the text alternative: what it shows, for readers who cannot see it (required) |
+| `schema:caption` | `caption` | the caption shown under it |
+| `schema:creditText` | `credit` | who made it, where it comes from |
+| `c4:imageKind` | `kind` | screenshot, diagram, photo or illustration |
+| `c4:illustrative` | `illustrative` | true for a mock-up or wireframe, not a capture of the real thing |
+| `c4v:order` | (list position) | its place among the images of what it shows |
+
+The images are part of what the graph describes, so a page recreated from the graph shows the same pictures (with their files next to the graph, or carried in it as `data:` URIs, which makes the graph large: see the explorer's RDF graph reference).
 
 ## States and transitions
 
@@ -150,7 +169,7 @@ The mapping lives in one place, the template's `<script id="rdf">` (`window.arch
 
 ## Validate with SHACL
 
-[`c4-shapes.ttl`](c4-shapes.ttl) checks what a graph must meet: one label, id, level (1–4) and parent per element; exactly one source and one target element and a label per relationship; position, source, target and scenario per step; containers inside software systems and components inside containers; transitions between states; a person as the primary actor; an order for everything the explorer lists. It is SHACL Core without `sh:or`/`sh:not`, so every engine gives the same report.
+[`c4-shapes.ttl`](c4-shapes.ttl) checks what a graph must meet: one label, id, level (1–4) and parent per element; one address, one alt text and one owner per image; exactly one source and one target element and a label per relationship; position, source, target and scenario per step; containers inside software systems and components inside containers; transitions between states; a person as the primary actor; an order for everything the explorer lists. It is SHACL Core without `sh:or`/`sh:not`, so every engine gives the same report.
 
 ```sh
 pip install pyshacl

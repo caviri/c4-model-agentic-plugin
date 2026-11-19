@@ -1,7 +1,8 @@
 """MkDocs hook: things the site publishes that MkDocs does not build.
 
 - The explorer and the deck that the plugin produced for examples/image-annotation-tool are copied into
-  the built site under demo/, unchanged, and the pages in docs/example/ show them in a frame. The example
+  the built site under demo/, unchanged (the explorer with its img/ folder), and the pages in docs/example/ show
+  them in a frame. The example
   folder stays the single source: rebuild the example and the docs pick it up.
 - docs/landing/ is the hand-made landing page. It replaces the index.html MkDocs writes for docs/index.md.
 - The plugin icon (.claude-plugin/) becomes the site's logo and favicon under assets/.
@@ -141,6 +142,9 @@ def on_post_build(config, **kwargs):
         for name in names:
             if (source / name).is_file():
                 shutil.copy2(source / name, dest / name)
+        # the images a page shows from files next to it (build-explorer.mjs copies them there): img/ goes along
+        if (source / "img").is_dir():
+            shutil.copytree(source / "img", dest / "img", dirs_exist_ok=True)
 
     for target, source in ICONS.items():
         (site / target).parent.mkdir(parents=True, exist_ok=True)

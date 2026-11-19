@@ -58,13 +58,21 @@ node skills/architecture-explorer/scripts/build-explorer.mjs \
   Each card has the tag, pull request or short SHA, the kind (commit, merge, tag, pull request, squash), the date, the
   authors, the first line of the commit message, the pull request, whether the model was committed or regenerated, and
   what changed since the version before (`+` / `−` / `~` boxes, arrows, scenarios, and the RDF triples added and
-  removed). Unfold a card for the full message, the SHA, parents, branches, the pull request's branches and the list
+  removed), and **where**: the same counts per container (`where API service +12 ~1 · Worker ~1`). Unfold a card for the full message, the SHA, parents, branches, the pull request's branches and the list
   of changes. Each card can be **shown**, **compared** with the version on screen (or set as end A or B of a
   comparison), its **SHA copied**, and its **commit** or **pull request** opened on GitHub, GitLab or Bitbucket when
   the repository is known. `Esc` closes it; `#hist=open` in the URL opens it.
 - **Compare mode** (`⇄ compare` or `C`): the later version is drawn with **added** boxes and arrows in green,
-  **removed** ones brought back from the earlier version as red, dashed ghosts, and **changed** ones in amber. A closed
-  box with changes inside gets a dotted amber border. Click a dot to move the later end, Shift + click (or the *from*
+  **removed** ones brought back from the earlier version as red, dashed ghosts, and **changed** ones in amber, as an
+  outline and a tint, in exactly the colours of the panel's change list and legend (the same CSS variables).
+- **Changes roll up**: every box with changes anywhere inside it, at any depth, carries a badge on its top edge with
+  the counts, `+2 −1 ~3` in the added, removed and changed colours, and a beaded outline with a light tint in the colour
+  of the strongest change inside (removed, else added, else changed), heavier the more there are. A change three levels
+  down (a new state in a component of a container) shows on the system box at L1; open the box and its parts carry the
+  same marks, so you can follow the changes down level by level. A merged arrow says how many of the relationships it
+  carries changed (`JSON over HTTPS +4 · Δ +1 ~2`): green or red when all were added or removed, amber when mixed.
+  Select a box to list its **Changes inside**, grouped by child (and the arrows between its parts and across its
+  border), each one a button that goes there. Click a dot to move the later end, Shift + click (or the *from*
   list) to move the earlier one. The panel lists every change with the fields that changed and who changed them in
   which commit; select a box to see its old and new text.
 - **Go to a change**: every change in the panel and in the version list is a button. A box is opened down to its

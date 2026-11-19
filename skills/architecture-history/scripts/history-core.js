@@ -14,10 +14,10 @@
 'use strict';
 
 var NODE_FIELDS = ['parent', 'type', 'kind', 'name', 'tag', 'sub', 'desc', 'notes', 'tech', 'path', 'line', 'url',
-  'initial', 'final', 'dashed', 'variants', 'at', 'rdf'];
-var EDGE_FIELDS = ['label', 'summary', 'kind', 'dashed', 'variants', 'rdf'];
-var SCENARIO_FIELDS = ['name', 'desc', 'actor', 'goal', 'trigger', 'preconditions', 'outcome', 'rdf', 'steps'];
-var STEP_FIELDS = ['label', 'reply', 'variants'];
+  'initial', 'final', 'dashed', 'variants', 'at', 'images', 'rdf'];
+var EDGE_FIELDS = ['label', 'summary', 'kind', 'dashed', 'variants', 'images', 'rdf'];
+var SCENARIO_FIELDS = ['name', 'desc', 'actor', 'goal', 'trigger', 'preconditions', 'outcome', 'color', 'images', 'rdf', 'steps'];
+var STEP_FIELDS = ['label', 'reply', 'variants', 'images'];
 var VARIANT_FIELDS = ['name', 'short', 'tone'];
 var SETTINGS = ['project', 'source', 'view', 'defaultPins', 'levelNames', 'legend', 'rdf', 'placeholder'];
 

@@ -30,6 +30,13 @@ running in the gaps between boxes on separate lanes; ++e++ switches to **straigh
 Click a box to see its description, notes, technology, source file and line (linked to the repository), the boxes
 inside it, and the lists of what it uses and what uses it. Every entry navigates to the other end.
 
+**Images.** A box can carry pictures: screenshots of what a user sees, diagrams, photos, or wireframes clearly
+labelled *illustrative*. It shows a small picture badge; its panel has a gallery with captions and credits, and a click
+opens a lightbox (++left++ ++right++ to move, ++esc++ to close). Arrows, scenarios and steps can carry pictures too: a
+step's screenshot appears in the Dynamic panel when that step is current. Images sit next to `model.js` in `img/` and
+the build copies them next to the page (or `--embed-images` puts them inside it). The example's pictures are
+hand-drawn wireframes, marked as such, because that project was never run.
+
 The handle on the right edge of the map (or ++i++) folds the panel away and gives the views the whole width; it
 stays folded when you select a box (the handle shows a dot) until you bring it back. On a phone the panel is a bottom
 sheet that folds to one line. Both the panel and the minimap remember their state and appear in the URL
@@ -50,6 +57,17 @@ diagram or a table. Draw it at any level: steps that stay inside one box are fol
 explanation, the elements it passes through and its length.
 
 ![A scenario stepped through as a sequence diagram](img/explorer-scenario.png){ .shot }
+
+Every scenario has a **colour of its own**: its arrows, numbers and current step are drawn in it, and a swatch shows it
+next to the picker. Set one with `color`, or let the scenarios take distinct colours by order.
+
+### Flows on the map
+
+**flows ▾** in the toolbar (or ++w++) paints one or several scenarios on the map, each in its colour: the arrows its
+steps travel along get a coloured band under them, with chips carrying the step numbers, and the boxes they pass
+through stay bright while the rest fades. Where several flows share an arrow, the band is striped in their colours and
+their chips sit side by side. A legend lists the flows on, opens one in the Dynamic view, or turns it off; the URL
+carries them (`#flows=upload,review`).
 
 ### Sequence inside a box
 
@@ -82,28 +100,37 @@ in the colours on screen. `export ▾` → **The model** downloads the architect
 
 ### Edit the model in the page
 
-`✎ edit` turns the page into an editor of its own model, with an edit bar under the toolbar and a form in the panel.
+`✎ edit` turns the page into an editor of its own model. A slim edit bar under the toolbar keeps undo, redo, the
+downloads, `discard edits` and `✓ done`; the details panel's column becomes the **editor sidebar**, so the map keeps
+its width. The sidebar folds away like the panel (++i++ or its header), its edge drags to make it wider, and on a
+phone it is a bottom sheet. It has three sections that fold open and closed and remember it:
 
-- **Add** a box by dragging a type from the edit bar onto the map (into an open box or at the top level), or click a
-  type to add one inside the selected box.
-- **Move** a box by dragging it: onto a sibling to swap places, into a gap for a new row or column, or into another
-  open box to put it inside.
-- **Connect** two boxes with Alt+drag from one to the other, or `→ connect to…` and a click.
-- **Edit** anything in the panel: name, id (references follow), type, description, notes, technology, source path
-  and line, colour, the box it is inside, each connection's label and style; with nothing selected, the project,
-  source links, RDF base and vocabulary, the opening view and every scenario step. Each box also shows its RDF
-  triples.
-- **Delete** with the button or the Delete key; undo and redo with Ctrl+Z and Ctrl+Y.
+- **Add**: the element types by C4 level, each drawn as its box in the current theme. **Drag** one onto the map (into
+  an open box, onto a closed one, or at the top level) or into the outline: while you drag, the boxes it may go into
+  are outlined, and one it may not go into is marked in red with the reason (a component goes inside a container, a
+  container inside a software system, and so on). Or **press** a type (or ++enter++) to add one inside the selected
+  box. The **Relationship** tool connects two boxes: pick the source, then the target.
+- **Outline**: the whole model as a tree, with the scenarios and their steps. Click a row to select the box and show
+  it on the map; **drag** rows to reorder them or to move a box into another (checked against where it may go);
+  rename in place (++f2++), duplicate, add inside, or delete (a bar in the sidebar asks first). Every action also has
+  keys: arrows, ++enter++, ++f2++, ++del++, ++alt++ + arrows to move, ++shift+f10++ for the menu.
+- **Properties**: the selected box's fields in groups (identity, description and notes, technology and tag, source,
+  style, relationships, images, RDF); a scenario's name, colour on the map, use case and steps; or, with nothing
+  selected, the project, source links, RDF settings and opening view. **Images** come from a file (embedded in the
+  model, scaled down if large) or a path, and need their alt text before they are added.
 
-Every change is checked by the page's validator before it is made. The edits stay in the browser until you
-download them: `model.js` to rebuild from, the whole `page` with the new model inside, or the graph as JSON-LD,
-Turtle (`.ttl`) or `.rete`. Try it on the [live example](example/explorer.md).
+On the map you can still drag a box to move it, or Alt+drag from one box to another to connect them. Every change
+is checked by the page's validator before it is made, and can be undone (++ctrl+z++, ++ctrl+y++). The edits stay in
+the browser until you download them: `model.js` to rebuild from, the whole `page` with the new model inside, or the
+graph as JSON-LD, Turtle (`.ttl`) or `.rete`. Try it on the [live example](example/explorer.md).
 
 ### Versions and compare mode
 
 Built with the history of its model (`--history`, from the `architecture-history` skill), the page gets a history
 bar along the bottom of the map: step through the versions or play them, and compare two, with added boxes and arrows
-in green, removed ones as red ghosts and changed ones in amber, each change listed with who made it and when.
+in green, removed ones as red ghosts and changed ones in amber, each change listed with who made it and when. Changes
+roll up: a closed box with changes anywhere inside carries a badge with their counts (`+2 −1 ~3`), so they are visible
+from the system context down.
 **History** (or ++h++) opens a list of every version with its message, authors, pull request and changes; click a
 change to go to it. See [History and diffs](history.md).
 
@@ -118,9 +145,10 @@ change to go to it. See [History and diffs](history.md).
 | ++p++ | Pin or unpin the selected box |
 | ++s++ | Sequence inside the selected box, or its boxes again (Map) · all scenarios (Dynamic) |
 | ++l++, ++e++, ++t++ | Arrow labels, arrow style, colour theme |
-| ++i++, ++o++ | Hide or show the details panel, minimize or restore the minimap |
+| ++w++ | Flows on the map: paint scenarios in their colours |
+| ++i++, ++o++ | Hide or show the details panel (the editor sidebar in edit mode), minimize or restore the minimap |
 | ++bracket-left++ ++bracket-right++, ++c++, ++h++ | With a history: previous / next version, compare, the version list |
-| ++esc++ | Clear the selection (or close the version list) |
+| ++esc++ | Clear the selection (or close the version list, or the lightbox) |
 | ++left++ ++right++ ++space++ | Previous step, next step, play |
 | ++del++, ++ctrl+z++, ++ctrl+y++ | In edit mode: delete the selected box, undo, redo |
 

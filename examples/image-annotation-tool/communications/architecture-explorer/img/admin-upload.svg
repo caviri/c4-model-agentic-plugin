@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500" font-family="system-ui, Segoe UI, sans-serif" font-size="14" fill="#333">
+  <title>Illustrative wireframe of the admin upload and export page (not a screenshot)</title>
+  <rect width="800" height="500" fill="#fff"/>
+  <rect width="800" height="40" fill="#eceff3"/>
+  <text x="20" y="25">Image Annotation Tool - signed in as admin</text>
+  <rect x="688" y="9" width="92" height="22" rx="4" fill="#fff" stroke="#999"/><text x="734" y="25" text-anchor="middle">Sign out</text>
+  <text x="20" y="84" font-size="24" font-weight="700">Upload image batch</text>
+  <rect x="20" y="104" width="240" height="30" rx="3" fill="#fff" stroke="#999"/><text x="30" y="124">street scenes, May</text>
+  <rect x="272" y="104" width="300" height="30" rx="3" fill="#f6f7f9" stroke="#999"/><rect x="278" y="109" width="98" height="20" rx="3" fill="#fff" stroke="#bbb"/><text x="327" y="124" text-anchor="middle" font-size="12">Choose files</text><text x="386" y="124" font-size="13">24 files</text>
+  <rect x="584" y="104" width="90" height="30" rx="4" fill="#1d4f7a"/><text x="629" y="124" text-anchor="middle" fill="#fff">Upload</text>
+  <text x="20" y="168" font-size="13" fill="#555">24 images uploaded. One annotation task was created for each.</text>
+  <text x="20" y="232" font-size="24" font-weight="700">Export</text>
+  <rect x="20" y="250" width="300" height="32" rx="4" fill="#fff" stroke="#999"/><text x="170" y="271" text-anchor="middle">Export approved annotations (COCO)</text>
+  <text x="20" y="314" font-size="13">Export #3: done</text>
+  <text x="20" y="340" font-size="13" fill="#2563eb" text-decoration="underline">Download export-3.coco.json</text>
+  <g transform="translate(520 430)"><rect width="260" height="46" rx="6" fill="#fff4e5" stroke="#c2410c" stroke-width="2"/>
+    <text x="130" y="20" text-anchor="middle" font-size="13" font-weight="700" fill="#9a3412">ILLUSTRATIVE WIREFRAME</text>
+    <text x="130" y="37" text-anchor="middle" font-size="12" fill="#9a3412">drawn from the code, not a screenshot</text></g>
+</svg>

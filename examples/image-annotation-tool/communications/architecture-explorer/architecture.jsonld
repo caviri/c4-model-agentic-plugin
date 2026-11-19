@@ -83,6 +83,16 @@
     "trigger": "c4:trigger",
     "precondition": "c4:precondition",
     "outcome": "c4:outcome",
+    "image": {
+      "@id": "schema:image",
+      "@type": "@id"
+    },
+    "contentUrl": "schema:contentUrl",
+    "caption": "schema:caption",
+    "creditText": "schema:creditText",
+    "altText": "c4:altText",
+    "imageKind": "c4:imageKind",
+    "illustrative": "c4:illustrative",
     "order": "c4v:order",
     "style": "c4v:style",
     "dashed": "c4v:dashed",
@@ -585,10 +595,25 @@
       "order": 13,
       "column": 0,
       "row": 0,
+      "image": "urn:architecture:image-annotation-tool:image:annotate-page:1",
       "uses": [
         "urn:architecture:image-annotation-tool:canvas",
         "urn:architecture:image-annotation-tool:client"
       ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:image:annotate-page:1",
+      "@type": "schema:ImageObject",
+      "contentUrl": {
+        "@value": "img/annotate-page.svg",
+        "@type": "xsd:anyURI"
+      },
+      "altText": "Wireframe of the Annotate page: task number and file name, a Label field, the image with two drawn boxes, Save draft and Submit for review buttons, and a Rejected list with a Fix button.",
+      "caption": "Illustrative wireframe drawn from AnnotatePage.tsx, not a screenshot: the example project was never run.",
+      "creditText": "Wireframe drawn for the plugin example",
+      "imageKind": "illustration",
+      "illustrative": true,
+      "order": 1
     },
     {
       "@id": "urn:architecture:image-annotation-tool:review-page",
@@ -615,10 +640,25 @@
       "order": 14,
       "column": 1,
       "row": 0,
+      "image": "urn:architecture:image-annotation-tool:image:review-page:1",
       "uses": [
         "urn:architecture:image-annotation-tool:canvas",
         "urn:architecture:image-annotation-tool:client"
       ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:image:review-page:1",
+      "@type": "schema:ImageObject",
+      "contentUrl": {
+        "@value": "img/review-queue.svg",
+        "@type": "xsd:anyURI"
+      },
+      "altText": "Wireframe of the Review queue page: three submitted tasks with thumbnails, the selected image with its boxes, a comment box, an Approve button and a disabled Reject button.",
+      "caption": "Illustrative wireframe drawn from ReviewQueuePage.tsx, not a screenshot: the example project was never run.",
+      "creditText": "Wireframe drawn for the plugin example",
+      "imageKind": "illustration",
+      "illustrative": true,
+      "order": 1
     },
     {
       "@id": "urn:architecture:image-annotation-tool:admin-page",
@@ -645,7 +685,22 @@
       "order": 15,
       "column": 2,
       "row": 0,
+      "image": "urn:architecture:image-annotation-tool:image:admin-page:1",
       "uses": "urn:architecture:image-annotation-tool:client"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:image:admin-page:1",
+      "@type": "schema:ImageObject",
+      "contentUrl": {
+        "@value": "img/admin-upload.svg",
+        "@type": "xsd:anyURI"
+      },
+      "altText": "Wireframe of the admin page: a batch name field, a file picker and an Upload button, the uploaded count, then an Export button, the export status and a download link.",
+      "caption": "Illustrative wireframe drawn from AdminUploadPage.tsx, not a screenshot: the example project was never run.",
+      "creditText": "Wireframe drawn for the plugin example",
+      "imageKind": "illustration",
+      "illustrative": true,
+      "order": 1
     },
     {
       "@id": "urn:architecture:image-annotation-tool:canvas",
@@ -2657,7 +2712,21 @@
       "position": 15,
       "source": "urn:architecture:image-annotation-tool:annotator",
       "target": "urn:architecture:image-annotation-tool:annotate-page",
-      "name": "Submit for review"
+      "name": "Submit for review",
+      "image": "urn:architecture:image-annotation-tool:image:step:annotate:15:1"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:image:step:annotate:15:1",
+      "@type": "schema:ImageObject",
+      "contentUrl": {
+        "@value": "img/annotate-page.svg",
+        "@type": "xsd:anyURI"
+      },
+      "altText": "Wireframe of the Annotate page with two boxes drawn and the Submit for review button, which is enabled once there is at least one box.",
+      "caption": "What the annotator sees at this step: an illustrative wireframe from AnnotatePage.tsx, not a screenshot.",
+      "imageKind": "illustration",
+      "illustrative": true,
+      "order": 1
     },
     {
       "@id": "urn:architecture:image-annotation-tool:step:annotate:16",
@@ -2842,7 +2911,21 @@
       "position": 7,
       "source": "urn:architecture:image-annotation-tool:reviewer",
       "target": "urn:architecture:image-annotation-tool:review-page",
-      "name": "types comment, Reject"
+      "name": "types comment, Reject",
+      "image": "urn:architecture:image-annotation-tool:image:step:review:7:1"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:image:step:review:7:1",
+      "@type": "schema:ImageObject",
+      "contentUrl": {
+        "@value": "img/review-queue.svg",
+        "@type": "xsd:anyURI"
+      },
+      "altText": "Wireframe of the Review queue page with a task selected; Reject stays disabled until a comment is typed.",
+      "caption": "What the reviewer sees at this step: an illustrative wireframe from ReviewQueuePage.tsx, not a screenshot.",
+      "imageKind": "illustration",
+      "illustrative": true,
+      "order": 1
     },
     {
       "@id": "urn:architecture:image-annotation-tool:step:review:8",
@@ -3065,6 +3148,7 @@
       "precondition": "Signed in with the admin role: POST /api/exports and GET /api/exports/{id} require it.",
       "outcome": "The worker writes exports/export-<id>.coco.json to MinIO and marks the export done with its task count; the page shows a presigned download URL.",
       "order": 4,
+      "tone": "teal",
       "hasStep": [
         "urn:architecture:image-annotation-tool:step:export:1",
         "urn:architecture:image-annotation-tool:step:export:2",

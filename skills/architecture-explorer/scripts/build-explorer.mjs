@@ -11,9 +11,16 @@
 //   --root     passed on to check-model.mjs: verifies every `path` / `line` against the repository
 //   --history  <history.json> from the architecture-history skill (arch-history.mjs timeline): embeds the versions, so the
 //              page gets its timeline bar and compare mode (with that skill's history-core.js, the comparison code)
+//   images     relative image paths in the model (img/screen.png, next to model.js) must exist: a missing one is an error.
+//              By default they are copied next to the page, at the same relative path, so the page and its folder go
+//              together (and index.html, architecture.ttl and .jsonld stay small).
+//   --embed-images  put them into the page instead, as data: URIs, so index.html is one file that travels alone (an
+//              attachment, a chat upload, a host that serves no folder). The page's MODEL block is then the model as JSON,
+//              and its RDF graph carries the data: URIs too. Images over 2 MB are copied, not embedded (warning).
+//   --images-from <dir>  where relative image paths start (default: the folder of the model file, or of the graph)
 // Exit code: 0 = written and valid, 1 = written but the model has errors, 2 = nothing written.
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { dirname, resolve, join } from 'node:path';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, copyFileSync } from 'node:fs';
+import { dirname, resolve, join, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -24,10 +31,10 @@ const args = process.argv.slice(2);
 const flag = (name) => { const i = args.indexOf(name); return i >= 0 ? args.splice(i, 2)[1] : null; };
 const template = flag('--template') || resolve(here, '../templates/explorer.html');
 const root = flag('--root');
-const historyFile = flag('--history');
-const strict = args.includes('--strict'), noRdf = args.includes('--no-rdf');
+const historyFile = flag('--history'), imagesFrom = flag('--images-from');
+const strict = args.includes('--strict'), noRdf = args.includes('--no-rdf'), embedImages = args.includes('--embed-images');
 const [modelFile, outFile] = args.filter((a) => !a.startsWith('--'));
-if (!modelFile || !outFile) { console.error('Usage: node build-explorer.mjs <model.js | graph.nt|ttl|jsonld|rete> <out.html> [--template explorer.html] [--root repo] [--strict] [--no-rdf] [--from-rdf] [--history history.json]'); process.exit(2); }
+if (!modelFile || !outFile) { console.error('Usage: node build-explorer.mjs <model.js | graph.nt|ttl|jsonld|rete> <out.html> [--template explorer.html] [--root repo] [--strict] [--no-rdf] [--from-rdf] [--history history.json] [--embed-images] [--images-from dir]'); process.exit(2); }
 const fromRdf = args.includes('--from-rdf') || /\.(nt|nq|ttl|jsonld|rete)$/i.test(modelFile);
 
 let html, model;
@@ -48,6 +55,51 @@ if (/<\/script/i.test(model)) { console.error('The model contains "</script", wh
 if (!/window\.MODEL\s*=/.test(model)) { console.error('The model file must assign window.MODEL = { ... };'); process.exit(2); }
 model = model.replace(/^\/\* BEGIN MODEL \*\/\s*/, '').replace(/\s*\/\* END MODEL \*\/$/, '');
 
+// ---- images: relative paths must exist; copied next to the page, or embedded as data: URIs (--embed-images)
+const outDir = dirname(resolve(outFile)), imgBase = resolve(imagesFrom || dirname(resolve(modelFile)));
+const MIME = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', avif: 'image/avif' };
+const EMBED_MAX = 2 * 1024 * 1024;
+let imageErrors = 0;
+{
+  let M = null;
+  try { const sb = { window: {} }; vm.createContext(sb); vm.runInContext(model, sb, { filename: 'model.js', timeout: 5000 }); M = sb.window.MODEL ? JSON.parse(JSON.stringify(sb.window.MODEL)) : null; }
+  catch (e) { M = null; }   // check-model.mjs reports it
+  const owners = [];
+  if (M) {
+    (M.nodes || []).forEach((n) => n && owners.push(['node "' + n.id + '"', n]));
+    (M.edges || []).forEach((e, i) => e && owners.push(['edges[' + i + ']', e]));
+    (M.scenarios || []).forEach((s) => { if (!s) return; owners.push(['scenario "' + s.id + '"', s]); (s.steps || []).forEach((st, j) => st && owners.push(['scenario "' + s.id + '" step ' + (j + 1), st])); });
+  }
+  const rel = [];
+  for (const [where, o] of owners) for (const im of Array.isArray(o.images) ? o.images : []) {
+    if (im && typeof im.src === 'string' && im.src && !/^[a-z][a-z0-9+.-]*:/i.test(im.src) && !/^[\\/]/.test(im.src)) rel.push({ where, im });
+  }
+  let copied = 0, embedded = 0, bytes = 0;
+  const done = new Set();
+  for (const r of rel) {
+    const src = r.im.src.replace(/[?#].*$/, ''), abs = resolve(imgBase, src);
+    if (!(abs + sep).startsWith(imgBase + sep) || !existsSync(abs) || !statSync(abs).isFile()) { console.log('ERROR    ' + r.where + ': image "' + r.im.src + '" not found at ' + abs); imageErrors++; continue; }
+    const size = statSync(abs).size;
+    if (size > 1024 * 1024) console.log('WARNING  ' + r.where + ': image "' + r.im.src + '" is ' + (size / 1048576).toFixed(1) + ' MB; scale screenshots down (about 1600 px wide is plenty)');
+    if (embedImages && size <= EMBED_MAX) {
+      const ext = ((/\.([a-z0-9]+)$/i.exec(src) || [])[1] || '').toLowerCase();
+      r.im.src = 'data:' + (MIME[ext] || 'application/octet-stream') + ';base64,' + readFileSync(abs).toString('base64');
+      embedded++; bytes += r.im.src.length; continue;
+    }
+    if (embedImages) console.log('WARNING  ' + r.where + ': image "' + r.im.src + '" is over ' + EMBED_MAX / 1048576 + ' MB, so it is copied next to the page instead of embedded');
+    const dest = resolve(outDir, src);
+    if (!done.has(dest)) { done.add(dest); if (dest !== abs) { mkdirSync(dirname(dest), { recursive: true }); copyFileSync(abs, dest); copied++; } }
+  }
+  if (embedded) {
+    const { modelJs } = await import('./model-from-rdf.mjs');
+    model = modelJs(M).trim();
+    if (bytes > 6 * 1024 * 1024) console.log('WARNING  the embedded images add ' + (bytes / 1048576).toFixed(1) + ' MB to the page and to its RDF graph');
+  }
+  if (rel.length) console.log('IMAGES   ' + rel.length + ' relative image' + (rel.length > 1 ? 's' : '') + ' from ' + imgBase + ': ' +
+    [embedded ? embedded + ' embedded as data: URIs (' + Math.round(bytes / 1024) + ' KB)' : '', copied ? copied + ' copied next to the page' : '', imageErrors ? imageErrors + ' missing' : '',
+      !embedded && !copied && !imageErrors ? 'already next to the page' : ''].filter(Boolean).join(', '));
+}
+
 // ---- versions for the timeline bar and compare mode (architecture-history skill)
 let page = html.replace(block, () => '/* BEGIN MODEL */\n' + model + '\n/* END MODEL */');
 if (historyFile) {
@@ -64,7 +116,6 @@ if (historyFile) {
   page = page.replace(hblock, () => '/* BEGIN HISTORY */\nwindow.ARCH_HISTORY = ' + data + ';\n' + core + '\n/* END HISTORY */');
   console.log('HISTORY  ' + hist.versions.length + ' versions embedded from ' + historyFile + ' (' + hist.resolution + (hist.demo ? ', DEMONSTRATION DATA' : '') + ', ' + Math.round(data.length / 1024) + ' KB)');
 }
-const outDir = dirname(resolve(outFile));
 mkdirSync(outDir, { recursive: true });
 writeFileSync(outFile, page);
 console.log('WROTE    ' + outFile);
@@ -88,7 +139,7 @@ if (!noRdf && check.status === 0) {
     console.log(note);
   } catch (e) { console.log('RDF      skipped: ' + e.message); }
 }
-process.exit(check.status === 0 ? 0 : 1);
+process.exit(check.status === 0 && !imageErrors ? 0 : 1);
 
 async function buildRete(g, jsonld, reteOut) {
   // 1. the rete CLI: the only route that can embed a dataset card and title

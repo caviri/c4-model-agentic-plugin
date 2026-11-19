@@ -93,6 +93,14 @@ Follow the schema below (it is the explorer's `data-model.md`). Essentials:
   cache, gateway or queue because systems like this usually have one. Use the project's own names.
 - No repository? You can model a system the user describes, but then leave out `path` and `line` and
   say in `project.intro` that the model is based on a description, not on code.
+- Images (optional, on a node, edge, scenario or step): `images: [{ src, alt, caption, credit, kind,
+  illustrative }]`. Reuse what the repository already has (README and docs screenshots, design files), as
+  `https://raw.githubusercontent.com/…` URLs or, to show them in this view, as `data:image/…` URIs (small:
+  under ~300 KB each). `alt` is required and says what the image shows. A mock-up or wireframe you make is
+  `illustrative: true` with `kind: 'illustration'` and a caption that says it is not a screenshot; never
+  present one as a screenshot. Never include secrets or personal data.
+- Scenarios each get a colour of their own (`color`, a tone, is optional); `view.flows` in `show_explorer`
+  paints them on the map.
 
 ## 6. Validate, then show
 
@@ -100,7 +108,7 @@ Follow the schema below (it is the explorer's `data-model.md`). Essentials:
    Reconsider every warning: text that does not fit a box or an arrow, missing descriptions, misplaced
    components, SHACL results, arrows that pass behind a box (move one end next to the other with
    `at: [col, row]` on every box of that group).
-2. `show_explorer` with the model (and optionally `view`: `{ level, open, select, tab, scenario, style }`)
+2. `show_explorer` with the model (and optionally `view`: `{ level, open, select, tab, scenario, style, flows }`)
    to draw it. Tell the user what it covers: counts per level, lifecycles, scenarios, and what you left out
    or could not confirm.
 3. When the user asks for changes, edit the MODEL and call `show_explorer` again (the full model each time:

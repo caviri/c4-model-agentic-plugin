@@ -89,7 +89,7 @@ you describe in the chat instead of a repository.
 | `validate_model` | Validator, SHACL, layout, and (with `repo`, `root`) paths and lines against GitHub. |
 | `export_rdf` | `ttl`, `jsonld`, `nt` as text; `rete` as an embedded binary resource. |
 | `model_from_rdf` | A graph (`nt`, `ttl`, `jsonld`, or `.rete` as base64) back to the MODEL. |
-| `show_explorer` | The interactive view; `view` picks the level, open boxes, selection, tab, scenario, style, theme; `history` adds the timeline. |
+| `show_explorer` | The interactive view; `view` picks the level, open boxes, selection, tab, scenario, style, theme and `flows` (scenario ids painted on the map); `history` adds the timeline. |
 | `build_explorer_page` | The standalone page as an embedded `text/html` resource (about 400 KB). |
 | `list_elements`, `get_element`, `query_sparql` | The explorer's own [agent tools](#webmcp-agents-in-the-browser) that read a model, with the model as an argument. |
 
@@ -118,8 +118,17 @@ domains at all.
   `model.js` is saved as `model.js.txt`, because Claude refuses `.js` downloads.
 - **Links** to the source open through the host (`ui/open-link`); the host's light or dark theme is followed while the
   reader's theme is `auto`.
+- **Images.** The view draws `data:image/…` images only: its CSP lets it load nothing from outside, and it has no
+  folder next to the model. An `https` image is shown as a card with its alt text and an **open ↗** link, which opens
+  through the host; a relative path (`img/…`) as a card saying the file is not available in the chat. The server does
+  not fetch images on the model's behalf: no request leaves the server for a URL a model names (no server-side request
+  forgery, no tracking pixel), and the model the view exports stays exactly the one it was given. To show a picture in
+  the chat, pass it as a data URI (keep it small: the model is limited to 1.5 MB of JSON, and models up to 100 KB travel
+  inside the tool result). The bundled example (`c4-explorer://examples/image-annotation-tool/model.json`) carries its
+  wireframes that way.
 - **Agents.** The view also offers the explorer's [agent tools](#webmcp-agents-in-the-browser) to the chat's
-  assistant as MCP Apps *app tools*, so it can open a level, select boxes or show a scenario in the view you have open.
+  assistant as MCP Apps *app tools*, so it can open a level, select boxes, show a scenario or paint flows
+  (`show_flows`) in the view you have open.
   Claude offers app tools to a limited set of organizations so far.
 - **History.** With `history` (a `history.json` from the [history skill](history.md)) the view shows the history
   bar along its bottom edge, the version list and compare mode; without it the bar stays hidden.
@@ -180,7 +189,7 @@ browser, through `document.modelContext`, with no server. The pages this plugin 
 it:
 
 - **The explorer** registers the explorer's agent tools: `get_model`, `get_rdf`, `list_elements`, `get_element`,
-  `get_view`, `open_level`, `focus_element`, `select_elements`, `show_scenario`, `set_theme`; with a history,
+  `get_view`, `open_level`, `focus_element`, `select_elements`, `show_scenario`, `show_flows`, `set_theme`; with a history,
   `list_versions`, `compare_versions`, `show_version`; in edit mode only, `add_element`, `connect_elements`,
   `rename_element`. An edit never applies on its own: a bar on the page shows what the agent asks for, and nothing
   changes until you click **Apply** (and it can be undone). `query_sparql` is offered by the MCP server only, because

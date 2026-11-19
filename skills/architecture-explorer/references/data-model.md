@@ -67,6 +67,7 @@ One entry per box. The hierarchy comes from `parent`; the level comes from `type
 | `dashed` | no | `true` gives a dashed border: optional, planned, or conditional elements. |
 | `variants` | no | Array of variant ids this element exists in. Omit for "all". |
 | `at` | no | `[column, row]` inside its parent, see Layout. |
+| `images` | no | Pictures of it: screenshots of what a user sees, diagrams, photos, or clearly labelled mock-ups. See "Images" below. A box with images gets a small picture badge; its panel shows them. |
 | `rdf` | no | Extension terms for the RDF graph: an object of property name → value, in a namespace declared in `rdf.prefixes`. See "Extension terms" below. |
 
 ### Types
@@ -109,7 +110,7 @@ Defaults to the type's look. Override to make a point:
 | `highlight` | Accent-tinted with a thick border. Mark the two or three elements a reader must not miss (entry point, orchestrator). |
 | `plain` | White with a light border. |
 | `person`, `system`, `container`, `store`, `code`, `ext`, `sibling` | Borrow another type's look. |
-| `teal`, `orange`, `green`, `violet`, `rose` | A tone. Use the tone of a variant for elements specific to that variant, or give the colour its own meaning with `legend`. |
+| `teal`, `orange`, `green`, `violet`, `rose`, `blue`, `gold`, `brown` | A tone. Use the tone of a variant for elements specific to that variant, or give the colour its own meaning with `legend`. |
 
 ## `edges[]`
 
@@ -123,6 +124,7 @@ Always declare an edge between the most specific elements you know (code to code
 | `kind` | no | `ink` (grey, default), `accent` (entry points, user-facing), or a tone. An edge limited to some variants takes the first variant's tone automatically. |
 | `dashed` | no | `true` for asynchronous, optional or indirect relationships. Edges limited to some variants are dashed automatically. |
 | `variants` | no | Array of variant ids in which the relationship exists. Omit for "all". |
+| `images` | no | Pictures of the relationship (a message format, a protocol diagram), as on nodes. The panel of either end box shows them. |
 | `rdf` | no | Extension terms for the RDF graph, as on nodes. |
 
 An edge between a box and its own ancestor or descendant is never drawn (warning). The one exception is a state pointing at itself, drawn as a loop.
@@ -175,6 +177,8 @@ Each scenario is an ordered list of interactions between nodes of the static mod
 | `preconditions` | no | Use case: what must hold before it starts. A string, or an array of strings. |
 | `outcome` | no | Use case: what holds when it has succeeded (its success guarantee). |
 | `steps` | yes | Non-empty array, in execution order. |
+| `color` | no | Its flow colour: a tone (`teal`, `orange`, `green`, `violet`, `rose`, `blue`, `gold`, `brown`). Without it, each scenario gets a tone of its own by order. See "Flow colours". |
+| `images` | no | Pictures of the whole flow, as on nodes. The Dynamic panel shows them under the use case. |
 | `rdf` | no | Extension terms for the RDF graph, as on nodes. |
 
 Each step:
@@ -185,6 +189,7 @@ Each step:
 | `label` | yes | What happens: `validate basket`, `201 · order id`. |
 | `reply` | no | `true` for a return/response message; drawn dashed, and ignored when ordering participants. |
 | `variants` | no | Array of variant ids in which this step happens. Selecting a variant in the toolbar removes the other steps. |
+| `images` | no | What the user sees at this step: a screenshot of that screen, or a wireframe marked `illustrative`. The Dynamic panel shows them while the step is current (and so does the panel of the sequence inside a box). |
 
 Steps do not need a matching entry in `edges`, but a call that appears in a scenario normally deserves one.
 
@@ -201,6 +206,10 @@ The five use-case fields are optional and shown as a short list under the scenar
   outcome: 'The worker writes exports/export-<id>.coco.json to MinIO and marks the export done; the page shows a download URL.',
   steps: [ … ] }
 ```
+
+### Flow colours
+
+Every scenario has a colour of its own, its **flow colour**: the Dynamic view draws its arrows, step numbers and current step in it, the map's flows overlay paints its steps in it (features.md, "Flows on the map"), and the scenario picker, the panel and the history's change lists show it as a swatch. Set it with `color` (a tone) or leave it out: scenarios without one take, in order, the next of `blue`, `gold`, `violet`, `teal`, `brown`, `rose`, `orange`, `green` that no scenario names, so the same model always gets the same colours and four or five flows never repeat. The compare-mode colours (green, rose, orange) come last, so they rarely meet a flow. A step that exists only in some variants keeps its variant's tone.
 
 The same scenarios also draw the **sequence inside a box** on the map (the `⇅ sequence` button of an open box; see features.md). Nothing extra goes in the model. A box offers it as soon as some step crosses its border or runs between two of its children.
 
@@ -221,7 +230,7 @@ variants: { label: 'Deployment', items: [
 | `items[].id` | yes | Referenced by `variants: [...]` on nodes, edges and steps. |
 | `items[].name` | no | Display name. Defaults to `id`. |
 | `items[].short` | no | Shorter name for the sequence diagram margin. |
-| `items[].tone` | no | `teal`, `orange`, `green`, `violet`, `rose`. Defaults in that order. |
+| `items[].tone` | no | `teal`, `orange`, `green`, `violet`, `rose`, `blue`, `gold`, `brown`. Defaults in that order. |
 
 Two to five items work. Omit `variants` entirely when the architecture has no such dimension: the filter, the dots and the chips all disappear.
 
@@ -255,6 +264,37 @@ source: { repoUrl: 'https://github.com/org/repo', branch: 'main' }
 - `legend`: object mapping a kind (`person`, `system`/`highlight`, `container`, `store`, `code`/`plain`, `ext`, `sibling`, `state`, a tone, or `dashed`) to its legend label. Required in practice for any tone you use that is not a variant's tone.
 - `rdf`: `{ base, vocab, prefixes }`, all optional. `base` is the prefix of every element IRI in the RDF export. Default: `source.repoUrl` + `#` when set, else `urn:architecture:<project-slug>:`. `vocab` replaces the `c4:` namespace of the published ontology; leave it out (with another vocabulary the graph no longer uses the ontology and the SHACL shapes do not apply). `prefixes` maps prefix names to the namespaces of extension terms. See rdf-graph.md.
 
+## Images
+
+An optional `images` list on a node, an edge, a scenario or a step: pictures that show what an element is, what a user sees at a step, or how a flow looks.
+
+```js
+{ id: 'annotate-page', type: 'component', name: 'AnnotatePage', /* … */
+  images: [{ src: 'img/annotate-page.png', alt: 'The Annotate page: the image with two labelled boxes and a Submit for review button.',
+             caption: 'The Annotate page after drawing two boxes.', credit: 'Screenshot of v1.2, 2026-05-02', kind: 'screenshot' }] }
+// on a step: what the user sees there
+{ from: 'annotator', to: 'annotate-page', label: 'Submit for review',
+  images: [{ src: 'img/annotate-wireframe.svg', alt: '…', kind: 'illustration', illustrative: true,
+             caption: 'Illustrative wireframe drawn from AnnotatePage.tsx, not a screenshot.' }] }
+```
+
+| Field | Required | Notes |
+|---|---|---|
+| `src` | yes | A path next to `model.js`, in its folder or below it (`img/annotate-page.png`: forward slashes, no `..`, no spaces); an `https://` URL; or a `data:image/png`, `jpeg`, `gif`, `webp`, `svg+xml` or `avif` URI. A file must be `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg` or `.avif`. `javascript:`, `file:` and other schemes are errors; `http://` is a warning (blocked on https pages). |
+| `alt` | yes | What the image shows, for readers who cannot see it (the text alternative). Say what matters for this architecture ("the review queue with three tasks and a disabled Reject button"), not "screenshot". About 250 characters at most (a warning above 300); put the rest in the caption. |
+| `caption` | no | Shown under the image to everyone. |
+| `credit` | no | Who made it, or where it comes from. |
+| `kind` | no | `screenshot` (a capture of the running software), `diagram`, `photo` or `illustration`. |
+| `illustrative` | no | `true` for a mock-up or wireframe that is not a capture of the real thing. The page labels it "illustrative"; say so in the caption too. `kind: 'screenshot'` with `illustrative: true` is a warning: a mock-up is not a screenshot. |
+
+The list keeps its order; the badge opens the first. A data URI over 512 KB of text is a warning, and so are embedded images adding up to more than 4 MB in the whole model: they make the page, its RDF graph and every version in a history heavy. Keep large screenshots as files (about 1600 px wide is plenty).
+
+**Where they show.** A box with images gets a picture badge with the count (bottom left of a closed box, in the header of an open one). Its details panel has a gallery with the captions, credits, kind and the "illustrative" label; a click on a picture or on the badge opens a lightbox (← → move, Esc closes and gives the focus back). An edge's images are in the panel of both its end boxes, a scenario's in the Dynamic panel under the use case, a step's in the Dynamic panel while that step is current.
+
+**Files.** `build-explorer.mjs` checks that every relative path exists next to `model.js` (an error otherwise) and copies the files next to the page at the same path, so `img/` sits beside `index.html`; `--embed-images` puts them into the page as data URIs instead, for a page that has to travel as one file. `check-model.mjs` checks that they are next to the page. The plugin's MCP view draws data URIs only (it loads nothing from outside); see features.md, "Images".
+
+**Where images come from** (SKILL.md, "Images"): reuse what the repository has (README and docs screenshots, design files); capture screenshots with headless Chrome only when the app runs locally and the user agrees; otherwise draw clearly labelled illustrative wireframes, never passed off as screenshots. Never capture secrets or personal data.
+
 ## Extension terms
 
 Facts the explorer has no field for (deployment, ownership, data classification, compliance) go into the RDF graph through an `rdf` object on a node, an edge or a scenario. Declare each namespace once in `rdf.prefixes`, in a namespace of your own, **never `c4:`**:
@@ -275,7 +315,7 @@ rdf: { prefixes: { dep: 'https://example.org/ontology/deployment#' } },
 | `[ … ]` | several values (a set: the order is not kept) |
 | `'rdf:type': { '@id': 'prefix:Class' }` | an extra class of your own, a subclass of a `c4:` class |
 
-Keys are `prefix:name` with a declared prefix (or the built-in `rdf`, `rdfs`, `xsd`, `dcterms`, `schema`, `sh`) or a full IRI. The validator rejects unknown prefixes, malformed values, and properties the export already writes from the model's own fields (`rdfs:label`, `dcterms:*`, any `c4:` or `c4v:` term). The page does not draw these terms; they are for the graph. Ship an ontology file and SHACL shapes with them: `${CLAUDE_PLUGIN_ROOT}/ontology/EXTENDING.md`.
+Keys are `prefix:name` with a declared prefix (or the built-in `rdf`, `rdfs`, `xsd`, `dcterms`, `schema`, `sh`) or a full IRI. The validator rejects unknown prefixes, malformed values, and properties the export already writes from the model's own fields (`rdfs:label`, `dcterms:*`, `schema:position`, `schema:image`, `schema:contentUrl`, `schema:caption`, `schema:creditText`, any `c4:` or `c4v:` term). The page does not draw these terms; they are for the graph. Ship an ontology file and SHACL shapes with them: `${CLAUDE_PLUGIN_ROOT}/ontology/EXTENDING.md`.
 
 ## Layout: `at`
 

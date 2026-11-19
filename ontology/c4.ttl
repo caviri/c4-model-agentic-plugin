@@ -61,6 +61,11 @@ dcterms:modified    a owl:AnnotationProperty .
 dcterms:isPartOf    a owl:ObjectProperty .
 dcterms:hasPart     a owl:ObjectProperty .
 schema:position     a owl:DatatypeProperty .
+schema:ImageObject  a owl:Class .
+schema:image        a owl:ObjectProperty .
+schema:contentUrl   a owl:AnnotationProperty .   # an IRI (http, https) or an xsd:anyURI literal (a relative path, a data: URI)
+schema:caption      a owl:DatatypeProperty .
+schema:creditText   a owl:DatatypeProperty .
 skos:definition     a owl:AnnotationProperty .
 skos:scopeNote      a owl:AnnotationProperty .
 skos:note           a owl:AnnotationProperty .
@@ -399,4 +404,35 @@ c4:outcome a owl:DatatypeProperty ;
     skos:scopeNote "Use-case metadata, an extension beyond core C4."@en ;
     rdfs:domain c4:Scenario ;
     rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+#################################################################
+#  Images of elements, relationships, scenarios and steps
+#################################################################
+# An image is a schema:ImageObject linked with schema:image from what it shows (an element, a relationship, a scenario,
+# or a step: what the user sees at that step), with schema:contentUrl, schema:caption and schema:creditText. These three
+# properties add what schema.org has no term for: the text alternative, the kind of image, and whether it is real.
+
+c4:altText a owl:DatatypeProperty ;
+    rdfs:label "alt text"@en ;
+    skos:definition "The text alternative of an image: what it shows, for readers who cannot see it (the HTML alt attribute). Required on every image the explorer exports."@en ;
+    rdfs:comment "Not schema:caption, which is shown under the image to everyone, and not schema:description, which says more about the image than what it shows."@en ;
+    skos:example "Wireframe of the Annotate page: the image with two drawn boxes and a Submit for review button." ;
+    rdfs:domain schema:ImageObject ;
+    rdfs:range xsd:string ;
+    dcterms:source <https://www.w3.org/WAI/tutorials/images/> ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:imageKind a owl:DatatypeProperty ;
+    rdfs:label "image kind"@en ;
+    skos:definition "What sort of image it is: screenshot (a capture of the running software), diagram, photo or illustration."@en ;
+    rdfs:domain schema:ImageObject ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .
+
+c4:illustrative a owl:DatatypeProperty ;
+    rdfs:label "illustrative"@en ;
+    skos:definition "True for an image made to illustrate, such as a mock-up or a wireframe drawn from the code, that is not a capture of the real thing. The explorer labels such images. Written only when true."@en ;
+    rdfs:domain schema:ImageObject ;
+    rdfs:range xsd:boolean ;
     rdfs:isDefinedBy <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4> .

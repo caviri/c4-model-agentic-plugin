@@ -9,7 +9,7 @@
 # The shapes do not need the ontology: the exported data names the superclasses itself (a data store is
 # also typed c4:Element and c4:Container), so sh:targetClass and sh:class find them in the data graph.
 #
-# Sections: core architecture · use cases · states and transitions · view module (c4v:).
+# Sections: core architecture · use cases · images · states and transitions · view module (c4v:).
 
 @prefix c4s:     <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4-shapes.ttl#> .
 @prefix c4:      <https://caviri.github.io/c4-model-agentic-plugin/ontology/c4#> .
@@ -66,7 +66,8 @@ c4s:ElementShape a sh:NodeShape ;
     sh:property [ sh:path c4:link ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
     sh:property [ sh:path rdfs:seeAlso ; sh:nodeKind sh:IRI ] ;
     sh:property [ sh:path c4:uses ; sh:class c4:Element ] ;
-    sh:property [ sh:path c4:inVariant ; sh:class c4:Variant ] .
+    sh:property [ sh:path c4:inVariant ; sh:class c4:Variant ] ;
+    sh:property [ sh:path schema:image ; sh:class schema:ImageObject ] .
 
 # the line needs the file it is in
 c4s:LineNeedsPathShape a sh:NodeShape ;
@@ -89,7 +90,8 @@ c4s:RelationshipShape a sh:NodeShape ;
     sh:property [ sh:path c4:target ; sh:minCount 1 ; sh:maxCount 1 ; sh:class c4:Element ; sh:message "A relationship has exactly one target element." ] ;
     sh:property [ sh:path rdfs:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:message "A relationship says what happens along it (one rdfs:label)." ] ;
     sh:property [ sh:path c4:summaryLabel ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
-    sh:property [ sh:path c4:inVariant ; sh:class c4:Variant ] .
+    sh:property [ sh:path c4:inVariant ; sh:class c4:Variant ] ;
+    sh:property [ sh:path schema:image ; sh:class schema:ImageObject ] .
 
 c4s:VariantShape a sh:NodeShape ;
     sh:targetClass c4:Variant ;
@@ -113,7 +115,8 @@ c4s:ScenarioShape a sh:NodeShape ;
     sh:property [ sh:path c4:goal ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
     sh:property [ sh:path c4:trigger ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
     sh:property [ sh:path c4:outcome ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
-    sh:property [ sh:path c4:precondition ; sh:datatype xsd:string ; sh:minLength 1 ] .
+    sh:property [ sh:path c4:precondition ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path schema:image ; sh:class schema:ImageObject ] .
 
 c4s:StepShape a sh:NodeShape ;
     sh:targetClass c4:Step ;
@@ -125,7 +128,29 @@ c4s:StepShape a sh:NodeShape ;
     sh:property [ sh:path [ sh:inversePath c4:hasStep ] ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "Exactly one scenario lists the step with c4:hasStep." ] ;
     sh:property [ sh:path rdfs:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
     sh:property [ sh:path c4:isReply ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
-    sh:property [ sh:path c4:inVariant ; sh:class c4:Variant ] .
+    sh:property [ sh:path c4:inVariant ; sh:class c4:Variant ] ;
+    sh:property [ sh:path schema:image ; sh:class schema:ImageObject ] .
+
+#################################################################
+#  Images (schema:ImageObject, linked with schema:image from an element, a relationship, a scenario or a step)
+#################################################################
+
+# its address is an IRI (an http(s) URL) or an xsd:anyURI literal (a path next to the model, or a data: URI); SHACL Core
+# without sh:or cannot say "one or the other" more closely than sh:IRIOrLiteral
+c4s:ImageShape a sh:NodeShape ;
+    sh:targetClass schema:ImageObject ;
+    sh:property [ sh:path schema:contentUrl ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRIOrLiteral ;
+                  sh:message "An image has exactly one address (schema:contentUrl)." ] ;
+    sh:property [ sh:path c4:altText ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ;
+                  sh:message "An image has exactly one text alternative (c4:altText): what it shows, for readers who cannot see it." ] ;
+    sh:property [ sh:path schema:caption ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path schema:creditText ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path c4:imageKind ; sh:maxCount 1 ; sh:in ( "screenshot" "diagram" "photo" "illustration" ) ] ;
+    sh:property [ sh:path c4:illustrative ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path [ sh:inversePath schema:image ] ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "An image belongs to exactly one element, relationship, scenario or step (schema:image)." ] ;
+    sh:property [ sh:path c4v:order ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ;
+                  sh:message "An image has its place among the images of what it shows (one c4v:order)." ] .
 
 #################################################################
 #  States and transitions
@@ -199,7 +224,7 @@ c4s:ElementViewShape a sh:NodeShape ;
     sh:property [ sh:path c4v:order ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ;
                   sh:message "An element has its position in the model (one c4v:order), so the diagrams can be redrawn." ] ;
     sh:property [ sh:path c4v:style ; sh:maxCount 1 ;
-                  sh:in ( "person" "system" "container" "store" "code" "ext" "sibling" "state" "highlight" "plain" "teal" "orange" "green" "violet" "rose" ) ] ;
+                  sh:in ( "person" "system" "container" "store" "code" "ext" "sibling" "state" "highlight" "plain" "teal" "orange" "green" "violet" "rose" "blue" "gold" "brown" ) ] ;
     sh:property [ sh:path c4v:dashed ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
     sh:property [ sh:path c4v:column ; sh:maxCount 1 ; sh:nodeKind sh:Literal ] ;
     sh:property [ sh:path c4v:row ; sh:maxCount 1 ; sh:nodeKind sh:Literal ] ;
@@ -221,7 +246,7 @@ c4s:RowNeedsColumnShape a sh:NodeShape ;
 c4s:RelationshipViewShape a sh:NodeShape ;
     sh:targetClass c4:Relationship ;
     sh:property [ sh:path c4v:order ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ] ;
-    sh:property [ sh:path c4v:style ; sh:maxCount 1 ; sh:in ( "ink" "accent" "teal" "orange" "green" "violet" "rose" ) ] ;
+    sh:property [ sh:path c4v:style ; sh:maxCount 1 ; sh:in ( "ink" "accent" "teal" "orange" "green" "violet" "rose" "blue" "gold" "brown" ) ] ;
     sh:property [ sh:path c4v:dashed ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
     sh:property [ sh:path c4v:variantList ; sh:maxCount 1 ] ;
     sh:property [ sh:path ( c4v:variantList [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class c4:Variant ] .
@@ -229,6 +254,7 @@ c4s:RelationshipViewShape a sh:NodeShape ;
 c4s:ScenarioViewShape a sh:NodeShape ;
     sh:targetClass c4:Scenario ;
     sh:property [ sh:path c4v:order ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ] ;
+    sh:property [ sh:path c4v:tone ; sh:maxCount 1 ; sh:in ( "teal" "orange" "green" "violet" "rose" "blue" "gold" "brown" ) ] ;
     sh:property [ sh:path c4v:preconditionList ; sh:maxCount 1 ] ;
     sh:property [ sh:path ( c4v:preconditionList [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:datatype xsd:string ] .
 
@@ -241,4 +267,4 @@ c4s:VariantViewShape a sh:NodeShape ;
     sh:targetClass c4:Variant ;
     sh:property [ sh:path c4v:order ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ] ;
     sh:property [ sh:path c4v:shortName ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
-    sh:property [ sh:path c4v:tone ; sh:maxCount 1 ; sh:in ( "teal" "orange" "green" "violet" "rose" ) ] .
+    sh:property [ sh:path c4v:tone ; sh:maxCount 1 ; sh:in ( "teal" "orange" "green" "violet" "rose" "blue" "gold" "brown" ) ] .

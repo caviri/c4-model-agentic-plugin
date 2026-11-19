@@ -240,7 +240,17 @@
     c4v:order 13 ;
     c4v:column 0 ;
     c4v:row 0 ;
+    schema:image :image:annotate-page:1 ;
     c4:uses :canvas, :client .
+
+:image:annotate-page:1 a schema:ImageObject ;
+    schema:contentUrl "img/annotate-page.svg"^^xsd:anyURI ;
+    c4:altText "Wireframe of the Annotate page: task number and file name, a Label field, the image with two drawn boxes, Save draft and Submit for review buttons, and a Rejected list with a Fix button." ;
+    schema:caption "Illustrative wireframe drawn from AnnotatePage.tsx, not a screenshot: the example project was never run." ;
+    schema:creditText "Wireframe drawn for the plugin example" ;
+    c4:imageKind "illustration" ;
+    c4:illustrative true ;
+    c4v:order 1 .
 
 :review-page a c4:Element, c4:Component ;
     rdfs:label "ReviewQueuePage" ;
@@ -257,7 +267,17 @@
     c4v:order 14 ;
     c4v:column 1 ;
     c4v:row 0 ;
+    schema:image :image:review-page:1 ;
     c4:uses :canvas, :client .
+
+:image:review-page:1 a schema:ImageObject ;
+    schema:contentUrl "img/review-queue.svg"^^xsd:anyURI ;
+    c4:altText "Wireframe of the Review queue page: three submitted tasks with thumbnails, the selected image with its boxes, a comment box, an Approve button and a disabled Reject button." ;
+    schema:caption "Illustrative wireframe drawn from ReviewQueuePage.tsx, not a screenshot: the example project was never run." ;
+    schema:creditText "Wireframe drawn for the plugin example" ;
+    c4:imageKind "illustration" ;
+    c4:illustrative true ;
+    c4v:order 1 .
 
 :admin-page a c4:Element, c4:Component ;
     rdfs:label "AdminUploadPage" ;
@@ -274,7 +294,17 @@
     c4v:order 15 ;
     c4v:column 2 ;
     c4v:row 0 ;
+    schema:image :image:admin-page:1 ;
     c4:uses :client .
+
+:image:admin-page:1 a schema:ImageObject ;
+    schema:contentUrl "img/admin-upload.svg"^^xsd:anyURI ;
+    c4:altText "Wireframe of the admin page: a batch name field, a file picker and an Upload button, the uploaded count, then an Export button, the export status and a download link." ;
+    schema:caption "Illustrative wireframe drawn from AdminUploadPage.tsx, not a screenshot: the example project was never run." ;
+    schema:creditText "Wireframe drawn for the plugin example" ;
+    c4:imageKind "illustration" ;
+    c4:illustrative true ;
+    c4v:order 1 .
 
 :canvas a c4:Element, c4:Component ;
     rdfs:label "BoundingBoxCanvas" ;
@@ -1636,7 +1666,16 @@
     schema:position 15 ;
     c4:source :annotator ;
     c4:target :annotate-page ;
-    rdfs:label "Submit for review" .
+    rdfs:label "Submit for review" ;
+    schema:image :image:step:annotate:15:1 .
+
+:image:step:annotate:15:1 a schema:ImageObject ;
+    schema:contentUrl "img/annotate-page.svg"^^xsd:anyURI ;
+    c4:altText "Wireframe of the Annotate page with two boxes drawn and the Submit for review button, which is enabled once there is at least one box." ;
+    schema:caption "What the annotator sees at this step: an illustrative wireframe from AnnotatePage.tsx, not a screenshot." ;
+    c4:imageKind "illustration" ;
+    c4:illustrative true ;
+    c4v:order 1 .
 
 :step:annotate:16 a c4:Step ;
     c4:inScenario :scenario:annotate ;
@@ -1761,7 +1800,16 @@
     schema:position 7 ;
     c4:source :reviewer ;
     c4:target :review-page ;
-    rdfs:label "types comment, Reject" .
+    rdfs:label "types comment, Reject" ;
+    schema:image :image:step:review:7:1 .
+
+:image:step:review:7:1 a schema:ImageObject ;
+    schema:contentUrl "img/review-queue.svg"^^xsd:anyURI ;
+    c4:altText "Wireframe of the Review queue page with a task selected; Reject stays disabled until a comment is typed." ;
+    schema:caption "What the reviewer sees at this step: an illustrative wireframe from ReviewQueuePage.tsx, not a screenshot." ;
+    c4:imageKind "illustration" ;
+    c4:illustrative true ;
+    c4v:order 1 .
 
 :step:review:8 a c4:Step ;
     c4:inScenario :scenario:review ;
@@ -1936,6 +1984,7 @@
     c4:precondition "Signed in with the admin role: POST /api/exports and GET /api/exports/{id} require it." ;
     c4:outcome "The worker writes exports/export-<id>.coco.json to MinIO and marks the export done with its task count; the page shows a presigned download URL." ;
     c4v:order 4 ;
+    c4v:tone "teal" ;
     c4:hasStep :step:export:1, :step:export:2, :step:export:3, :step:export:4, :step:export:5, :step:export:6,
         :step:export:7, :step:export:8, :step:export:9, :step:export:10, :step:export:11,
         :step:export:12, :step:export:13, :step:export:14, :step:export:15, :step:export:16,
