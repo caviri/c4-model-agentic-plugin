@@ -1,0 +1,875 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Image Annotation Tool: how it works</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/*!
+* reveal.js 5.1.0
+* https://revealjs.com
+* MIT licensed
+*
+* Copyright (C) 2011-2024 Hakim El Hattab, https://hakim.se
+*/.reveal .r-stretch,.reveal .stretch{max-width:none;max-height:none}.reveal pre.r-stretch code,.reveal pre.stretch code{height:100%;max-height:100%;box-sizing:border-box}.reveal .r-fit-text{display:inline-block;white-space:nowrap}.reveal .r-stack{display:grid;grid-template-rows:100%}.reveal .r-stack>*{grid-area:1/1;margin:auto}.reveal .r-hstack,.reveal .r-vstack{display:flex}.reveal .r-hstack img,.reveal .r-hstack video,.reveal .r-vstack img,.reveal .r-vstack video{min-width:0;min-height:0;object-fit:contain}.reveal .r-vstack{flex-direction:column;align-items:center;justify-content:center}.reveal .r-hstack{flex-direction:row;align-items:center;justify-content:center}.reveal .items-stretch{align-items:stretch}.reveal .items-start{align-items:flex-start}.reveal .items-center{align-items:center}.reveal .items-end{align-items:flex-end}.reveal .justify-between{justify-content:space-between}.reveal .justify-around{justify-content:space-around}.reveal .justify-start{justify-content:flex-start}.reveal .justify-center{justify-content:center}.reveal .justify-end{justify-content:flex-end}html.reveal-full-page{width:100%;height:100%;height:100vh;height:calc(var(--vh,1vh) * 100);height:100svh;overflow:hidden}.reveal-viewport{height:100%;overflow:hidden;position:relative;line-height:1;margin:0;background-color:#fff;color:#000;--r-controls-spacing:12px}.reveal-viewport:fullscreen{top:0!important;left:0!important;width:100%!important;height:100%!important;transform:none!important}.reveal .fragment{transition:all .2s ease}.reveal .fragment:not(.custom){opacity:0;visibility:hidden;will-change:opacity}.reveal .fragment.visible{opacity:1;visibility:inherit}.reveal .fragment.disabled{transition:none}.reveal .fragment.grow{opacity:1;visibility:inherit}.reveal .fragment.grow.visible{transform:scale(1.3)}.reveal .fragment.shrink{opacity:1;visibility:inherit}.reveal .fragment.shrink.visible{transform:scale(.7)}.reveal .fragment.zoom-in{transform:scale(.1)}.reveal .fragment.zoom-in.visible{transform:none}.reveal .fragment.fade-out{opacity:1;visibility:inherit}.reveal .fragment.fade-out.visible{opacity:0;visibility:hidden}.reveal .fragment.semi-fade-out{opacity:1;visibility:inherit}.reveal .fragment.semi-fade-out.visible{opacity:.5;visibility:inherit}.reveal .fragment.strike{opacity:1;visibility:inherit}.reveal .fragment.strike.visible{text-decoration:line-through}.reveal .fragment.fade-up{transform:translate(0,40px)}.reveal .fragment.fade-up.visible{transform:translate(0,0)}.reveal .fragment.fade-down{transform:translate(0,-40px)}.reveal .fragment.fade-down.visible{transform:translate(0,0)}.reveal .fragment.fade-right{transform:translate(-40px,0)}.reveal .fragment.fade-right.visible{transform:translate(0,0)}.reveal .fragment.fade-left{transform:translate(40px,0)}.reveal .fragment.fade-left.visible{transform:translate(0,0)}.reveal .fragment.current-visible,.reveal .fragment.fade-in-then-out{opacity:0;visibility:hidden}.reveal .fragment.current-visible.current-fragment,.reveal .fragment.fade-in-then-out.current-fragment{opacity:1;visibility:inherit}.reveal .fragment.fade-in-then-semi-out{opacity:0;visibility:hidden}.reveal .fragment.fade-in-then-semi-out.visible{opacity:.5;visibility:inherit}.reveal .fragment.fade-in-then-semi-out.current-fragment{opacity:1;visibility:inherit}.reveal .fragment.highlight-blue,.reveal .fragment.highlight-current-blue,.reveal .fragment.highlight-current-green,.reveal .fragment.highlight-current-red,.reveal .fragment.highlight-green,.reveal .fragment.highlight-red{opacity:1;visibility:inherit}.reveal .fragment.highlight-red.visible{color:#ff2c2d}.reveal .fragment.highlight-green.visible{color:#17ff2e}.reveal .fragment.highlight-blue.visible{color:#1b91ff}.reveal .fragment.highlight-current-red.current-fragment{color:#ff2c2d}.reveal .fragment.highlight-current-green.current-fragment{color:#17ff2e}.reveal .fragment.highlight-current-blue.current-fragment{color:#1b91ff}.reveal:after{content:"";font-style:italic}.reveal iframe{z-index:1}.reveal a{position:relative}@keyframes bounce-right{0%,10%,25%,40%,50%{transform:translateX(0)}20%{transform:translateX(10px)}30%{transform:translateX(-5px)}}@keyframes bounce-left{0%,10%,25%,40%,50%{transform:translateX(0)}20%{transform:translateX(-10px)}30%{transform:translateX(5px)}}@keyframes bounce-down{0%,10%,25%,40%,50%{transform:translateY(0)}20%{transform:translateY(10px)}30%{transform:translateY(-5px)}}.reveal .controls{display:none;position:absolute;top:auto;bottom:var(--r-controls-spacing);right:var(--r-controls-spacing);left:auto;z-index:11;color:#000;pointer-events:none;font-size:10px}.reveal .controls button{position:absolute;padding:0;background-color:transparent;border:0;outline:0;cursor:pointer;color:currentColor;transform:scale(.9999);transition:color .2s ease,opacity .2s ease,transform .2s ease;z-index:2;pointer-events:auto;font-size:inherit;visibility:hidden;opacity:0;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}.reveal .controls .controls-arrow:after,.reveal .controls .controls-arrow:before{content:"";position:absolute;top:0;left:0;width:2.6em;height:.5em;border-radius:.25em;background-color:currentColor;transition:all .15s ease,background-color .8s ease;transform-origin:.2em 50%;will-change:transform}.reveal .controls .controls-arrow{position:relative;width:3.6em;height:3.6em}.reveal .controls .controls-arrow:before{transform:translateX(.5em) translateY(1.55em) rotate(45deg)}.reveal .controls .controls-arrow:after{transform:translateX(.5em) translateY(1.55em) rotate(-45deg)}.reveal .controls .controls-arrow:hover:before{transform:translateX(.5em) translateY(1.55em) rotate(40deg)}.reveal .controls .controls-arrow:hover:after{transform:translateX(.5em) translateY(1.55em) rotate(-40deg)}.reveal .controls .controls-arrow:active:before{transform:translateX(.5em) translateY(1.55em) rotate(36deg)}.reveal .controls .controls-arrow:active:after{transform:translateX(.5em) translateY(1.55em) rotate(-36deg)}.reveal .controls .navigate-left{right:6.4em;bottom:3.2em;transform:translateX(-10px)}.reveal .controls .navigate-left.highlight{animation:bounce-left 2s 50 both ease-out}.reveal .controls .navigate-right{right:0;bottom:3.2em;transform:translateX(10px)}.reveal .controls .navigate-right .controls-arrow{transform:rotate(180deg)}.reveal .controls .navigate-right.highlight{animation:bounce-right 2s 50 both ease-out}.reveal .controls .navigate-up{right:3.2em;bottom:6.4em;transform:translateY(-10px)}.reveal .controls .navigate-up .controls-arrow{transform:rotate(90deg)}.reveal .controls .navigate-down{right:3.2em;bottom:-1.4em;padding-bottom:1.4em;transform:translateY(10px)}.reveal .controls .navigate-down .controls-arrow{transform:rotate(-90deg)}.reveal .controls .navigate-down.highlight{animation:bounce-down 2s 50 both ease-out}.reveal .controls[data-controls-back-arrows=faded] .navigate-up.enabled{opacity:.3}.reveal .controls[data-controls-back-arrows=faded] .navigate-up.enabled:hover{opacity:1}.reveal .controls[data-controls-back-arrows=hidden] .navigate-up.enabled{opacity:0;visibility:hidden}.reveal .controls .enabled{visibility:visible;opacity:.9;cursor:pointer;transform:none}.reveal .controls .enabled.fragmented{opacity:.5}.reveal .controls .enabled.fragmented:hover,.reveal .controls .enabled:hover{opacity:1}.reveal:not(.rtl) .controls[data-controls-back-arrows=faded] .navigate-left.enabled{opacity:.3}.reveal:not(.rtl) .controls[data-controls-back-arrows=faded] .navigate-left.enabled:hover{opacity:1}.reveal:not(.rtl) .controls[data-controls-back-arrows=hidden] .navigate-left.enabled{opacity:0;visibility:hidden}.reveal.rtl .controls[data-controls-back-arrows=faded] .navigate-right.enabled{opacity:.3}.reveal.rtl .controls[data-controls-back-arrows=faded] .navigate-right.enabled:hover{opacity:1}.reveal.rtl .controls[data-controls-back-arrows=hidden] .navigate-right.enabled{opacity:0;visibility:hidden}.reveal[data-navigation-mode=linear].has-horizontal-slides .navigate-down,.reveal[data-navigation-mode=linear].has-horizontal-slides .navigate-up{display:none}.reveal:not(.has-vertical-slides) .controls .navigate-left,.reveal[data-navigation-mode=linear].has-horizontal-slides .navigate-left{bottom:1.4em;right:5.5em}.reveal:not(.has-vertical-slides) .controls .navigate-right,.reveal[data-navigation-mode=linear].has-horizontal-slides .navigate-right{bottom:1.4em;right:.5em}.reveal:not(.has-horizontal-slides) .controls .navigate-up{right:1.4em;bottom:5em}.reveal:not(.has-horizontal-slides) .controls .navigate-down{right:1.4em;bottom:.5em}.reveal.has-dark-background .controls{color:#fff}.reveal.has-light-background .controls{color:#000}.reveal.no-hover .controls .controls-arrow:active:before,.reveal.no-hover .controls .controls-arrow:hover:before{transform:translateX(.5em) translateY(1.55em) rotate(45deg)}.reveal.no-hover .controls .controls-arrow:active:after,.reveal.no-hover .controls .controls-arrow:hover:after{transform:translateX(.5em) translateY(1.55em) rotate(-45deg)}@media screen and (min-width:500px){.reveal-viewport{--r-controls-spacing:0.8em}.reveal .controls[data-controls-layout=edges]{top:0;right:0;bottom:0;left:0}.reveal .controls[data-controls-layout=edges] .navigate-down,.reveal .controls[data-controls-layout=edges] .navigate-left,.reveal .controls[data-controls-layout=edges] .navigate-right,.reveal .controls[data-controls-layout=edges] .navigate-up{bottom:auto;right:auto}.reveal .controls[data-controls-layout=edges] .navigate-left{top:50%;left:var(--r-controls-spacing);margin-top:-1.8em}.reveal .controls[data-controls-layout=edges] .navigate-right{top:50%;right:var(--r-controls-spacing);margin-top:-1.8em}.reveal .controls[data-controls-layout=edges] .navigate-up{top:var(--r-controls-spacing);left:50%;margin-left:-1.8em}.reveal .controls[data-controls-layout=edges] .navigate-down{bottom:calc(var(--r-controls-spacing) - 1.4em + .3em);left:50%;margin-left:-1.8em}}.reveal .progress{position:absolute;display:none;height:3px;width:100%;bottom:0;left:0;z-index:10;background-color:rgba(0,0,0,.2);color:#fff}.reveal .progress:after{content:"";display:block;position:absolute;height:10px;width:100%;top:-10px}.reveal .progress span{display:block;height:100%;width:100%;background-color:currentColor;transition:transform .8s cubic-bezier(.26,.86,.44,.985);transform-origin:0 0;transform:scaleX(0)}.reveal .slide-number{position:absolute;display:block;right:8px;bottom:8px;z-index:31;font-family:Helvetica,sans-serif;font-size:12px;line-height:1;color:#fff;background-color:rgba(0,0,0,.4);padding:5px}.reveal .slide-number a{color:currentColor}.reveal .slide-number-delimiter{margin:0 3px}.reveal{position:relative;width:100%;height:100%;overflow:hidden;touch-action:pinch-zoom}.reveal.embedded{touch-action:pan-y}.reveal.embedded.is-vertical-slide{touch-action:none}.reveal .slides{position:absolute;width:100%;height:100%;top:0;right:0;bottom:0;left:0;margin:auto;pointer-events:none;overflow:visible;z-index:1;text-align:center;perspective:600px;perspective-origin:50% 40%}.reveal .slides>section{perspective:600px}.reveal .slides>section,.reveal .slides>section>section{display:none;position:absolute;width:100%;pointer-events:auto;z-index:10;transform-style:flat;transition:transform-origin .8s cubic-bezier(.26,.86,.44,.985),transform .8s cubic-bezier(.26,.86,.44,.985),visibility .8s cubic-bezier(.26,.86,.44,.985),opacity .8s cubic-bezier(.26,.86,.44,.985)}.reveal[data-transition-speed=fast] .slides section{transition-duration:.4s}.reveal[data-transition-speed=slow] .slides section{transition-duration:1.2s}.reveal .slides section[data-transition-speed=fast]{transition-duration:.4s}.reveal .slides section[data-transition-speed=slow]{transition-duration:1.2s}.reveal .slides>section.stack{padding-top:0;padding-bottom:0;pointer-events:none;height:100%}.reveal .slides>section.present,.reveal .slides>section>section.present{display:block;z-index:11;opacity:1}.reveal .slides>section:empty,.reveal .slides>section>section:empty,.reveal .slides>section>section[data-background-interactive],.reveal .slides>section[data-background-interactive]{pointer-events:none}.reveal.center,.reveal.center .slides,.reveal.center .slides section{min-height:0!important}.reveal .slides>section:not(.present),.reveal .slides>section>section:not(.present){pointer-events:none}.reveal.overview .slides>section,.reveal.overview .slides>section>section{pointer-events:auto}.reveal .slides>section.future,.reveal .slides>section.future>section,.reveal .slides>section.past,.reveal .slides>section.past>section,.reveal .slides>section>section.future,.reveal .slides>section>section.past{opacity:0}.reveal .slides>section[data-transition=slide].past,.reveal .slides>section[data-transition~=slide-out].past,.reveal.slide .slides>section:not([data-transition]).past{transform:translate(-150%,0)}.reveal .slides>section[data-transition=slide].future,.reveal .slides>section[data-transition~=slide-in].future,.reveal.slide .slides>section:not([data-transition]).future{transform:translate(150%,0)}.reveal .slides>section>section[data-transition=slide].past,.reveal .slides>section>section[data-transition~=slide-out].past,.reveal.slide .slides>section>section:not([data-transition]).past{transform:translate(0,-150%)}.reveal .slides>section>section[data-transition=slide].future,.reveal .slides>section>section[data-transition~=slide-in].future,.reveal.slide .slides>section>section:not([data-transition]).future{transform:translate(0,150%)}.reveal .slides>section[data-transition=linear].past,.reveal .slides>section[data-transition~=linear-out].past,.reveal.linear .slides>section:not([data-transition]).past{transform:translate(-150%,0)}.reveal .slides>section[data-transition=linear].future,.reveal .slides>section[data-transition~=linear-in].future,.reveal.linear .slides>section:not([data-transition]).future{transform:translate(150%,0)}.reveal .slides>section>section[data-transition=linear].past,.reveal .slides>section>section[data-transition~=linear-out].past,.reveal.linear .slides>section>section:not([data-transition]).past{transform:translate(0,-150%)}.reveal .slides>section>section[data-transition=linear].future,.reveal .slides>section>section[data-transition~=linear-in].future,.reveal.linear .slides>section>section:not([data-transition]).future{transform:translate(0,150%)}.reveal .slides section[data-transition=default].stack,.reveal.default .slides section.stack{transform-style:preserve-3d}.reveal .slides>section[data-transition=default].past,.reveal .slides>section[data-transition~=default-out].past,.reveal.default .slides>section:not([data-transition]).past{transform:translate3d(-100%,0,0) rotateY(-90deg) translate3d(-100%,0,0)}.reveal .slides>section[data-transition=default].future,.reveal .slides>section[data-transition~=default-in].future,.reveal.default .slides>section:not([data-transition]).future{transform:translate3d(100%,0,0) rotateY(90deg) translate3d(100%,0,0)}.reveal .slides>section>section[data-transition=default].past,.reveal .slides>section>section[data-transition~=default-out].past,.reveal.default .slides>section>section:not([data-transition]).past{transform:translate3d(0,-300px,0) rotateX(70deg) translate3d(0,-300px,0)}.reveal .slides>section>section[data-transition=default].future,.reveal .slides>section>section[data-transition~=default-in].future,.reveal.default .slides>section>section:not([data-transition]).future{transform:translate3d(0,300px,0) rotateX(-70deg) translate3d(0,300px,0)}.reveal .slides section[data-transition=convex].stack,.reveal.convex .slides section.stack{transform-style:preserve-3d}.reveal .slides>section[data-transition=convex].past,.reveal .slides>section[data-transition~=convex-out].past,.reveal.convex .slides>section:not([data-transition]).past{transform:translate3d(-100%,0,0) rotateY(-90deg) translate3d(-100%,0,0)}.reveal .slides>section[data-transition=convex].future,.reveal .slides>section[data-transition~=convex-in].future,.reveal.convex .slides>section:not([data-transition]).future{transform:translate3d(100%,0,0) rotateY(90deg) translate3d(100%,0,0)}.reveal .slides>section>section[data-transition=convex].past,.reveal .slides>section>section[data-transition~=convex-out].past,.reveal.convex .slides>section>section:not([data-transition]).past{transform:translate3d(0,-300px,0) rotateX(70deg) translate3d(0,-300px,0)}.reveal .slides>section>section[data-transition=convex].future,.reveal .slides>section>section[data-transition~=convex-in].future,.reveal.convex .slides>section>section:not([data-transition]).future{transform:translate3d(0,300px,0) rotateX(-70deg) translate3d(0,300px,0)}.reveal .slides section[data-transition=concave].stack,.reveal.concave .slides section.stack{transform-style:preserve-3d}.reveal .slides>section[data-transition=concave].past,.reveal .slides>section[data-transition~=concave-out].past,.reveal.concave .slides>section:not([data-transition]).past{transform:translate3d(-100%,0,0) rotateY(90deg) translate3d(-100%,0,0)}.reveal .slides>section[data-transition=concave].future,.reveal .slides>section[data-transition~=concave-in].future,.reveal.concave .slides>section:not([data-transition]).future{transform:translate3d(100%,0,0) rotateY(-90deg) translate3d(100%,0,0)}.reveal .slides>section>section[data-transition=concave].past,.reveal .slides>section>section[data-transition~=concave-out].past,.reveal.concave .slides>section>section:not([data-transition]).past{transform:translate3d(0,-80%,0) rotateX(-70deg) translate3d(0,-80%,0)}.reveal .slides>section>section[data-transition=concave].future,.reveal .slides>section>section[data-transition~=concave-in].future,.reveal.concave .slides>section>section:not([data-transition]).future{transform:translate3d(0,80%,0) rotateX(70deg) translate3d(0,80%,0)}.reveal .slides section[data-transition=zoom],.reveal.zoom .slides section:not([data-transition]){transition-timing-function:ease}.reveal .slides>section[data-transition=zoom].past,.reveal .slides>section[data-transition~=zoom-out].past,.reveal.zoom .slides>section:not([data-transition]).past{visibility:hidden;transform:scale(16)}.reveal .slides>section[data-transition=zoom].future,.reveal .slides>section[data-transition~=zoom-in].future,.reveal.zoom .slides>section:not([data-transition]).future{visibility:hidden;transform:scale(.2)}.reveal .slides>section>section[data-transition=zoom].past,.reveal .slides>section>section[data-transition~=zoom-out].past,.reveal.zoom .slides>section>section:not([data-transition]).past{transform:scale(16)}.reveal .slides>section>section[data-transition=zoom].future,.reveal .slides>section>section[data-transition~=zoom-in].future,.reveal.zoom .slides>section>section:not([data-transition]).future{transform:scale(.2)}.reveal.cube .slides{perspective:1300px}.reveal.cube .slides section{padding:30px;min-height:700px;backface-visibility:hidden;box-sizing:border-box;transform-style:preserve-3d}.reveal.center.cube .slides section{min-height:0}.reveal.cube .slides section:not(.stack):before{content:"";position:absolute;display:block;width:100%;height:100%;left:0;top:0;background:rgba(0,0,0,.1);border-radius:4px;transform:translateZ(-20px)}.reveal.cube .slides section:not(.stack):after{content:"";position:absolute;display:block;width:90%;height:30px;left:5%;bottom:0;background:0 0;z-index:1;border-radius:4px;box-shadow:0 95px 25px rgba(0,0,0,.2);transform:translateZ(-90px) rotateX(65deg)}.reveal.cube .slides>section.stack{padding:0;background:0 0}.reveal.cube .slides>section.past{transform-origin:100% 0;transform:translate3d(-100%,0,0) rotateY(-90deg)}.reveal.cube .slides>section.future{transform-origin:0 0;transform:translate3d(100%,0,0) rotateY(90deg)}.reveal.cube .slides>section>section.past{transform-origin:0 100%;transform:translate3d(0,-100%,0) rotateX(90deg)}.reveal.cube .slides>section>section.future{transform-origin:0 0;transform:translate3d(0,100%,0) rotateX(-90deg)}.reveal.page .slides{perspective-origin:0 50%;perspective:3000px}.reveal.page .slides section{padding:30px;min-height:700px;box-sizing:border-box;transform-style:preserve-3d}.reveal.page .slides section.past{z-index:12}.reveal.page .slides section:not(.stack):before{content:"";position:absolute;display:block;width:100%;height:100%;left:0;top:0;background:rgba(0,0,0,.1);transform:translateZ(-20px)}.reveal.page .slides section:not(.stack):after{content:"";position:absolute;display:block;width:90%;height:30px;left:5%;bottom:0;background:0 0;z-index:1;border-radius:4px;box-shadow:0 95px 25px rgba(0,0,0,.2);-webkit-transform:translateZ(-90px) rotateX(65deg)}.reveal.page .slides>section.stack{padding:0;background:0 0}.reveal.page .slides>section.past{transform-origin:0 0;transform:translate3d(-40%,0,0) rotateY(-80deg)}.reveal.page .slides>section.future{transform-origin:100% 0;transform:translate3d(0,0,0)}.reveal.page .slides>section>section.past{transform-origin:0 0;transform:translate3d(0,-40%,0) rotateX(80deg)}.reveal.page .slides>section>section.future{transform-origin:0 100%;transform:translate3d(0,0,0)}.reveal .slides section[data-transition=fade],.reveal.fade .slides section:not([data-transition]),.reveal.fade .slides>section>section:not([data-transition]){transform:none;transition:opacity .5s}.reveal.fade.overview .slides section,.reveal.fade.overview .slides>section>section{transition:none}.reveal .slides section[data-transition=none],.reveal.none .slides section:not([data-transition]){transform:none;transition:none}.reveal .pause-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;visibility:hidden;opacity:0;z-index:100;transition:all 1s ease}.reveal .pause-overlay .resume-button{position:absolute;bottom:20px;right:20px;color:#ccc;border-radius:2px;padding:6px 14px;border:2px solid #ccc;font-size:16px;background:0 0;cursor:pointer}.reveal .pause-overlay .resume-button:hover{color:#fff;border-color:#fff}.reveal.paused .pause-overlay{visibility:visible;opacity:1}.reveal .no-transition,.reveal .no-transition *,.reveal .slides.disable-slide-transitions section{transition:none!important}.reveal .slides.disable-slide-transitions section{transform:none!important}.reveal .backgrounds{position:absolute;width:100%;height:100%;top:0;left:0;perspective:600px}.reveal .slide-background{display:none;position:absolute;width:100%;height:100%;opacity:0;visibility:hidden;overflow:hidden;background-color:rgba(0,0,0,0);transition:all .8s cubic-bezier(.26,.86,.44,.985)}.reveal .slide-background-content{position:absolute;width:100%;height:100%;background-position:50% 50%;background-repeat:no-repeat;background-size:cover}.reveal .slide-background.stack{display:block}.reveal .slide-background.present{opacity:1;visibility:visible;z-index:2}.print-pdf .reveal .slide-background{opacity:1!important;visibility:visible!important}.reveal .slide-background video{position:absolute;width:100%;height:100%;max-width:none;max-height:none;top:0;left:0;object-fit:cover}.reveal .slide-background[data-background-size=contain] video{object-fit:contain}.reveal>.backgrounds .slide-background[data-background-transition=none],.reveal[data-background-transition=none]>.backgrounds .slide-background:not([data-background-transition]){transition:none}.reveal>.backgrounds .slide-background[data-background-transition=slide],.reveal[data-background-transition=slide]>.backgrounds .slide-background:not([data-background-transition]){opacity:1}.reveal>.backgrounds .slide-background.past[data-background-transition=slide],.reveal[data-background-transition=slide]>.backgrounds .slide-background.past:not([data-background-transition]){transform:translate(-100%,0)}.reveal>.backgrounds .slide-background.future[data-background-transition=slide],.reveal[data-background-transition=slide]>.backgrounds .slide-background.future:not([data-background-transition]){transform:translate(100%,0)}.reveal>.backgrounds .slide-background>.slide-background.past[data-background-transition=slide],.reveal[data-background-transition=slide]>.backgrounds .slide-background>.slide-background.past:not([data-background-transition]){transform:translate(0,-100%)}.reveal>.backgrounds .slide-background>.slide-background.future[data-background-transition=slide],.reveal[data-background-transition=slide]>.backgrounds .slide-background>.slide-background.future:not([data-background-transition]){transform:translate(0,100%)}.reveal>.backgrounds .slide-background.past[data-background-transition=convex],.reveal[data-background-transition=convex]>.backgrounds .slide-background.past:not([data-background-transition]){opacity:0;transform:translate3d(-100%,0,0) rotateY(-90deg) translate3d(-100%,0,0)}.reveal>.backgrounds .slide-background.future[data-background-transition=convex],.reveal[data-background-transition=convex]>.backgrounds .slide-background.future:not([data-background-transition]){opacity:0;transform:translate3d(100%,0,0) rotateY(90deg) translate3d(100%,0,0)}.reveal>.backgrounds .slide-background>.slide-background.past[data-background-transition=convex],.reveal[data-background-transition=convex]>.backgrounds .slide-background>.slide-background.past:not([data-background-transition]){opacity:0;transform:translate3d(0,-100%,0) rotateX(90deg) translate3d(0,-100%,0)}.reveal>.backgrounds .slide-background>.slide-background.future[data-background-transition=convex],.reveal[data-background-transition=convex]>.backgrounds .slide-background>.slide-background.future:not([data-background-transition]){opacity:0;transform:translate3d(0,100%,0) rotateX(-90deg) translate3d(0,100%,0)}.reveal>.backgrounds .slide-background.past[data-background-transition=concave],.reveal[data-background-transition=concave]>.backgrounds .slide-background.past:not([data-background-transition]){opacity:0;transform:translate3d(-100%,0,0) rotateY(90deg) translate3d(-100%,0,0)}.reveal>.backgrounds .slide-background.future[data-background-transition=concave],.reveal[data-background-transition=concave]>.backgrounds .slide-background.future:not([data-background-transition]){opacity:0;transform:translate3d(100%,0,0) rotateY(-90deg) translate3d(100%,0,0)}.reveal>.backgrounds .slide-background>.slide-background.past[data-background-transition=concave],.reveal[data-background-transition=concave]>.backgrounds .slide-background>.slide-background.past:not([data-background-transition]){opacity:0;transform:translate3d(0,-100%,0) rotateX(-90deg) translate3d(0,-100%,0)}.reveal>.backgrounds .slide-background>.slide-background.future[data-background-transition=concave],.reveal[data-background-transition=concave]>.backgrounds .slide-background>.slide-background.future:not([data-background-transition]){opacity:0;transform:translate3d(0,100%,0) rotateX(90deg) translate3d(0,100%,0)}.reveal>.backgrounds .slide-background[data-background-transition=zoom],.reveal[data-background-transition=zoom]>.backgrounds .slide-background:not([data-background-transition]){transition-timing-function:ease}.reveal>.backgrounds .slide-background.past[data-background-transition=zoom],.reveal[data-background-transition=zoom]>.backgrounds .slide-background.past:not([data-background-transition]){opacity:0;visibility:hidden;transform:scale(16)}.reveal>.backgrounds .slide-background.future[data-background-transition=zoom],.reveal[data-background-transition=zoom]>.backgrounds .slide-background.future:not([data-background-transition]){opacity:0;visibility:hidden;transform:scale(.2)}.reveal>.backgrounds .slide-background>.slide-background.past[data-background-transition=zoom],.reveal[data-background-transition=zoom]>.backgrounds .slide-background>.slide-background.past:not([data-background-transition]){opacity:0;visibility:hidden;transform:scale(16)}.reveal>.backgrounds .slide-background>.slide-background.future[data-background-transition=zoom],.reveal[data-background-transition=zoom]>.backgrounds .slide-background>.slide-background.future:not([data-background-transition]){opacity:0;visibility:hidden;transform:scale(.2)}.reveal[data-transition-speed=fast]>.backgrounds .slide-background{transition-duration:.4s}.reveal[data-transition-speed=slow]>.backgrounds .slide-background{transition-duration:1.2s}.reveal [data-auto-animate-target^=unmatched]{will-change:opacity}.reveal section[data-auto-animate]:not(.stack):not([data-auto-animate=running]) [data-auto-animate-target^=unmatched]{opacity:0}.reveal.overview{perspective-origin:50% 50%;perspective:700px}.reveal.overview .slides{-moz-transform-style:preserve-3d}.reveal.overview .slides section{height:100%;top:0!important;opacity:1!important;overflow:hidden;visibility:visible!important;cursor:pointer;box-sizing:border-box}.reveal.overview .slides section.present,.reveal.overview .slides section:hover{outline:10px solid rgba(150,150,150,.4);outline-offset:10px}.reveal.overview .slides section .fragment{opacity:1;transition:none}.reveal.overview .slides section:after,.reveal.overview .slides section:before{display:none!important}.reveal.overview .slides>section.stack{padding:0;top:0!important;background:0 0;outline:0;overflow:visible}.reveal.overview .backgrounds{perspective:inherit;-moz-transform-style:preserve-3d}.reveal.overview .backgrounds .slide-background{opacity:1;visibility:visible;outline:10px solid rgba(150,150,150,.1);outline-offset:10px}.reveal.overview .backgrounds .slide-background.stack{overflow:visible}.reveal.overview .slides section,.reveal.overview-deactivating .slides section{transition:none}.reveal.overview .backgrounds .slide-background,.reveal.overview-deactivating .backgrounds .slide-background{transition:none}.reveal.rtl .slides,.reveal.rtl .slides h1,.reveal.rtl .slides h2,.reveal.rtl .slides h3,.reveal.rtl .slides h4,.reveal.rtl .slides h5,.reveal.rtl .slides h6{direction:rtl;font-family:sans-serif}.reveal.rtl code,.reveal.rtl pre{direction:ltr}.reveal.rtl ol,.reveal.rtl ul{text-align:right}.reveal.rtl .progress span{transform-origin:100% 0}.reveal.has-parallax-background .backgrounds{transition:all .8s ease}.reveal.has-parallax-background[data-transition-speed=fast] .backgrounds{transition-duration:.4s}.reveal.has-parallax-background[data-transition-speed=slow] .backgrounds{transition-duration:1.2s}.reveal>.overlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1000;background:rgba(0,0,0,.95);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:all .3s ease}.reveal>.overlay .spinner{position:absolute;display:block;top:50%;left:50%;width:32px;height:32px;margin:-16px 0 0 -16px;z-index:10;background-image:url(data:image/gif;base64,R0lGODlhIAAgAPMAAJmZmf%2F%2F%2F6%2Bvr8nJybW1tcDAwOjo6Nvb26ioqKOjo7Ozs%2FLy8vz8%2FAAAAAAAAAAAACH%2FC05FVFNDQVBFMi4wAwEAAAAh%2FhpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh%2BQQJCgAAACwAAAAAIAAgAAAE5xDISWlhperN52JLhSSdRgwVo1ICQZRUsiwHpTJT4iowNS8vyW2icCF6k8HMMBkCEDskxTBDAZwuAkkqIfxIQyhBQBFvAQSDITM5VDW6XNE4KagNh6Bgwe60smQUB3d4Rz1ZBApnFASDd0hihh12BkE9kjAJVlycXIg7CQIFA6SlnJ87paqbSKiKoqusnbMdmDC2tXQlkUhziYtyWTxIfy6BE8WJt5YJvpJivxNaGmLHT0VnOgSYf0dZXS7APdpB309RnHOG5gDqXGLDaC457D1zZ%2FV%2FnmOM82XiHRLYKhKP1oZmADdEAAAh%2BQQJCgAAACwAAAAAIAAgAAAE6hDISWlZpOrNp1lGNRSdRpDUolIGw5RUYhhHukqFu8DsrEyqnWThGvAmhVlteBvojpTDDBUEIFwMFBRAmBkSgOrBFZogCASwBDEY%2FCZSg7GSE0gSCjQBMVG023xWBhklAnoEdhQEfyNqMIcKjhRsjEdnezB%2BA4k8gTwJhFuiW4dokXiloUepBAp5qaKpp6%2BHo7aWW54wl7obvEe0kRuoplCGepwSx2jJvqHEmGt6whJpGpfJCHmOoNHKaHx61WiSR92E4lbFoq%2BB6QDtuetcaBPnW6%2BO7wDHpIiK9SaVK5GgV543tzjgGcghAgAh%2BQQJCgAAACwAAAAAIAAgAAAE7hDISSkxpOrN5zFHNWRdhSiVoVLHspRUMoyUakyEe8PTPCATW9A14E0UvuAKMNAZKYUZCiBMuBakSQKG8G2FzUWox2AUtAQFcBKlVQoLgQReZhQlCIJesQXI5B0CBnUMOxMCenoCfTCEWBsJColTMANldx15BGs8B5wlCZ9Po6OJkwmRpnqkqnuSrayqfKmqpLajoiW5HJq7FL1Gr2mMMcKUMIiJgIemy7xZtJsTmsM4xHiKv5KMCXqfyUCJEonXPN2rAOIAmsfB3uPoAK%2B%2BG%2Bw48edZPK%2BM6hLJpQg484enXIdQFSS1u6UhksENEQAAIfkECQoAAAAsAAAAACAAIAAABOcQyEmpGKLqzWcZRVUQnZYg1aBSh2GUVEIQ2aQOE%2BG%2BcD4ntpWkZQj1JIiZIogDFFyHI0UxQwFugMSOFIPJftfVAEoZLBbcLEFhlQiqGp1Vd140AUklUN3eCA51C1EWMzMCezCBBmkxVIVHBWd3HHl9JQOIJSdSnJ0TDKChCwUJjoWMPaGqDKannasMo6WnM562R5YluZRwur0wpgqZE7NKUm%2BFNRPIhjBJxKZteWuIBMN4zRMIVIhffcgojwCF117i4nlLnY5ztRLsnOk%2BaV%2BoJY7V7m76PdkS4trKcdg0Zc0tTcKkRAAAIfkECQoAAAAsAAAAACAAIAAABO4QyEkpKqjqzScpRaVkXZWQEximw1BSCUEIlDohrft6cpKCk5xid5MNJTaAIkekKGQkWyKHkvhKsR7ARmitkAYDYRIbUQRQjWBwJRzChi9CRlBcY1UN4g0%2FVNB0AlcvcAYHRyZPdEQFYV8ccwR5HWxEJ02YmRMLnJ1xCYp0Y5idpQuhopmmC2KgojKasUQDk5BNAwwMOh2RtRq5uQuPZKGIJQIGwAwGf6I0JXMpC8C7kXWDBINFMxS4DKMAWVWAGYsAdNqW5uaRxkSKJOZKaU3tPOBZ4DuK2LATgJhkPJMgTwKCdFjyPHEnKxFCDhEAACH5BAkKAAAALAAAAAAgACAAAATzEMhJaVKp6s2nIkolIJ2WkBShpkVRWqqQrhLSEu9MZJKK9y1ZrqYK9WiClmvoUaF8gIQSNeF1Er4MNFn4SRSDARWroAIETg1iVwuHjYB1kYc1mwruwXKC9gmsJXliGxc%2BXiUCby9ydh1sOSdMkpMTBpaXBzsfhoc5l58Gm5yToAaZhaOUqjkDgCWNHAULCwOLaTmzswadEqggQwgHuQsHIoZCHQMMQgQGubVEcxOPFAcMDAYUA85eWARmfSRQCdcMe0zeP1AAygwLlJtPNAAL19DARdPzBOWSm1brJBi45soRAWQAAkrQIykShQ9wVhHCwCQCACH5BAkKAAAALAAAAAAgACAAAATrEMhJaVKp6s2nIkqFZF2VIBWhUsJaTokqUCoBq%2BE71SRQeyqUToLA7VxF0JDyIQh%2FMVVPMt1ECZlfcjZJ9mIKoaTl1MRIl5o4CUKXOwmyrCInCKqcWtvadL2SYhyASyNDJ0uIiRMDjI0Fd30%2FiI2UA5GSS5UDj2l6NoqgOgN4gksEBgYFf0FDqKgHnyZ9OX8HrgYHdHpcHQULXAS2qKpENRg7eAMLC7kTBaixUYFkKAzWAAnLC7FLVxLWDBLKCwaKTULgEwbLA4hJtOkSBNqITT3xEgfLpBtzE%2FjiuL04RGEBgwWhShRgQExHBAAh%2BQQJCgAAACwAAAAAIAAgAAAE7xDISWlSqerNpyJKhWRdlSAVoVLCWk6JKlAqAavhO9UkUHsqlE6CwO1cRdCQ8iEIfzFVTzLdRAmZX3I2SfZiCqGk5dTESJeaOAlClzsJsqwiJwiqnFrb2nS9kmIcgEsjQydLiIlHehhpejaIjzh9eomSjZR%2BipslWIRLAgMDOR2DOqKogTB9pCUJBagDBXR6XB0EBkIIsaRsGGMMAxoDBgYHTKJiUYEGDAzHC9EACcUGkIgFzgwZ0QsSBcXHiQvOwgDdEwfFs0sDzt4S6BK4xYjkDOzn0unFeBzOBijIm1Dgmg5YFQwsCMjp1oJ8LyIAACH5BAkKAAAALAAAAAAgACAAAATwEMhJaVKp6s2nIkqFZF2VIBWhUsJaTokqUCoBq%2BE71SRQeyqUToLA7VxF0JDyIQh%2FMVVPMt1ECZlfcjZJ9mIKoaTl1MRIl5o4CUKXOwmyrCInCKqcWtvadL2SYhyASyNDJ0uIiUd6GGl6NoiPOH16iZKNlH6KmyWFOggHhEEvAwwMA0N9GBsEC6amhnVcEwavDAazGwIDaH1ipaYLBUTCGgQDA8NdHz0FpqgTBwsLqAbWAAnIA4FWKdMLGdYGEgraigbT0OITBcg5QwPT4xLrROZL6AuQAPUS7bxLpoWidY0JtxLHKhwwMJBTHgPKdEQAACH5BAkKAAAALAAAAAAgACAAAATrEMhJaVKp6s2nIkqFZF2VIBWhUsJaTokqUCoBq%2BE71SRQeyqUToLA7VxF0JDyIQh%2FMVVPMt1ECZlfcjZJ9mIKoaTl1MRIl5o4CUKXOwmyrCInCKqcWtvadL2SYhyASyNDJ0uIiUd6GAULDJCRiXo1CpGXDJOUjY%2BYip9DhToJA4RBLwMLCwVDfRgbBAaqqoZ1XBMHswsHtxtFaH1iqaoGNgAIxRpbFAgfPQSqpbgGBqUD1wBXeCYp1AYZ19JJOYgH1KwA4UBvQwXUBxPqVD9L3sbp2BNk2xvvFPJd%2BMFCN6HAAIKgNggY0KtEBAAh%2BQQJCgAAACwAAAAAIAAgAAAE6BDISWlSqerNpyJKhWRdlSAVoVLCWk6JKlAqAavhO9UkUHsqlE6CwO1cRdCQ8iEIfzFVTzLdRAmZX3I2SfYIDMaAFdTESJeaEDAIMxYFqrOUaNW4E4ObYcCXaiBVEgULe0NJaxxtYksjh2NLkZISgDgJhHthkpU4mW6blRiYmZOlh4JWkDqILwUGBnE6TYEbCgevr0N1gH4At7gHiRpFaLNrrq8HNgAJA70AWxQIH1%2BvsYMDAzZQPC9VCNkDWUhGkuE5PxJNwiUK4UfLzOlD4WvzAHaoG9nxPi5d%2BjYUqfAhhykOFwJWiAAAIfkECQoAAAAsAAAAACAAIAAABPAQyElpUqnqzaciSoVkXVUMFaFSwlpOCcMYlErAavhOMnNLNo8KsZsMZItJEIDIFSkLGQoQTNhIsFehRww2CQLKF0tYGKYSg%2BygsZIuNqJksKgbfgIGepNo2cIUB3V1B3IvNiBYNQaDSTtfhhx0CwVPI0UJe0%2Bbm4g5VgcGoqOcnjmjqDSdnhgEoamcsZuXO1aWQy8KAwOAuTYYGwi7w5h%2BKr0SJ8MFihpNbx%2B4Erq7BYBuzsdiH1jCAzoSfl0rVirNbRXlBBlLX%2BBP0XJLAPGzTkAuAOqb0WT5AH7OcdCm5B8TgRwSRKIHQtaLCwg1RAAAOwAAAAAAAAAAAA%3D%3D);visibility:visible;opacity:.6;transition:all .3s ease}.reveal>.overlay header{position:absolute;left:0;top:0;width:100%;padding:5px;z-index:2;box-sizing:border-box}.reveal>.overlay header a{display:inline-block;width:40px;height:40px;line-height:36px;padding:0 10px;float:right;opacity:.6;box-sizing:border-box}.reveal>.overlay header a:hover{opacity:1}.reveal>.overlay header a .icon{display:inline-block;width:20px;height:20px;background-position:50% 50%;background-size:100%;background-repeat:no-repeat}.reveal>.overlay header a.close .icon{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABkklEQVRYR8WX4VHDMAxG6wnoJrABZQPYBCaBTWAD2g1gE5gg6OOsXuxIlr40d81dfrSJ9V4c2VLK7spHuTJ/5wpM07QXuXc5X0opX2tEJcadjHuV80li/FgxTIEK/5QBCICBD6xEhSMGHgQPgBgLiYVAB1dpSqKDawxTohFw4JSEA3clzgIBPCURwE2JucBR7rhPJJv5OpJwDX+SfDjgx1wACQeJG1aChP9K/IMmdZ8DtESV1WyP3Bt4MwM6sj4NMxMYiqUWHQu4KYA/SYkIjOsm3BXYWMKFDwU2khjCQ4ELJUJ4SmClRArOCmSXGuKma0fYD5CbzHxFpCSGAhfAVSSUGDUk2BWZaff2g6GE15BsBQ9nwmpIGDiyHQddwNTMKkbZaf9fajXQca1EX44puJZUsnY0ObGmITE3GVLCbEhQUjGVt146j6oasWN+49Vph2w1pZ5EansNZqKBm1txbU57iRRcZ86RWMDdWtBJUHBHwoQPi1GV+JCbntmvok7iTX4/Up9mgyTc/FJYDTcndgH/AA5A/CHsyEkVAAAAAElFTkSuQmCC)}.reveal>.overlay header a.external .icon{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAcElEQVRYR+2WSQoAIQwEzf8f7XiOMkUQxUPlGkM3hVmiQfQR9GYnH1SsAQlI4DiBqkCMoNb9y2e90IAEJPAcgdznU9+engMaeJ7Azh5Y1U67gAho4DqBqmB1buAf0MB1AlVBek83ZPkmJMGc1wAR+AAqod/B97TRpQAAAABJRU5ErkJggg==)}.reveal>.overlay .viewport{position:absolute;display:flex;top:50px;right:0;bottom:0;left:0}.reveal>.overlay.overlay-preview .viewport iframe{width:100%;height:100%;max-width:100%;max-height:100%;border:0;opacity:0;visibility:hidden;transition:all .3s ease}.reveal>.overlay.overlay-preview.loaded .viewport iframe{opacity:1;visibility:visible}.reveal>.overlay.overlay-preview.loaded .viewport-inner{position:absolute;z-index:-1;left:0;top:45%;width:100%;text-align:center;letter-spacing:normal}.reveal>.overlay.overlay-preview .x-frame-error{opacity:0;transition:opacity .3s ease .3s}.reveal>.overlay.overlay-preview.loaded .x-frame-error{opacity:1}.reveal>.overlay.overlay-preview.loaded .spinner{opacity:0;visibility:hidden;transform:scale(.2)}.reveal>.overlay.overlay-help .viewport{overflow:auto;color:#fff}.reveal>.overlay.overlay-help .viewport .viewport-inner{width:600px;margin:auto;padding:20px 20px 80px 20px;text-align:center;letter-spacing:normal}.reveal>.overlay.overlay-help .viewport .viewport-inner .title{font-size:20px}.reveal>.overlay.overlay-help .viewport .viewport-inner table{border:1px solid #fff;border-collapse:collapse;font-size:16px}.reveal>.overlay.overlay-help .viewport .viewport-inner table td,.reveal>.overlay.overlay-help .viewport .viewport-inner table th{width:200px;padding:14px;border:1px solid #fff;vertical-align:middle}.reveal>.overlay.overlay-help .viewport .viewport-inner table th{padding-top:20px;padding-bottom:20px}.reveal .playback{position:absolute;left:15px;bottom:20px;z-index:30;cursor:pointer;transition:all .4s ease;-webkit-tap-highlight-color:transparent}.reveal.overview .playback{opacity:0;visibility:hidden}.reveal .hljs{min-height:100%}.reveal .hljs table{margin:initial}.reveal .hljs-ln-code,.reveal .hljs-ln-numbers{padding:0;border:0}.reveal .hljs-ln-numbers{opacity:.6;padding-right:.75em;text-align:right;vertical-align:top}.reveal .hljs.has-highlights tr:not(.highlight-line){opacity:.4}.reveal .hljs.has-highlights.fragment{transition:all .2s ease}.reveal .hljs:not(:first-child).fragment{position:absolute;top:0;left:0;width:100%;box-sizing:border-box}.reveal pre[data-auto-animate-target]{overflow:hidden}.reveal pre[data-auto-animate-target] code{height:100%}.reveal .roll{display:inline-block;line-height:1.2;overflow:hidden;vertical-align:top;perspective:400px;perspective-origin:50% 50%}.reveal .roll:hover{background:0 0;text-shadow:none}.reveal .roll span{display:block;position:relative;padding:0 2px;pointer-events:none;transition:all .4s ease;transform-origin:50% 0;transform-style:preserve-3d;backface-visibility:hidden}.reveal .roll:hover span{background:rgba(0,0,0,.5);transform:translate3d(0,0,-45px) rotateX(90deg)}.reveal .roll span:after{content:attr(data-title);display:block;position:absolute;left:0;top:0;padding:0 2px;backface-visibility:hidden;transform-origin:50% 0;transform:translate3d(0,110%,0) rotateX(-90deg)}.reveal aside.notes{display:none}.reveal .speaker-notes{display:none;position:absolute;width:33.3333333333%;height:100%;top:0;left:100%;padding:14px 18px 14px 18px;z-index:1;font-size:18px;line-height:1.4;border:1px solid rgba(0,0,0,.05);color:#222;background-color:#f5f5f5;overflow:auto;box-sizing:border-box;text-align:left;font-family:Helvetica,sans-serif;-webkit-overflow-scrolling:touch}.reveal .speaker-notes .notes-placeholder{color:#ccc;font-style:italic}.reveal .speaker-notes:focus{outline:0}.reveal .speaker-notes:before{content:"Speaker notes";display:block;margin-bottom:10px;opacity:.5}.reveal.show-notes{max-width:75%;overflow:visible}.reveal.show-notes .speaker-notes{display:block}@media screen and (min-width:1600px){.reveal .speaker-notes{font-size:20px}}@media screen and (max-width:1024px){.reveal.show-notes{border-left:0;max-width:none;max-height:70%;max-height:70vh;overflow:visible}.reveal.show-notes .speaker-notes{top:100%;left:0;width:100%;height:30vh;border:0}}@media screen and (max-width:600px){.reveal.show-notes{max-height:60%;max-height:60vh}.reveal.show-notes .speaker-notes{top:100%;height:40vh}.reveal .speaker-notes{font-size:14px}}.reveal .jump-to-slide{position:absolute;top:15px;left:15px;z-index:30;font-size:32px;-webkit-tap-highlight-color:transparent}.reveal .jump-to-slide-input{background:0 0;padding:8px;font-size:inherit;color:currentColor;border:0}.reveal .jump-to-slide-input::placeholder{color:currentColor;opacity:.5}.reveal.has-dark-background .jump-to-slide-input{color:#fff}.reveal.has-light-background .jump-to-slide-input{color:#222}.reveal .jump-to-slide-input:focus{outline:0}.zoomed .reveal *,.zoomed .reveal :after,.zoomed .reveal :before{backface-visibility:visible!important}.zoomed .reveal .controls,.zoomed .reveal .progress{opacity:0}.zoomed .reveal .roll span{background:0 0}.zoomed .reveal .roll span:after{visibility:hidden}.reveal-viewport.loading-scroll-mode{visibility:hidden}.reveal-viewport.reveal-scroll{margin:0 auto;overflow:auto;overflow-x:hidden;overflow-y:auto;z-index:1;--r-scrollbar-width:7px;--r-scrollbar-trigger-size:5px;--r-controls-spacing:8px}@media screen and (max-width:500px){.reveal-viewport.reveal-scroll{--r-scrollbar-width:3px;--r-scrollbar-trigger-size:3px}}.reveal-viewport.reveal-scroll .backgrounds,.reveal-viewport.reveal-scroll .controls,.reveal-viewport.reveal-scroll .playback,.reveal-viewport.reveal-scroll .progress,.reveal-viewport.reveal-scroll .slide-number,.reveal-viewport.reveal-scroll .speaker-notes{display:none!important}.reveal-viewport.reveal-scroll .overlay,.reveal-viewport.reveal-scroll .pause-overlay{position:fixed}.reveal-viewport.reveal-scroll .reveal{overflow:visible;touch-action:manipulation}.reveal-viewport.reveal-scroll .slides{position:static;pointer-events:initial;left:auto;top:auto;width:100%!important;margin:0;padding:0;overflow:visible;display:block;perspective:none;perspective-origin:50% 50%}.reveal-viewport.reveal-scroll .scroll-page{position:relative;width:100%;height:calc(var(--page-height) + var(--page-scroll-padding));z-index:1;overflow:visible}.reveal-viewport.reveal-scroll .scroll-page-sticky{position:sticky;height:var(--page-height);top:0}.reveal-viewport.reveal-scroll .scroll-page-content{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden}.reveal-viewport.reveal-scroll .scroll-page section{visibility:visible!important;display:block!important;position:absolute!important;width:var(--slide-width)!important;height:var(--slide-height)!important;top:50%!important;left:50%!important;opacity:1!important;transform:scale(var(--slide-scale)) translate(-50%,-50%)!important;transform-style:flat!important;transform-origin:0 0!important}.reveal-viewport.reveal-scroll .slide-background{display:block!important;position:absolute;top:0;left:0;width:100%;height:100%;z-index:auto!important;visibility:visible;opacity:1;touch-action:manipulation}.reveal-viewport.reveal-scroll[data-scrollbar=auto]::-webkit-scrollbar,.reveal-viewport.reveal-scroll[data-scrollbar=true]::-webkit-scrollbar{display:none}.reveal-viewport.reveal-scroll[data-scrollbar=auto],.reveal-viewport.reveal-scroll[data-scrollbar=true]{scrollbar-width:none}.reveal-viewport.has-dark-background,.reveal.has-dark-background{--r-overlay-element-bg-color:240,240,240;--r-overlay-element-fg-color:0,0,0}.reveal-viewport.has-light-background,.reveal.has-light-background{--r-overlay-element-bg-color:0,0,0;--r-overlay-element-fg-color:240,240,240}.reveal-viewport.reveal-scroll .scrollbar{position:sticky;top:50%;z-index:20;opacity:0;transition:all .3s ease}.reveal-viewport.reveal-scroll .scrollbar.visible,.reveal-viewport.reveal-scroll .scrollbar:hover{opacity:1}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-inner{position:absolute;width:var(--r-scrollbar-width);height:calc(var(--viewport-height) - var(--r-controls-spacing) * 2);right:var(--r-controls-spacing);top:0;transform:translateY(-50%);border-radius:var(--r-scrollbar-width);z-index:10}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-playhead{position:absolute;width:var(--r-scrollbar-width);height:var(--r-scrollbar-width);top:0;left:0;border-radius:var(--r-scrollbar-width);background-color:rgba(var(--r-overlay-element-bg-color),1);z-index:11;transition:background-color .2s ease}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide{position:absolute;width:100%;background-color:rgba(var(--r-overlay-element-bg-color),.2);box-shadow:0 0 0 1px rgba(var(--r-overlay-element-fg-color),.1);border-radius:var(--r-scrollbar-width);transition:background-color .2s ease}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide:after{content:"";position:absolute;width:200%;height:100%;top:0;left:-50%;background:rgba(0,0,0,0);z-index:-1}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active,.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide:hover{background-color:rgba(var(--r-overlay-element-bg-color),.4)}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-trigger{position:absolute;width:100%;transition:background-color .2s ease}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active.has-triggers{background-color:rgba(var(--r-overlay-element-bg-color),.4);z-index:10}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active .scrollbar-trigger:after{content:"";position:absolute;width:var(--r-scrollbar-trigger-size);height:var(--r-scrollbar-trigger-size);border-radius:20px;top:50%;left:50%;transform:translate(-50%,-50%);background-color:rgba(var(--r-overlay-element-bg-color),1);transition:transform .2s ease,opacity .2s ease;opacity:.4}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active .scrollbar-trigger.active:after,.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active .scrollbar-trigger.active~.scrollbar-trigger:after{opacity:1}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active .scrollbar-trigger~.scrollbar-trigger.active:after{transform:translate(calc(var(--r-scrollbar-width) * -2),0);background-color:rgba(var(--r-overlay-element-bg-color),1)}html.reveal-print *{-webkit-print-color-adjust:exact}html.reveal-print{width:100%;height:100%;overflow:visible}html.reveal-print body{margin:0 auto!important;border:0;padding:0;float:none!important;overflow:visible}html.reveal-print .nestedarrow,html.reveal-print .reveal .controls,html.reveal-print .reveal .playback,html.reveal-print .reveal .progress,html.reveal-print .reveal.overview,html.reveal-print .state-background{display:none!important}html.reveal-print .reveal pre code{overflow:hidden!important}html.reveal-print .reveal{width:auto!important;height:auto!important;overflow:hidden!important}html.reveal-print .reveal .slides{position:static;width:100%!important;height:auto!important;zoom:1!important;pointer-events:initial;left:auto;top:auto;margin:0!important;padding:0!important;overflow:visible;display:block;perspective:none;perspective-origin:50% 50%}html.reveal-print .reveal .slides .pdf-page{position:relative;overflow:hidden;z-index:1;page-break-after:always}html.reveal-print .reveal .slides .pdf-page:last-of-type{page-break-after:avoid}html.reveal-print .reveal .slides section{visibility:visible!important;display:block!important;position:absolute!important;margin:0!important;padding:0!important;box-sizing:border-box!important;min-height:1px;opacity:1!important;transform-style:flat!important;transform:none!important}html.reveal-print .reveal section.stack{position:relative!important;margin:0!important;padding:0!important;page-break-after:avoid!important;height:auto!important;min-height:auto!important}html.reveal-print .reveal img{box-shadow:none}html.reveal-print .reveal .backgrounds{display:none}html.reveal-print .reveal .slide-background{display:block!important;position:absolute;top:0;left:0;width:100%;height:100%;z-index:auto!important}html.reveal-print .reveal.show-notes{max-width:none;max-height:none}html.reveal-print .reveal .speaker-notes-pdf{display:block;width:100%;height:auto;max-height:none;top:auto;right:auto;bottom:auto;left:auto;z-index:100}html.reveal-print .reveal .speaker-notes-pdf[data-layout=separate-page]{position:relative;color:inherit;background-color:transparent;padding:20px;page-break-after:always;border:0}html.reveal-print .reveal .slide-number-pdf{display:block;position:absolute;font-size:14px;visibility:visible}html.reveal-print .aria-status{display:none}@media print{html:not(.print-pdf){overflow:visible;width:auto;height:auto}html:not(.print-pdf) body{margin:0;padding:0;overflow:visible}html:not(.print-pdf) .reveal{background:#fff;font-size:20pt}html:not(.print-pdf) .reveal .backgrounds,html:not(.print-pdf) .reveal .controls,html:not(.print-pdf) .reveal .progress,html:not(.print-pdf) .reveal .slide-number,html:not(.print-pdf) .reveal .state-background{display:none!important}html:not(.print-pdf) .reveal li,html:not(.print-pdf) .reveal p,html:not(.print-pdf) .reveal td{font-size:20pt!important;color:#000}html:not(.print-pdf) .reveal h1,html:not(.print-pdf) .reveal h2,html:not(.print-pdf) .reveal h3,html:not(.print-pdf) .reveal h4,html:not(.print-pdf) .reveal h5,html:not(.print-pdf) .reveal h6{color:#000!important;height:auto;line-height:normal;text-align:left;letter-spacing:normal}html:not(.print-pdf) .reveal h1{font-size:28pt!important}html:not(.print-pdf) .reveal h2{font-size:24pt!important}html:not(.print-pdf) .reveal h3{font-size:22pt!important}html:not(.print-pdf) .reveal h4{font-size:22pt!important;font-variant:small-caps}html:not(.print-pdf) .reveal h5{font-size:21pt!important}html:not(.print-pdf) .reveal h6{font-size:20pt!important;font-style:italic}html:not(.print-pdf) .reveal a:link,html:not(.print-pdf) .reveal a:visited{color:#000!important;font-weight:700;text-decoration:underline}html:not(.print-pdf) .reveal div,html:not(.print-pdf) .reveal ol,html:not(.print-pdf) .reveal p,html:not(.print-pdf) .reveal ul{visibility:visible;position:static;width:auto;height:auto;display:block;overflow:visible;margin:0;text-align:left!important}html:not(.print-pdf) .reveal pre,html:not(.print-pdf) .reveal table{margin-left:0;margin-right:0}html:not(.print-pdf) .reveal pre code{padding:20px}html:not(.print-pdf) .reveal blockquote{margin:20px 0}html:not(.print-pdf) .reveal .slides{position:static!important;width:auto!important;height:auto!important;left:0!important;top:0!important;margin-left:0!important;margin-top:0!important;padding:0!important;zoom:1!important;transform:none!important;overflow:visible!important;display:block!important;text-align:left!important;perspective:none;perspective-origin:50% 50%}html:not(.print-pdf) .reveal .slides section{visibility:visible!important;position:static!important;width:auto!important;height:auto!important;display:block!important;overflow:visible!important;left:0!important;top:0!important;margin-left:0!important;margin-top:0!important;padding:60px 20px!important;z-index:auto!important;opacity:1!important;page-break-after:always!important;transform-style:flat!important;transform:none!important;transition:none!important}html:not(.print-pdf) .reveal .slides section.stack{padding:0!important}html:not(.print-pdf) .reveal .slides section:last-of-type{page-break-after:avoid!important}html:not(.print-pdf) .reveal .slides section .fragment{opacity:1!important;visibility:visible!important;transform:none!important}html:not(.print-pdf) .reveal .r-fit-text{white-space:normal!important}html:not(.print-pdf) .reveal section img{display:block;margin:15px 0;background:#fff;border:1px solid #666;box-shadow:none}html:not(.print-pdf) .reveal section small{font-size:.8em}html:not(.print-pdf) .reveal .hljs{max-height:100%;white-space:pre-wrap;word-wrap:break-word;word-break:break-word;font-size:15pt}html:not(.print-pdf) .reveal .hljs .hljs-ln-numbers{white-space:nowrap}html:not(.print-pdf) .reveal .hljs td{font-size:inherit!important;color:inherit!important}}
+</style>
+<style>
+/* Deck design. 16:9 reveal.js stage, left-aligned slides, light + dark themes from tokens.
+   --c1 / --c2 / --c3 are three category colours (teal / orange / green). Give each one meaning for
+   this deck (three modes, three subsystems, sync / async / batch ...) and use it consistently in
+   cards, tags, tables and diagrams. Leave them unused if the project has no such split. */
+:root {
+  --bg: #f6f8fa;
+  --surface: #ffffff;
+  --ink: #142231;
+  --muted: #5a6878;
+  --line: #d5dce4;
+  --accent: #1d4f7a;
+  --c1: #0e7490;
+  --c1-soft: #e0f2f6;
+  --c2: #c2410c;
+  --c2-soft: #fdeee4;
+  --c3: #3f7d20;
+  --c3-soft: #e9f3e2;
+  --ext: #6b7785;
+  --code-bg: #eef2f6;
+  --accent-soft: #e4eef7;
+  --syn-kw: #cf222e; --syn-str: #0a3069; --syn-com: #6e7781; --syn-num: #0550ae; --syn-fn: #8250df; --syn-type: #953800; --syn-attr: #116329;
+  --shadow: rgba(20, 34, 49, 0.07);
+  --f-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1720; --surface: #16212d; --ink: #e5ebf1; --muted: #9aa8b7; --line: #2a3847;
+    --accent: #8fb8de; --c1: #4fc3d9; --c1-soft: #12333b; --c2: #f39a62; --c2-soft: #3a2418;
+    --c3: #8cc66a; --c3-soft: #1f3319; --ext: #8995a3; --code-bg: #1b2734; --accent-soft: #1b3045; --syn-kw: #ff7b72; --syn-str: #a5d6ff; --syn-com: #8b949e; --syn-num: #79c0ff; --syn-fn: #d2a8ff; --syn-type: #ffa657; --syn-attr: #7ee787; --shadow: rgba(0, 0, 0, 0.35); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1720; --surface: #16212d; --ink: #e5ebf1; --muted: #9aa8b7; --line: #2a3847;
+  --accent: #8fb8de; --c1: #4fc3d9; --c1-soft: #12333b; --c2: #f39a62; --c2-soft: #3a2418;
+  --c3: #8cc66a; --c3-soft: #1f3319; --ext: #8995a3; --code-bg: #1b2734; --accent-soft: #1b3045; --syn-kw: #ff7b72; --syn-str: #a5d6ff; --syn-com: #8b949e; --syn-num: #79c0ff; --syn-fn: #d2a8ff; --syn-type: #ffa657; --syn-attr: #7ee787; --shadow: rgba(0, 0, 0, 0.35); color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); margin: 0; }
+.reveal-viewport { background: var(--bg); }
+.reveal { font-family: var(--f-body); font-size: 26px; color: var(--ink); line-height: 1.45; }
+.reveal .slides section { text-align: left; }
+.reveal h1, .reveal h2, .reveal h3 { font-family: var(--f-display); color: var(--ink); text-wrap: balance; margin: 0 0 .4em; letter-spacing: -0.01em; }
+.reveal h1 { font-size: 2.6em; line-height: 1.05; font-weight: 700; }
+.reveal h2 { font-size: 1.55em; line-height: 1.15; font-weight: 700; }
+.reveal h3 { font-size: 1.0em; font-weight: 500; }
+.reveal p { margin: 0 0 .6em; }
+.reveal ul { margin: 0 0 .6em 1.1em; padding: 0; }
+.reveal li { margin: .2em 0; }
+.reveal code, .reveal pre { font-family: var(--f-mono); }
+.reveal code { font-size: .82em; background: var(--code-bg); padding: .05em .3em; border-radius: 4px; }
+.reveal pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: .7em .9em; font-size: .6em; line-height: 1.5; overflow-x: auto; margin: 0 0 .6em; box-shadow: none; width: auto; }
+.reveal pre code { background: none; padding: 0; font-size: 1em; max-height: none; }
+.reveal a { color: var(--accent); }
+.reveal .progress { color: var(--accent); }
+.reveal .controls { color: var(--accent); }
+.reveal .slide-number { left: max(20px, env(safe-area-inset-left, 0px)); right: auto; bottom: 14px; background: transparent; color: var(--muted); font-family: var(--f-mono); font-size: 14px; }
+
+.eyebrow { font-family: var(--f-mono); font-size: .52em; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin-bottom: .6em; display: block; }
+.lede { font-size: 1.05em; color: var(--muted); max-width: 36em; }
+.small { font-size: .7em; color: var(--muted); }
+.where { display: inline-flex; gap: .5em; align-items: center; font-family: var(--f-mono); font-size: .5em; color: var(--muted); border: 1px dashed var(--line); border-radius: 6px; padding: .25em .7em; margin-top: .3em; }
+.where b { color: var(--ink); font-weight: 500; }
+.where::before { content: "path"; text-transform: uppercase; letter-spacing: .12em; font-size: .85em; color: var(--accent); }
+
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2em; align-items: start; }
+.cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: .9em; }
+.cols > *, .cols-3 > * { min-width: 0; }
+.wide-left { grid-template-columns: 1.35fr 1fr; }
+.flowstack { display: flex; flex-direction: column; gap: .5em; }
+.flowstack .small ul { columns: 2; column-gap: 2.2em; }
+.flowstack .small li { break-inside: avoid; margin: 0; padding: .2em 0; }
+
+.card { border: 1px solid var(--line); border-radius: 10px; padding: .8em .9em; background: var(--surface); font-size: .68em; }
+.card h3 { font-family: var(--f-mono); font-size: 1.05em; margin-bottom: .5em; }
+.card.c1 { border-top: 5px solid var(--c1); } .card.c1 h3 { color: var(--c1); }
+.card.c2 { border-top: 5px solid var(--c2); }  .card.c2 h3 { color: var(--c2); }
+.card.c3 { border-top: 5px solid var(--c3); }  .card.c3 h3 { color: var(--c3); }
+.card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: .35em .8em; }
+.card dt { color: var(--muted); font-family: var(--f-mono); font-size: .85em; text-transform: uppercase; letter-spacing: .06em; padding-top: .1em; }
+.card dd { margin: 0; }
+
+.tag { display: inline-block; font-family: var(--f-mono); font-size: .78em; padding: .05em .45em; border-radius: 4px; font-weight: 500; }
+.tag.c1 { color: var(--c1); background: var(--c1-soft); }
+.tag.c2 { color: var(--c2); background: var(--c2-soft); }
+.tag.c3 { color: var(--c3); background: var(--c3-soft); }
+
+table.grid { border-collapse: collapse; width: 100%; font-size: .56em; font-variant-numeric: tabular-nums; }
+table.grid th, table.grid td { color: var(--ink); border-bottom: 1px solid var(--line); padding: .32em .6em; text-align: left; vertical-align: top; }
+table.grid th { color: var(--muted); font-family: var(--f-mono); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; font-size: .9em; color: var(--muted); }
+table.grid td.c { text-align: center; font-family: var(--f-mono); width: 8.5em; }
+table.grid td code { font-size: .95em; }
+table.grid td.on-c1 { color: var(--c1); font-weight: 600; } table.grid td.on-c2 { color: var(--c2); font-weight: 600; } table.grid td.on-c3 { color: var(--c3); font-weight: 600; }
+table.grid td.off { color: var(--muted); opacity: .5; }
+table.grid td.opt { color: var(--muted); }
+table.grid th.c1 { color: var(--c1); } table.grid th.c2 { color: var(--c2); } table.grid th.c3 { color: var(--c3); }
+
+.legend { display: flex; flex-wrap: wrap; gap: .4em 1.2em; font-size: .52em; color: var(--muted); font-family: var(--f-mono); margin-top: .4em; }
+.legend span { display: inline-flex; align-items: center; gap: .4em; }
+.legend i { width: .9em; height: .9em; border-radius: 3px; display: inline-block; border: 1.5px solid currentColor; }
+
+
+.title-slide h1 span { display: block; }
+.reveal .title-slide h1 .h1-org { font-size: .42em; font-weight: 500; color: var(--muted); letter-spacing: 0; margin-bottom: .1em; }
+.reveal .title-slide h1 .h1-sub { color: var(--accent); }
+.title-slide .tag-row { display: flex; gap: .6em; flex-wrap: wrap; margin: 1.1em 0 1.3em; }
+.title-slide .tag-row .tag { font-size: .62em; padding: .35em .8em; }
+.kv { font-family: var(--f-mono); font-size: .52em; color: var(--muted); display: grid; grid-template-columns: auto 1fr; gap: .25em 1em; }
+.kv b { color: var(--ink); font-weight: 500; }
+.callout { border-left: 3px solid var(--accent); padding: .3em 0 .3em .8em; font-size: .7em; color: var(--muted); margin: .4em 0 .6em; }
+.step { font-family: var(--f-mono); font-size: .5em; color: var(--accent); letter-spacing: .1em; text-transform: uppercase; }
+.tree { font-size: .5em; }
+
+/* ---- hand-drawn SVG diagrams ---- */
+.dg-fig { margin: 0; width: 100%; display: flex; justify-content: center; }
+.dg-fig svg { width: 100%; height: auto; max-height: 580px; }
+.flowstack .dg-fig svg { max-height: 300px; }
+.dg text { font-family: var(--f-body); fill: var(--ink); }
+.dg .t { font-size: 14px; font-weight: 600; }
+.dg .s { font-family: var(--f-mono); font-size: 11.5px; fill: var(--muted); }
+.dg .tg { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .14em; fill: var(--muted); }
+.dg .sh { fill: var(--shadow); }
+.dg .n { stroke-width: 1.5; }
+.dg .n-code { fill: var(--surface); stroke: var(--line); }
+.dg .n-system { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+.dg .n-container { fill: var(--surface); stroke: var(--accent); }
+.dg .n-person { fill: var(--accent); stroke: var(--accent); }
+.dg .tk-person { fill: var(--bg); }
+.dg .n-ext, .dg .n-store { fill: var(--code-bg); stroke: var(--ext); }
+.dg .n-sibling { fill: var(--surface); stroke: var(--muted); stroke-dasharray: 6 4; }
+.dg .n-c1 { fill: var(--c1-soft); stroke: var(--c1); }
+.dg .n-c2 { fill: var(--c2-soft); stroke: var(--c2); }
+.dg .n-c3 { fill: var(--c3-soft); stroke: var(--c3); }
+.dg .n.dash { stroke-dasharray: 6 4; }
+.dg .n-rim { fill: none; }
+.dg .e { fill: none; stroke-width: 1.6; stroke: var(--muted); }
+.dg .e-c1 { stroke: var(--c1); } .dg .e-c2 { stroke: var(--c2); } .dg .e-c3 { stroke: var(--c3); } .dg .e-accent { stroke: var(--accent); }
+.dg .dash { stroke-dasharray: 6 5; }
+.dg .mk-ink { fill: var(--muted); } .dg .mk-c1 { fill: var(--c1); } .dg .mk-c2 { fill: var(--c2); } .dg .mk-c3 { fill: var(--c3); } .dg .mk-accent { fill: var(--accent); }
+.dg .lp-bg { fill: var(--bg); } .dg .lp-c2 { fill: var(--c2-soft); } .dg .lp-c3 { fill: var(--c3-soft); } .dg .lp-c1 { fill: var(--c1-soft); } .dg .lp-none { fill: none; }
+.dg .lab { font-family: var(--f-mono); font-size: 11.5px; fill: var(--muted); }
+.dg .lab-c1, .dg .ml-c1 { fill: var(--c1); } .dg .lab-c2, .dg .ml-c2 { fill: var(--c2); } .dg .lab-c3, .dg .ml-c3 { fill: var(--c3); } .dg .lab-accent, .dg .ml-accent { fill: var(--accent); }
+.dg .bound { fill: none; stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 4 5; }
+.dg .bound-t { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .14em; fill: var(--muted); }
+.dg .hdr { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.dg .life { stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 2 5; }
+.dg .ml { font-family: var(--f-mono); font-size: 12px; fill: var(--ink); }
+.dg .num { fill: var(--accent); }
+.dg .num-t { font-family: var(--f-mono); font-size: 10px; font-weight: 500; fill: var(--bg); }
+.dg .band { fill-opacity: .6; }
+.dg .band-c2 { fill: var(--c2-soft); } .dg .band-c3 { fill: var(--c3-soft); } .dg .band-c1 { fill: var(--c1-soft); } .dg .band-accent { fill: var(--accent-soft); }
+.dg .box { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.dg .divider { stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.dg .btag { font-family: var(--f-mono); font-size: 10px; font-weight: 500; letter-spacing: .1em; fill: var(--muted); }
+.dg .btag-c2 { fill: var(--c2); } .dg .btag-c3 { fill: var(--c3); } .dg .btag-c1 { fill: var(--c1); } .dg .btag-accent { fill: var(--accent); }
+.dg .note { fill: var(--surface); stroke: var(--line); }
+.dg .note-t { font-size: 12px; font-style: italic; fill: var(--muted); }
+
+/* ---- syntax colours (GitHub-like, token driven) ---- */
+.reveal pre { position: relative; padding: 0; overflow: hidden; }
+.reveal pre code, .reveal pre code.hljs { display: block; background: var(--code-bg); padding: .7em .9em; color: var(--ink); overflow: visible; border-radius: 8px; }
+.reveal pre code.hljs.fragment:not(:first-child) { inset: 0; height: 100%; }
+.reveal pre { font-size: .56em; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in.hljs-keyword, .hljs-meta .hljs-keyword { color: var(--syn-kw); }
+.hljs-string, .hljs-regexp, .hljs-meta .hljs-string { color: var(--syn-str); }
+.hljs-comment, .hljs-quote { color: var(--syn-com); font-style: italic; }
+.hljs-number, .hljs-literal, .hljs-variable, .hljs-template-variable { color: var(--syn-num); }
+.hljs-title, .hljs-title.function_, .hljs-section { color: var(--syn-fn); }
+.hljs-title.class_, .hljs-type, .hljs-built_in, .hljs-params { color: var(--syn-type); }
+.hljs-attr, .hljs-attribute, .hljs-name, .hljs-symbol, .hljs-bullet { color: var(--syn-attr); }
+.hljs-meta, .hljs-doctag { color: var(--syn-num); }
+.hljs-subst { color: var(--ink); }
+.reveal .hljs-ln-numbers { color: var(--muted); opacity: .6; padding-right: 1em !important; text-align: right; user-select: none; vertical-align: top; }
+.reveal .hljs-ln-code { padding: 0 !important; }
+.reveal .hljs table, .reveal .hljs td { border: 0; margin: 0; padding: 0; }
+/* ---- chapter navigation ---- */
+.reveal .down-hint { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); white-space: nowrap; margin: 0; font-family: var(--f-mono); font-size: .5em; color: var(--accent); letter-spacing: .04em; }
+.nav-hint { font-family: var(--f-mono); font-size: .48em; color: var(--muted); margin-top: 1.4em; display: flex; gap: .5em 1.1em; flex-wrap: wrap; align-items: center; }
+.reveal kbd { font-family: var(--f-mono); font-size: .95em; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: .05em .4em; color: var(--ink); background: var(--surface); margin-right: .25em; }
+.map { display: grid; grid-template-columns: repeat(5, 1fr); gap: .8em; margin: .6em 0 1em; }
+.map-col { display: flex; flex-direction: column; gap: .35em; font-size: .56em; min-width: 0; }
+.map-col b { font-family: var(--f-display); font-size: 1.15em; border-bottom: 2px solid var(--accent); padding-bottom: .35em; margin-bottom: .2em; }
+.map-col span { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .3em .6em; color: var(--muted); }
+.map-col span:first-of-type { color: var(--ink); border-color: var(--accent); }
+.crumbs { display: flex; gap: .4em; align-items: center; font-family: var(--f-mono); font-size: .48em; margin-bottom: .55em; flex-wrap: wrap; }
+.crumbs span { color: var(--accent); letter-spacing: .14em; margin-right: .3em; }
+.crumbs b { font-weight: 500; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: .15em .8em; }
+.crumbs b.on { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+.cols-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1em; margin-top: .3em; }
+.cols-4 > * { min-width: 0; margin: 0; }
+.cols-4 b { color: var(--ink); }
+.lede-wide { font-size: .82em; max-width: none; margin-bottom: .4em; }
+.rules > div { display: flex; flex-direction: column; gap: .3em; border-top: 2px solid var(--accent); padding-top: .5em; }
+.rules b { color: var(--ink); }
+.rules { margin-bottom: .8em; }
+/* ---- C4 explainer svg extras ---- */
+.dg .panel { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.dg .wedge { fill: var(--accent); fill-opacity: .07; }
+.dg .zoomline { fill: none; stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 4 4; opacity: .8; }
+.dg .hl { stroke: var(--accent); stroke-width: 3; }
+.dg .mini { font-size: 12px; font-weight: 600; }
+.dg .micro { font-family: var(--f-mono); font-size: 10.5px; fill: var(--muted); }
+.dg .uml { stroke: var(--line); stroke-width: 1.2; }
+.dg .code-t { font-family: var(--f-mono); font-size: 11.5px; fill: var(--ink); }
+
+/* ---- spacing fixes: beat `.reveal p { margin }` specificity ---- */
+.reveal .nav-hint { margin: 2.2em 0 0; }
+.reveal .callout { margin: .4em 0 .6em; }
+.reveal .lede-wide { margin: 0 0 .5em; }
+.reveal .step-hint { margin: -.2em 0 .5em; font-family: var(--f-mono); font-size: .5em; color: var(--accent); }
+.nav-hint span { display: inline-flex; align-items: center; gap: .1em; }
+/* every slide uses the cover's arrangement: a centred column */
+.reveal .slides section:not(.stack):not([style*="display: none"]) { display: flex !important; flex-direction: column; justify-content: flex-start; height: 100%; box-sizing: border-box; padding-bottom: 28px; }
+/* cover + closing: everything centred */
+.reveal .slides section.title-slide:not(.stack):not([style*="display: none"]) { justify-content: center; }
+/* other slides: heading pinned top, path labels pinned bottom, body centred between them */
+.reveal .slides section:not(.title-slide) > h2 + :not(.step-hint),
+.reveal .slides section:not(.title-slide) > .step-hint + * { margin-top: auto; }
+.reveal .slides section:not(.title-slide) > .paths { margin-top: auto; }
+.reveal .slides section:not(.stack):not(.title-slide):not(:has(> .paths))::after { content: ""; display: block; margin-top: auto; }
+.reveal .slides section:not(.stack) > * { flex: 0 0 auto; }
+.reveal .slides section:not(.stack) > .r-stretch { flex: 1 1 auto; min-height: 0; }
+.paths { display: flex; flex-wrap: wrap; gap: .4em .6em; align-items: center; margin-top: .4em; }
+.reveal .slides section:not(.stack) > h2 { margin-bottom: .5em; }
+.keys-panel[hidden] { display: none; }
+.reveal .repo-link { display: inline-flex; align-self: flex-start; gap: .4em; align-items: center; font-family: var(--f-mono); font-size: .8em; color: var(--accent); text-decoration: none; border: 1.5px solid var(--accent); border-radius: 10px; padding: .45em .9em; margin: .2em 0 1.2em; }
+.reveal .repo-link:hover, .reveal .repo-link:focus-visible { background: var(--accent-soft); outline: none; }
+.closing-kv { row-gap: .45em; }
+.title-slide .eyebrow { margin-bottom: 1.4em; }
+.reveal .title-slide h1 { margin-bottom: .55em; }
+.reveal .title-slide .lede { margin-bottom: 1em; }
+.title-slide .kv { margin-top: .4em; row-gap: .45em; }
+/* ---- figures: r-stretch + zoom frames ---- */
+.dg-fig.r-stretch svg { width: 100%; height: 100%; max-height: none; }
+.dg-fig.zoomfig { position: relative; display: block; margin: 0 auto; }
+.dg-fig.zoomfig svg { display: block; max-height: none; }
+.zf { position: absolute; border: 2.5px solid var(--accent); border-radius: 14px; pointer-events: none; }
+.zf-depart { border-style: dashed; border-width: 2px; }
+.zf-arrive { opacity: 0; }
+/* ---- sequence steps: focus the current message ---- */
+.seqsvg g.fragment.visible:not(.current-fragment) { opacity: .5; }
+.seqsvg g.fragment.current-fragment .ml { font-weight: 600; }
+/* ---- variant toggle: one diagram, re-coloured per variant (a / b / c = c1 / c2 / c3) ---- */
+.vsvg .v { display: none; }
+.vsvg[data-v="all"] .v-all, .vsvg[data-v="a"] .v-a, .vsvg[data-v="b"] .v-b, .vsvg[data-v="c"] .v-c { display: inline; }
+.vsvg .v-head { font-family: var(--f-mono); font-size: 15px; fill: var(--ink); }
+.vsvg[data-v="a"] .v-head { fill: var(--c1); } .vsvg[data-v="b"] .v-head { fill: var(--c2); } .vsvg[data-v="c"] .v-head { fill: var(--c3); }
+.vsvg .gate { transition: opacity .45s ease; }
+.vsvg .gbox { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; transition: fill .45s ease, stroke .45s ease; }
+.vsvg .dot { stroke-width: 1.5; }
+.vsvg .dot-a { stroke: var(--c1); } .vsvg .dot-b { stroke: var(--c2); } .vsvg .dot-c { stroke: var(--c3); }
+.vsvg .dot-a.dot-on, .vsvg .dot-a.dot-key { fill: var(--c1); }
+.vsvg .dot-b.dot-on, .vsvg .dot-b.dot-key { fill: var(--c2); }
+.vsvg .dot-c.dot-on, .vsvg .dot-c.dot-key { fill: var(--c3); }
+.vsvg .dot.dot-off { fill: none; opacity: .5; }
+.vsvg .dot.dot-opt { fill: none; stroke-dasharray: 2 2; }
+.vsvg[data-v="a"] .a-off, .vsvg[data-v="b"] .b-off, .vsvg[data-v="c"] .c-off { opacity: .16; }
+.vsvg[data-v="a"] .a-on .gbox, .vsvg[data-v="b"] .b-on .gbox, .vsvg[data-v="c"] .c-on .gbox { fill: var(--accent-soft); stroke: var(--accent); }
+.vsvg[data-v="a"] .a-key .gbox { fill: var(--c1-soft); stroke: var(--c1); stroke-width: 2.5; }
+.vsvg[data-v="b"] .b-key .gbox { fill: var(--c2-soft); stroke: var(--c2); stroke-width: 2.5; }
+.vsvg[data-v="c"] .c-key .gbox { fill: var(--c3-soft); stroke: var(--c3); stroke-width: 2.5; }
+.vsvg[data-v="a"] .a-opt .gbox { fill: var(--c1-soft); stroke: var(--c1); stroke-dasharray: 6 4; }
+.vsvg[data-v="b"] .b-opt .gbox { fill: var(--c2-soft); stroke: var(--c2); stroke-dasharray: 6 4; }
+.vsvg[data-v="c"] .c-opt .gbox { fill: var(--c3-soft); stroke: var(--c3); stroke-dasharray: 6 4; }
+.vsvg[data-v="a"] .a-opt, .vsvg[data-v="b"] .b-opt, .vsvg[data-v="c"] .c-opt { opacity: .7; }
+.v-step { position: absolute; width: 0; height: 0; overflow: hidden; }
+/* ---- screenshots and other raster images ---- */
+.reveal figure.shot { margin: 0; display: flex; flex-direction: column; align-items: center; gap: .5em; }
+.reveal figure.shot img { display: block; max-width: 100%; max-height: 520px; margin: 0; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 20px var(--shadow); }
+.reveal figure.shot.plain img { border: 0; box-shadow: none; border-radius: 0; }
+.reveal figure.shot figcaption { font-size: .6em; color: var(--muted); }
+.cols figure.shot img { max-height: 420px; }
+/* ---- deck tools + keyboard help ---- */
+.deck-tools { position: fixed; z-index: 40; top: calc(env(safe-area-inset-top, 0px) + 12px); right: max(14px, env(safe-area-inset-right, 0px)); display: flex; gap: 8px; }
+.deck-tools button { font-family: var(--f-mono); font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+.deck-tools button:hover, .deck-tools button:focus-visible { color: var(--ink); border-color: var(--accent); outline: none; }
+.keys-panel { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 72%, transparent); padding: 16px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); }
+.keys-card { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; padding: 22px 26px; width: min(760px, 100%); max-height: 90%; overflow: auto; box-shadow: 0 18px 50px var(--shadow); font-family: var(--f-body); }
+.keys-card h2 { font-family: var(--f-display); font-size: 22px; margin: 0 0 4px; }
+.keys-card p { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+.keys-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px 28px; }
+.keys-grid h3 { font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; font-weight: 500; }
+.keys-grid dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 7px 12px; align-items: center; font-size: 14px; }
+.keys-grid dt { white-space: nowrap; }
+.keys-grid dd { margin: 0; color: var(--muted); }
+.keys-card kbd { font-family: var(--f-mono); font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; background: var(--bg); color: var(--ink); }
+.keys-card .close { float: right; font-family: var(--f-mono); font-size: 12px; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 6px; padding: 3px 9px; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .reveal .slides section { transition: none !important; } }
+/* ---- print / PDF (open index.html?print-pdf, then print) ---- */
+html.reveal-print .deck-tools, html.reveal-print .keys-panel { display: none; }
+@media print { .deck-tools, .keys-panel { display: none; } }
+/* ---- fallback when reveal.js cannot be loaded (CDN unreachable): a plain scrolling page ---- */
+html.no-reveal, html.no-reveal body { height: auto; overflow: auto; }
+.no-reveal .reveal, .no-reveal .reveal .slides { position: static; width: auto; height: auto; overflow: visible; transform: none; }
+.no-reveal .reveal .slides { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+.no-reveal .reveal .slides section:not(.stack) { position: static !important; display: block !important; height: auto; min-height: 0; padding: 36px 0; border-bottom: 1px solid var(--line); opacity: 1; visibility: visible; transform: none; }
+.no-reveal .reveal .slides section.stack { position: static; display: block; height: auto; padding: 0; opacity: 1; visibility: visible; transform: none; }
+.no-reveal .reveal .fragment { opacity: 1; visibility: visible; }
+.no-reveal .reveal aside.notes, .no-reveal .down-hint, .no-reveal .nav-hint, .no-reveal .step-hint, .no-reveal #btn-view { display: none; }
+.no-reveal .dg-fig.r-stretch svg { height: auto; }
+.no-reveal-note { font: 14px var(--f-body); color: var(--muted); padding: 14px 20px; margin: 0; border-bottom: 1px solid var(--line); }
+</style>
+
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<section>
+  <section class="title-slide">
+    <span class="eyebrow">Onboarding overview · for new developers · 2026-11-19</span>
+    <h1><span class="h1-org">examples/</span><span>image-annotation-tool</span><span class="h1-sub">How it works.</span></h1>
+    <p class="lede">People draw labelled bounding boxes on images, and every task is reviewed before it is exported. This deck walks through the parts, the task lifecycle and where each lives in the code.</p>
+    <div class="tag-row">
+      <span class="tag c1">admin</span>
+      <span class="tag c2">annotator</span>
+      <span class="tag c3">reviewer</span>
+    </div>
+    <div class="kv">
+      <span>own code</span><b>web/ · api/ · worker/ · db/migrations/</b>
+      <span>runs with</span><b>docker compose (docker-compose.yml)</b>
+      <span>this deck</span><b>communications/project-deck/index.html</b>
+    </div>
+    <p class="nav-hint"><span><kbd>→</kbd> next chapter</span><span><kbd>↓</kbd> details</span><span><kbd>Esc</kbd> overview</span><span><kbd>V</kbd> reading view</span><span><kbd>?</kbd> all keys</span></p>
+    <aside class="notes">
+      Chapters run left to right and their details run downward. Press Esc for the grid overview.
+      The README states that this is a theoretical example project that has never been executed; everything in the deck was read from the code, nothing was run.
+      The three colours mean the three roles throughout the deck.
+    </aside>
+  </section>
+
+  <section>
+    <span class="eyebrow">Deck map</span>
+    <h2>Four chapters, details below each one</h2>
+    <div class="map" style="grid-template-columns: repeat(4, 1fr)">
+      <div class="map-col"><b>1 · What it is</b><span>Images in, reviewed boxes out</span><span>Three roles</span></div>
+      <div class="map-col"><b>2 · Architecture</b><span>Zoom levels</span><span>Notation</span><span>L1 Context</span><span>L2 Containers</span><span>L3 Inside the api</span><span>The transition table</span></div>
+      <div class="map-col"><b>3 · How it works</b><span>One image, start to end</span><span>States and data</span><span>Who may do what</span><span>Claiming a task</span><span>Where image bytes travel</span><span>Upload and thumbnails</span><span>Export</span></div>
+      <div class="map-col"><b>4 · Reference</b><span>Folder map</span><span>Commands</span></div>
+    </div>
+    <p class="small">Pressing only → gives the short version: the first slide of each chapter stands on its own. The last slide says what the deck was checked against.</p>
+  </section>
+</section>
+
+<section>
+  <section>
+    <span class="eyebrow">1 · What it is</span>
+    <h2>Images go in, reviewed bounding boxes come out</h2>
+    <div class="cols wide-left">
+      <div>
+        <p>An admin uploads a batch of images. Each image becomes exactly one task, which is annotated, reviewed and, once approved, exported as COCO-style JSON.</p>
+        <ul class="small">
+          <li><code>task</code> the unit of work: one per image, carries the status</li>
+          <li><code>annotation</code> one labelled box, in pixels of the original image</li>
+          <li><code>review</code> one approve or reject decision, kept as history</li>
+          <li><code>export</code> one run that writes all approved boxes to a file</li>
+        </ul>
+      </div>
+      <div>
+        <p class="small">The work happens in two places:</p>
+        <div class="card" style="margin-bottom:.6em">
+          <h3>While you wait · api</h3>
+          <p>A FastAPI service handles login, uploads, the task lifecycle, boxes and reviews.</p>
+        </div>
+        <div class="card">
+          <h3>In the background · worker</h3>
+          <p>An RQ worker makes a thumbnail per image and builds the COCO export file.</p>
+        </div>
+      </div>
+    </div>
+    <div class="paths"><span class="where"><b>api/app/</b> the service</span><span class="where"><b>worker/jobs/</b> the background jobs</span><span class="where"><b>web/src/</b> the pages</span></div>
+    <p class="down-hint">↓ the three roles</p>
+    <aside class="notes">
+      Sources: README.md (purpose, workflow, parts), db/migrations/001_init.sql (one task per image: tasks.image_id is UNIQUE), worker/main.py (the two job queues).
+    </aside>
+  </section>
+
+  <section>
+    <span class="eyebrow">1 · What it is</span>
+    <h2>Three roles, one page each</h2>
+    <div class="cols-3">
+      <div class="card c1">
+        <h3>admin</h3>
+        <dl>
+          <dt>Does</dt><dd>Uploads batches of JPEG or PNG images; requests exports and downloads the file.</dd>
+          <dt>Page</dt><dd><code>/admin</code> · AdminUploadPage</dd>
+          <dt>API</dt><dd><code>/api/images</code>, <code>/api/exports</code></dd>
+        </dl>
+      </div>
+      <div class="card c2">
+        <h3>annotator</h3>
+        <dl>
+          <dt>Does</dt><dd>Claims a task, draws and labels boxes, submits; fixes rejected tasks.</dd>
+          <dt>Page</dt><dd><code>/annotate</code> · AnnotatePage</dd>
+          <dt>API</dt><dd><code>/api/tasks/…</code></dd>
+        </dl>
+      </div>
+      <div class="card c3">
+        <h3>reviewer</h3>
+        <dl>
+          <dt>Does</dt><dd>Works through the review queue; approves, or rejects with a comment.</dd>
+          <dt>Page</dt><dd><code>/review</code> · ReviewQueuePage</dd>
+          <dt>API</dt><dd><code>/api/reviews/queue</code>, <code>/api/tasks/{id}/reviews</code></dd>
+        </dl>
+      </div>
+    </div>
+    <div class="paths"><span class="where"><b>web/src/App.tsx</b> HOME, routes per role</span><span class="where"><b>api/app/auth.py</b> require_role</span></div>
+    <aside class="notes">
+      The role is a column on users with a CHECK constraint (db/migrations/001_init.sql). Three demo users, one per role, are seeded on the first API start with password "demo" (api/app/auth.py seed_demo_users). There is no user management endpoint.
+      These three colours are used for the roles on every later slide.
+    </aside>
+  </section>
+</section>
+
+<section>
+  <section>
+    <span class="eyebrow">2 · Architecture</span>
+    <h2>The architecture at three zoom levels</h2>
+    <p class="lede lede-wide">Each level zooms into one box of the level before it. The next slides go through them in this order.</p>
+    <p class="step-hint">→ steps: one level at a time</p>
+    <figure class="dg-fig "><svg class="dg " viewBox="-2 -2 1204 334" role="img" aria-label="Three zoom levels: the tool with its three roles, the containers that docker compose starts, and the modules inside the api container."  xmlns="http://www.w3.org/2000/svg"><defs><marker id="lv-a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-ink" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="lv-a-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-accent" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="lv-a-c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c1" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="lv-a-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c2" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="lv-a-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c3" d="M0,0.5 L10,5 L0,9.5 z"/></marker></defs><rect class="panel" x="0" y="34" width="370" height="250" rx="12"/><rect class="n n-person" x="30" y="62" width="110" height="32" rx="6"/><text class="mini tk-person" x="85.0" y="82.0" text-anchor="middle">admin</text><rect class="n n-person" x="30" y="143" width="110" height="32" rx="6"/><text class="mini tk-person" x="85.0" y="163.0" text-anchor="middle">annotator</text><rect class="n n-person" x="30" y="224" width="110" height="32" rx="6"/><text class="mini tk-person" x="85.0" y="244.0" text-anchor="middle">reviewer</text><rect class="n n-system hl" x="210" y="132" width="130" height="54" rx="6"/><text class="mini tk-system" x="275.0" y="163.0" text-anchor="middle">annotation tool</text><path class="e e-ink" d="M140.0,78.0 L265.0,78.0 Q275.0,78.0 275.0,88.0 L275.0,132.0" marker-end="url(#lv-a-ink)"/><path class="e e-ink" d="M140.0,159.0 L210.0,159.0" marker-end="url(#lv-a-ink)"/><path class="e e-ink" d="M140.0,240.0 L265.0,240.0 Q275.0,240.0 275.0,230.0 L275.0,186.0" marker-end="url(#lv-a-ink)"/><text class="tg" x="16" y="22">LEVEL 1</text><text class="t" x="77" y="23">Context</text><text class="s" x="185.0" y="308" text-anchor="middle">who uses it</text><g class="fragment" data-fragment-index="1"><rect class="panel" x="415" y="34" width="370" height="250" rx="12"/><polygon class="wedge" points="340,132 415,34 415,284 340,186"/><rect class="n n-container" x="445" y="54" width="105" height="30" rx="6"/><text class="mini tk-container" x="497.5" y="73.0" text-anchor="middle">web</text><rect class="n n-container" x="445" y="98" width="105" height="30" rx="6"/><text class="mini tk-container" x="497.5" y="117.0" text-anchor="middle">worker</text><path class="n n-store" d="M445,147 a52.5,5 0 0 1 105,0 v24 a52.5,5 0 0 1 -105,0 z"/><path class="n n-rim n-store" d="M445,147 a52.5,5 0 0 0 105,0"/><text class="mini tk-store" x="497.5" y="165.0" text-anchor="middle">postgres</text><path class="n n-store" d="M445,193 a52.5,5 0 0 1 105,0 v24 a52.5,5 0 0 1 -105,0 z"/><path class="n n-rim n-store" d="M445,193 a52.5,5 0 0 0 105,0"/><text class="mini tk-store" x="497.5" y="211.0" text-anchor="middle">redis</text><path class="n n-store" d="M445,239 a52.5,5 0 0 1 105,0 v24 a52.5,5 0 0 1 -105,0 z"/><path class="n n-rim n-store" d="M445,239 a52.5,5 0 0 0 105,0"/><text class="mini tk-store" x="497.5" y="257.0" text-anchor="middle">minio</text><rect class="n n-system hl" x="640" y="134" width="115" height="50" rx="6"/><text class="mini tk-system" x="697.5" y="163.0" text-anchor="middle">api</text><path class="zoomline" d="M340,132 L415,34 M340,186 L415,284"/><path class="e e-ink" d="M550.0,69.0 L687.0,69.0 Q697.0,69.0 697.0,79.0 L697.0,134.0" marker-end="url(#lv-a-ink)"/><path class="e e-ink" d="M640.0,159.0 L550.0,159.0" marker-end="url(#lv-a-ink)"/><path class="e e-ink" d="M640.0,172.0 L550.0,203.0" marker-end="url(#lv-a-ink)"/><path class="e e-ink" d="M697.0,184.0 L697.0,241.0 Q697.0,251.0 687.0,251.0 L550.0,251.0" marker-end="url(#lv-a-ink)"/><text class="tg" x="431" y="22">LEVEL 2</text><text class="t" x="492" y="23">Containers</text><text class="s" x="600.0" y="308" text-anchor="middle">what docker compose starts</text></g><g class="fragment" data-fragment-index="2"><rect class="panel" x="830" y="34" width="370" height="250" rx="12"/><polygon class="wedge" points="755,134 830,34 830,284 755,184"/><rect class="n n-system" x="955" y="60" width="120" height="34" rx="6"/><text class="mini tk-system" x="1015.0" y="81.0" text-anchor="middle">routes</text><rect class="n n-code" x="870" y="136" width="120" height="34" rx="6"/><text class="mini tk-code" x="930.0" y="157.0" text-anchor="middle">state machine</text><rect class="n n-code" x="1040" y="136" width="120" height="34" rx="6"/><text class="mini tk-code" x="1100.0" y="157.0" text-anchor="middle">auth</text><rect class="n n-code" x="955" y="216" width="120" height="34" rx="6"/><text class="mini tk-code" x="1015.0" y="237.0" text-anchor="middle">storage · queue</text><path class="zoomline" d="M755,134 L830,34 M755,184 L830,284"/><path class="e e-ink" d="M995.0,94.0 L940.0,136.0" marker-end="url(#lv-a-ink)"/><path class="e e-ink" d="M1035.0,94.0 L1095.0,136.0" marker-end="url(#lv-a-ink)"/><path class="e e-ink" d="M1015.0,94.0 L1015.0,216.0" marker-end="url(#lv-a-ink)"/><text class="tg" x="846" y="22">LEVEL 3</text><text class="t" x="907" y="23">Components</text><text class="s" x="1015.0" y="308" text-anchor="middle">modules inside the api</text></g></svg></figure>
+    <div class="cols-3 small">
+      <p><b>Context:</b> the tool as one box, with the three roles that use it.</p>
+      <p><b>Containers:</b> what <code>docker compose up</code> starts: three own services and three stores.</p>
+      <p><b>Components:</b> the modules inside the api, where the rules live.</p>
+    </div>
+    <p class="down-hint">↓ how to read the diagrams</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">2 · Architecture</span>
+    <h2>How to read the diagrams in this deck</h2>
+    <div class="cols-3 small rules">
+      <div><b>Every box shows</b><span>its type, such as PERSON or CONTAINER</span><span>a name, as it is spelled in the code</span><span>a short description of its job</span></div>
+      <div><b>Every arrow shows</b><span>a direction: who starts the call</span><span>what it does, such as <code>enqueue</code> or <code>SQL</code></span><span>dashed = a reply, or done in the background</span></div>
+      <div><b>Colours</b><span>teal = done by the admin</span><span>orange = done by the annotator</span><span>green = done by the reviewer</span></div>
+    </div>
+    <figure class="dg-fig "><svg class="dg " viewBox="-2 -2 1204 244" role="img" aria-label="Notation key: element types on the first row, the three role colours and the line styles on the second."  xmlns="http://www.w3.org/2000/svg"><defs><marker id="lg-a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-ink" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="lg-a-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-accent" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="lg-a-c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c1" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="lg-a-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c2" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="lg-a-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c3" d="M0,0.5 L10,5 L0,9.5 z"/></marker></defs><rect class="sh" x="0.0" y="13" width="186" height="84" rx="10"/><rect class="n n-person" x="0.0" y="10" width="186" height="84" rx="10"/><text class="tg tk-person" x="93.0" y="45.5" text-anchor="middle">PERSON</text><text class="t tk-person" x="93.0" y="64.5" text-anchor="middle">Person</text><rect class="sh" x="202.8" y="13" width="186" height="84" rx="10"/><rect class="n n-system" x="202.8" y="10" width="186" height="84" rx="10"/><text class="tg tk-system" x="295.8" y="45.5" text-anchor="middle">SOFTWARE SYSTEM</text><text class="t tk-system" x="295.8" y="64.5" text-anchor="middle">System in scope</text><rect class="sh" x="405.6" y="13" width="186" height="84" rx="10"/><rect class="n n-container" x="405.6" y="10" width="186" height="84" rx="10"/><text class="tg tk-container" x="498.6" y="45.5" text-anchor="middle">CONTAINER</text><text class="t tk-container" x="498.6" y="64.5" text-anchor="middle">Container</text><path class="sh" d="M608.4000000000001,19 a93.0,9 0 0 1 186,0 v66 a93.0,9 0 0 1 -186,0 z" transform="translate(0,3)"/><path class="n n-store" d="M608.4000000000001,19 a93.0,9 0 0 1 186,0 v66 a93.0,9 0 0 1 -186,0 z"/><path class="n n-rim n-store" d="M608.4000000000001,19 a93.0,9 0 0 0 186,0"/><text class="tg tk-store" x="701.4" y="50.0" text-anchor="middle">DATA STORE</text><text class="t tk-store" x="701.4" y="69.0" text-anchor="middle">Data store</text><rect class="sh" x="811.2" y="13" width="186" height="84" rx="10"/><rect class="n n-code" x="811.2" y="10" width="186" height="84" rx="10"/><text class="tg tk-code" x="904.2" y="45.5" text-anchor="middle">COMPONENT</text><text class="t tk-code" x="904.2" y="64.5" text-anchor="middle">Module in a container</text><rect class="sh" x="1014.0" y="13" width="186" height="84" rx="10"/><rect class="n n-ext dash" x="1014.0" y="10" width="186" height="84" rx="10"/><text class="tg tk-ext" x="1107.0" y="45.5" text-anchor="middle">RUNS ONCE</text><text class="t tk-ext" x="1107.0" y="64.5" text-anchor="middle">One-shot job</text><rect class="sh" x="0.0" y="153" width="186" height="70" rx="10"/><rect class="n n-c1" x="0.0" y="150" width="186" height="70" rx="10"/><text class="t tk-c1" x="93.0" y="182.0" text-anchor="middle">admin</text><text class="s tk-c1" x="93.0" y="198.0" text-anchor="middle">uploads · exports</text><rect class="sh" x="202.8" y="153" width="186" height="70" rx="10"/><rect class="n n-c2" x="202.8" y="150" width="186" height="70" rx="10"/><text class="t tk-c2" x="295.8" y="182.0" text-anchor="middle">annotator</text><text class="s tk-c2" x="295.8" y="198.0" text-anchor="middle">claims · draws · submits</text><rect class="sh" x="405.6" y="153" width="186" height="70" rx="10"/><rect class="n n-c3" x="405.6" y="150" width="186" height="70" rx="10"/><text class="t tk-c3" x="498.6" y="182.0" text-anchor="middle">reviewer</text><text class="s tk-c3" x="498.6" y="198.0" text-anchor="middle">approves · rejects</text><path class="e e-ink" d="M648.4,162.0 L738.4,162.0" marker-end="url(#lg-a-ink)"/><path class="e e-ink dash" d="M648.4,186.0 L738.4,186.0" marker-end="url(#lg-a-ink)"/><path class="e e-c2" d="M648.4,210.0 L738.4,210.0" marker-end="url(#lg-a-c2)"/><text class="tg" x="0" y="140" text-anchor="start">ROLE COLOURS</text><text class="tg" x="648.4000000000001" y="140" text-anchor="start">LINES</text><text class="lab" x="752.4000000000001" y="166" text-anchor="start">call / dependency</text><text class="lab" x="752.4000000000001" y="190" text-anchor="start">reply, or done in the background</text><text class="lab" x="752.4000000000001" y="214" text-anchor="start">done by that role</text></svg></figure>
+  </section>
+
+  <section data-auto-animate>
+    <div class="crumbs" data-id="crumbs"><span>LEVEL</span><b class="on" data-id="cr1">L1 Context</b><b data-id="cr2">L2 Containers</b><b data-id="cr3">L3 Components</b></div>
+    <h2>Three roles use the tool; nothing outside it is involved</h2>
+    <figure class="dg-fig zoomfig" style="width:min(100%, 1464px)"><svg class="dg " viewBox="-2 -2 1204 444" role="img" aria-label="System context: an admin, an annotator and a reviewer use the Image Annotation Tool; it depends on no external system."  xmlns="http://www.w3.org/2000/svg"><defs><marker id="c1-a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-ink" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="c1-a-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-accent" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="c1-a-c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c1" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="c1-a-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c2" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="c1-a-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c3" d="M0,0.5 L10,5 L0,9.5 z"/></marker></defs><rect class="sh" x="0.0" y="13" width="260" height="104" rx="10"/><rect class="n n-person" x="0.0" y="10" width="260" height="104" rx="10"/><text class="tg tk-person" x="130.0" y="39.5" text-anchor="middle">PERSON</text><text class="t tk-person" x="130.0" y="58.5" text-anchor="middle">Admin</text><text class="s tk-person" x="130.0" y="74.5" text-anchor="middle">uploads image batches</text><text class="s tk-person" x="130.0" y="90.5" text-anchor="middle">downloads the COCO export</text><rect class="sh" x="470.0" y="13" width="260" height="104" rx="10"/><rect class="n n-person" x="470.0" y="10" width="260" height="104" rx="10"/><text class="tg tk-person" x="600.0" y="39.5" text-anchor="middle">PERSON</text><text class="t tk-person" x="600.0" y="58.5" text-anchor="middle">Annotator</text><text class="s tk-person" x="600.0" y="74.5" text-anchor="middle">claims tasks</text><text class="s tk-person" x="600.0" y="90.5" text-anchor="middle">draws and labels boxes</text><rect class="sh" x="940.0" y="13" width="260" height="104" rx="10"/><rect class="n n-person" x="940.0" y="10" width="260" height="104" rx="10"/><text class="tg tk-person" x="1070.0" y="39.5" text-anchor="middle">PERSON</text><text class="t tk-person" x="1070.0" y="58.5" text-anchor="middle">Reviewer</text><text class="s tk-person" x="1070.0" y="74.5" text-anchor="middle">works the review queue</text><text class="s tk-person" x="1070.0" y="90.5" text-anchor="middle">approves or rejects</text><rect class="sh" x="350" y="283" width="500" height="132" rx="10"/><rect class="n n-system" x="350" y="280" width="500" height="132" rx="10"/><text class="tg tk-system" x="600.0" y="323.5" text-anchor="middle">SOFTWARE SYSTEM</text><text class="t tk-system" x="600.0" y="342.5" text-anchor="middle">Image Annotation Tool</text><text class="s tk-system" x="600.0" y="358.5" text-anchor="middle">one task per image · review before export</text><text class="s tk-system" x="600.0" y="374.5" text-anchor="middle">images in → COCO JSON out</text><path class="e e-c1" d="M130.0,114.0 L130.0,336.0 Q130.0,346.0 140.0,346.0 L350.0,346.0" marker-end="url(#c1-a-c1)"/><path class="e e-c2" d="M600.0,114.0 L600.0,280.0" marker-end="url(#c1-a-c2)"/><path class="e e-c3" d="M1070.0,114.0 L1070.0,336.0 Q1070.0,346.0 1060.0,346.0 L850.0,346.0" marker-end="url(#c1-a-c3)"/><rect class="lp lp-bg" x="70.9" y="197.5" width="118.2" height="35" rx="4"/><text class="lab lab-c1" x="130.0" y="211.5" text-anchor="middle">images</text><text class="lab lab-c1" x="130.0" y="226.5" text-anchor="middle">export requests</text><rect class="lp lp-bg" x="554.8" y="179.5" width="90.5" height="35" rx="4"/><text class="lab lab-c2" x="600.0" y="193.5" text-anchor="middle">boxes</text><text class="lab lab-c2" x="600.0" y="208.5" text-anchor="middle">submissions</text><rect class="lp lp-bg" x="1031.7" y="197.5" width="76.6" height="35" rx="4"/><text class="lab lab-c3" x="1070.0" y="211.5" text-anchor="middle">decisions</text><text class="lab lab-c3" x="1070.0" y="226.5" text-anchor="middle">comments</text></svg><div class="zf zf-depart" data-id="zoom-1" style="left:28.904%;top:62.613%;width:42.193%;height:31.532%"></div></figure>
+    <p class="down-hint">↓ zoom into the tool</p>
+    <aside class="notes">
+      The outlined box is the one the next slide zooms into.
+      No external system was found: there is no outbound HTTP client, third-party SDK or webhook in the code. PostgreSQL, Redis and MinIO are started by the same compose file, so they appear as containers on the next slide. Whether anything outside consumes the COCO file is not visible in the repository.
+    </aside>
+  </section>
+
+  <section data-auto-animate>
+    <div class="crumbs" data-id="crumbs"><span>LEVEL</span><b data-id="cr1">L1 Context</b><b class="on" data-id="cr2">L2 Containers</b><b data-id="cr3">L3 Components</b></div>
+    <h2>api and worker never call each other; they share three stores</h2>
+    <figure class="dg-fig zoomfig" style="width:min(100%, 1290px)"><svg class="dg " viewBox="-2 -2 1204 504" role="img" aria-label="Containers: the browser loads the web app, which proxies API calls to the api; api and worker both use MinIO, PostgreSQL and Redis and never call each other; the browser downloads objects from MinIO directly."  xmlns="http://www.w3.org/2000/svg"><defs><marker id="c2-a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-ink" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="c2-a-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-accent" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="c2-a-c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c1" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="c2-a-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c2" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="c2-a-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c3" d="M0,0.5 L10,5 L0,9.5 z"/></marker></defs><rect class="bound" x="185" y="0" width="1015" height="500" rx="14"/><text class="bound-t" x="201" y="22">IMAGE ANNOTATION TOOL · DOCKER COMPOSE</text><rect class="sh" x="0" y="43" width="150" height="100" rx="10"/><rect class="n n-person" x="0" y="40" width="150" height="100" rx="10"/><text class="tg tk-person" x="75.0" y="67.5" text-anchor="middle">PERSON</text><text class="t tk-person" x="75.0" y="86.5" text-anchor="middle">Browser</text><text class="s tk-person" x="75.0" y="102.5" text-anchor="middle">all three</text><text class="s tk-person" x="75.0" y="118.5" text-anchor="middle">roles</text><rect class="sh" x="225" y="43" width="220" height="100" rx="10"/><rect class="n n-container" x="225" y="40" width="220" height="100" rx="10"/><text class="tg tk-container" x="335.0" y="67.5" text-anchor="middle">CONTAINER</text><text class="t tk-container" x="335.0" y="86.5" text-anchor="middle">web</text><text class="s tk-container" x="335.0" y="102.5" text-anchor="middle">nginx + React SPA</text><text class="s tk-container" x="335.0" y="118.5" text-anchor="middle">port 3000</text><rect class="sh" x="600" y="37" width="300" height="112" rx="10"/><rect class="n n-system" x="600" y="34" width="300" height="112" rx="10"/><text class="tg tk-system" x="750.0" y="67.5" text-anchor="middle">CONTAINER</text><text class="t tk-system" x="750.0" y="86.5" text-anchor="middle">api</text><text class="s tk-system" x="750.0" y="102.5" text-anchor="middle">FastAPI · port 8000</text><text class="s tk-system" x="750.0" y="118.5" text-anchor="middle">rules, uploads, signed URLs</text><path class="sh" d="M300,223 a120.0,9 0 0 1 240,0 v74 a120.0,9 0 0 1 -240,0 z" transform="translate(0,3)"/><path class="n n-store" d="M300,223 a120.0,9 0 0 1 240,0 v74 a120.0,9 0 0 1 -240,0 z"/><path class="n n-rim n-store" d="M300,223 a120.0,9 0 0 0 240,0"/><text class="tg tk-store" x="420.0" y="250.0" text-anchor="middle">DATA STORE</text><text class="t tk-store" x="420.0" y="269.0" text-anchor="middle">minio</text><text class="s tk-store" x="420.0" y="285.0" text-anchor="middle">images · thumbnails · exports</text><path class="sh" d="M630,223 a120.0,9 0 0 1 240,0 v74 a120.0,9 0 0 1 -240,0 z" transform="translate(0,3)"/><path class="n n-store" d="M630,223 a120.0,9 0 0 1 240,0 v74 a120.0,9 0 0 1 -240,0 z"/><path class="n n-rim n-store" d="M630,223 a120.0,9 0 0 0 240,0"/><text class="tg tk-store" x="750.0" y="250.0" text-anchor="middle">DATA STORE</text><text class="t tk-store" x="750.0" y="269.0" text-anchor="middle">postgres</text><text class="s tk-store" x="750.0" y="285.0" text-anchor="middle">6 tables · system of record</text><path class="sh" d="M930,223 a120.0,9 0 0 1 240,0 v74 a120.0,9 0 0 1 -240,0 z" transform="translate(0,3)"/><path class="n n-store" d="M930,223 a120.0,9 0 0 1 240,0 v74 a120.0,9 0 0 1 -240,0 z"/><path class="n n-rim n-store" d="M930,223 a120.0,9 0 0 0 240,0"/><text class="tg tk-store" x="1050.0" y="250.0" text-anchor="middle">DATA STORE</text><text class="t tk-store" x="1050.0" y="269.0" text-anchor="middle">redis</text><text class="s tk-store" x="1050.0" y="285.0" text-anchor="middle">queues thumbnails, exports</text><rect class="sh" x="600" y="383" width="300" height="96" rx="10"/><rect class="n n-container" x="600" y="380" width="300" height="96" rx="10"/><text class="tg tk-container" x="750.0" y="413.5" text-anchor="middle">CONTAINER</text><text class="t tk-container" x="750.0" y="432.5" text-anchor="middle">worker</text><text class="s tk-container" x="750.0" y="448.5" text-anchor="middle">RQ · thumbnail and COCO export jobs</text><rect class="sh" x="225" y="399" width="220" height="70" rx="10"/><rect class="n n-ext dash" x="225" y="396" width="220" height="70" rx="10"/><text class="t tk-ext" x="335.0" y="428.0" text-anchor="middle">minio-init</text><text class="s tk-ext" x="335.0" y="444.0" text-anchor="middle">creates 3 buckets, exits</text><path class="e e-accent" d="M150.0,90.0 L225.0,90.0" marker-end="url(#c2-a-accent)"/><path class="e e-accent" d="M445.0,90.0 L600.0,90.0" marker-end="url(#c2-a-accent)"/><path class="e e-ink" d="M750.0,146.0 L750.0,214.0" marker-end="url(#c2-a-ink)"/><path class="e e-ink" d="M660.0,146.0 L660.0,170.0 Q660.0,180.0 650.0,180.0 L430.0,180.0 Q420.0,180.0 420.0,190.0 L420.0,214.0" marker-end="url(#c2-a-ink)"/><path class="e e-ink" d="M840.0,146.0 L840.0,170.0 Q840.0,180.0 850.0,180.0 L1040.0,180.0 Q1050.0,180.0 1050.0,190.0 L1050.0,214.0" marker-end="url(#c2-a-ink)"/><path class="e e-ink" d="M750.0,380.0 L750.0,309.0" marker-end="url(#c2-a-ink)"/><path class="e e-ink" d="M660.0,380.0 L660.0,353.0 Q660.0,343.0 650.0,343.0 L490.0,343.0 Q480.0,343.0 480.0,333.0 L480.0,309.0" marker-end="url(#c2-a-ink)"/><path class="e e-ink" d="M840.0,380.0 L840.0,353.0 Q840.0,343.0 850.0,343.0 L1040.0,343.0 Q1050.0,343.0 1050.0,333.0 L1050.0,309.0" marker-end="url(#c2-a-ink)"/><path class="e e-ink dash" d="M335.0,396.0 L335.0,309.0" marker-end="url(#c2-a-ink)"/><path class="e e-accent" d="M75.0,140.0 L75.0,252.0 Q75.0,262.0 85.0,262.0 L300.0,262.0" marker-end="url(#c2-a-accent)"/><rect class="lp lp-bg" x="166.6" y="80.0" width="41.8" height="20" rx="4"/><text class="lab lab-accent" x="187.5" y="94.0" text-anchor="middle">HTTP</text><rect class="lp lp-bg" x="470.3" y="80.0" width="104.4" height="20" rx="4"/><text class="lab lab-accent" x="522.5" y="94.0" text-anchor="middle">proxies /api/</text><rect class="lp lp-bg" x="701.3" y="170.0" width="97.4" height="20" rx="4"/><text class="lab lab-ink" x="750.0" y="184.0" text-anchor="middle">read / write</text><rect class="lp lp-bg" x="487.8" y="170.0" width="104.4" height="20" rx="4"/><text class="lab lab-ink" x="540.0" y="184.0" text-anchor="middle">put originals</text><rect class="lp lp-bg" x="913.7" y="170.0" width="62.6" height="20" rx="4"/><text class="lab lab-ink" x="945.0" y="184.0" text-anchor="middle">enqueue</text><rect class="lp lp-bg" x="732.6" y="334.5" width="34.9" height="20" rx="4"/><text class="lab lab-ink" x="750.0" y="348.5" text-anchor="middle">SQL</text><rect class="lp lp-bg" x="531.7" y="333.0" width="76.6" height="20" rx="4"/><text class="lab lab-ink" x="570.0" y="347.0" text-anchor="middle">get / put</text><rect class="lp lp-bg" x="906.7" y="333.0" width="76.6" height="20" rx="4"/><text class="lab lab-ink" x="945.0" y="347.0" text-anchor="middle">take jobs</text><rect class="lp lp-bg" x="310.6" y="342.5" width="48.8" height="20" rx="4"/><text class="lab lab-ink" x="335.0" y="356.5" text-anchor="middle">mc mb</text><rect class="lp lp-bg" x="33.2" y="187.5" width="83.5" height="35" rx="4"/><text class="lab lab-accent" x="75.0" y="201.5" text-anchor="middle">GET by</text><text class="lab lab-accent" x="75.0" y="216.5" text-anchor="middle">signed URL</text></svg><div class="zf zf-arrive" data-id="zoom-1" style="left:15.532%;top:0.397%;width:84.302%;height:99.206%"></div></figure>
+    <div class="paths"><span class="where"><b>docker-compose.yml</b> all seven services</span><span class="where"><b>web/nginx.conf</b> proxies /api/ to api:8000</span><span class="where"><b>.env.example</b> every address</span></div>
+    <aside class="notes">
+      web, api and worker are built from this repository; postgres, redis, minio and minio-init come from public images.
+      Compose is the only topology in the repository; nothing is known about a production deployment.
+      api and worker start only after postgres is healthy and minio-init has finished.
+    </aside>
+  </section>
+
+  <section>
+    <div class="crumbs"><span>LEVEL</span><b>L1 Context</b><b>L2 Containers</b><b class="on">L3 Components</b></div>
+    <h2>Inside the api: six routers, one state machine, three adapters</h2>
+    <figure class="dg-fig " style="width:min(100%, 1343px)"><svg class="dg " viewBox="-2 -2 1204 484" role="img" aria-label="Components of the api: six route modules; tasks and reviews change status through the state machine; models, storage and queue are the adapters to PostgreSQL, MinIO and Redis."  xmlns="http://www.w3.org/2000/svg"><defs><marker id="c3-a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-ink" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="c3-a-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-accent" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="c3-a-c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c1" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="c3-a-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c2" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="c3-a-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c3" d="M0,0.5 L10,5 L0,9.5 z"/></marker></defs><rect class="bound" x="0" y="0" width="1200" height="346" rx="14"/><text class="bound-t" x="16" y="22">API CONTAINER · api/app/</text><rect class="sh" x="14.0" y="47" width="176" height="76" rx="10"/><rect class="n n-code" x="14.0" y="44" width="176" height="76" rx="10"/><text class="t tk-code" x="102.0" y="71.0" text-anchor="middle">auth.py</text><text class="s tk-code" x="102.0" y="87.0" text-anchor="middle">login · JWT</text><text class="s tk-code" x="102.0" y="103.0" text-anchor="middle">require_role</text><rect class="sh" x="213.2" y="47" width="176" height="76" rx="10"/><rect class="n n-code" x="213.2" y="44" width="176" height="76" rx="10"/><text class="t tk-code" x="301.2" y="71.0" text-anchor="middle">routes/tasks.py</text><text class="s tk-code" x="301.2" y="87.0" text-anchor="middle">claim · submit</text><text class="s tk-code" x="301.2" y="103.0" text-anchor="middle">reopen</text><rect class="sh" x="412.4" y="47" width="176" height="76" rx="10"/><rect class="n n-code" x="412.4" y="44" width="176" height="76" rx="10"/><text class="t tk-code" x="500.4" y="79.0" text-anchor="middle">routes/annotations.py</text><text class="s tk-code" x="500.4" y="95.0" text-anchor="middle">replace all boxes</text><rect class="sh" x="611.5999999999999" y="47" width="176" height="76" rx="10"/><rect class="n n-code" x="611.5999999999999" y="44" width="176" height="76" rx="10"/><text class="t tk-code" x="699.6" y="79.0" text-anchor="middle">routes/reviews.py</text><text class="s tk-code" x="699.6" y="95.0" text-anchor="middle">queue · decide</text><rect class="sh" x="810.8" y="47" width="176" height="76" rx="10"/><rect class="n n-code" x="810.8" y="44" width="176" height="76" rx="10"/><text class="t tk-code" x="898.8" y="79.0" text-anchor="middle">routes/images.py</text><text class="s tk-code" x="898.8" y="95.0" text-anchor="middle">batch upload</text><rect class="sh" x="1010.0" y="47" width="176" height="76" rx="10"/><rect class="n n-code" x="1010.0" y="44" width="176" height="76" rx="10"/><text class="t tk-code" x="1098.0" y="79.0" text-anchor="middle">routes/export.py</text><text class="s tk-code" x="1098.0" y="95.0" text-anchor="middle">request · poll</text><polygon class="sh" points="396,236 606,236 626,278.0 606,320 396,320 376,278.0" transform="translate(0,3)"/><polygon class="n n-system" points="396,236 606,236 626,278.0 606,320 396,320 376,278.0"/><text class="t tk-system" x="501.0" y="267.0" text-anchor="middle">state_machine.py</text><text class="s tk-system" x="501.0" y="283.0" text-anchor="middle">TRANSITIONS</text><text class="s tk-system" x="501.0" y="299.0" text-anchor="middle">pure logic</text><rect class="sh" x="14" y="239" width="176" height="84" rx="10"/><rect class="n n-code" x="14" y="236" width="176" height="84" rx="10"/><text class="t tk-code" x="102.0" y="267.0" text-anchor="middle">models.py · db.py</text><text class="s tk-code" x="102.0" y="283.0" text-anchor="middle">6 ORM classes</text><text class="s tk-code" x="102.0" y="299.0" text-anchor="middle">session per request</text><rect class="sh" x="812" y="239" width="176" height="84" rx="10"/><rect class="n n-code" x="812" y="236" width="176" height="84" rx="10"/><text class="t tk-code" x="900.0" y="267.0" text-anchor="middle">storage.py</text><text class="s tk-code" x="900.0" y="283.0" text-anchor="middle">put originals</text><text class="s tk-code" x="900.0" y="299.0" text-anchor="middle">sign URLs</text><rect class="sh" x="1010" y="239" width="176" height="84" rx="10"/><rect class="n n-code" x="1010" y="236" width="176" height="84" rx="10"/><text class="t tk-code" x="1098.0" y="267.0" text-anchor="middle">queue.py</text><text class="s tk-code" x="1098.0" y="283.0" text-anchor="middle">enqueue by</text><text class="s tk-code" x="1098.0" y="299.0" text-anchor="middle">dotted path</text><path class="sh" d="M22,401 a80.0,9 0 0 1 160,0 v62 a80.0,9 0 0 1 -160,0 z" transform="translate(0,3)"/><path class="n n-store" d="M22,401 a80.0,9 0 0 1 160,0 v62 a80.0,9 0 0 1 -160,0 z"/><path class="n n-rim n-store" d="M22,401 a80.0,9 0 0 0 160,0"/><text class="tg tk-store" x="102.0" y="430.0" text-anchor="middle">DATA STORE</text><text class="t tk-store" x="102.0" y="449.0" text-anchor="middle">postgres</text><path class="sh" d="M820,401 a80.0,9 0 0 1 160,0 v62 a80.0,9 0 0 1 -160,0 z" transform="translate(0,3)"/><path class="n n-store" d="M820,401 a80.0,9 0 0 1 160,0 v62 a80.0,9 0 0 1 -160,0 z"/><path class="n n-rim n-store" d="M820,401 a80.0,9 0 0 0 160,0"/><text class="tg tk-store" x="900.0" y="430.0" text-anchor="middle">DATA STORE</text><text class="t tk-store" x="900.0" y="449.0" text-anchor="middle">minio</text><path class="sh" d="M1018,401 a80.0,9 0 0 1 160,0 v62 a80.0,9 0 0 1 -160,0 z" transform="translate(0,3)"/><path class="n n-store" d="M1018,401 a80.0,9 0 0 1 160,0 v62 a80.0,9 0 0 1 -160,0 z"/><path class="n n-rim n-store" d="M1018,401 a80.0,9 0 0 0 160,0"/><text class="tg tk-store" x="1098.0" y="430.0" text-anchor="middle">DATA STORE</text><text class="t tk-store" x="1098.0" y="449.0" text-anchor="middle">redis</text><path class="e e-ink" d="M301.2,120.0 L301.2,268.0 Q301.2,278.0 311.2,278.0 L376.0,278.0" marker-end="url(#c3-a-ink)"/><path class="e e-ink" d="M699.6,120.0 L699.6,268.0 Q699.6,278.0 689.6,278.0 L626.0,278.0" marker-end="url(#c3-a-ink)"/><path class="e e-ink" d="M501.0,120.0 L501.0,236.0" marker-end="url(#c3-a-ink)"/><path class="e e-ink" d="M102.0,120.0 L102.0,236.0" marker-end="url(#c3-a-ink)"/><path class="e e-ink" d="M868.8,120.0 L868.8,236.0" marker-end="url(#c3-a-ink)"/><path class="e e-ink" d="M938.8,120.0 L938.8,148.0 Q938.8,158.0 948.8,158.0 L1048.0,158.0 Q1058.0,158.0 1058.0,168.0 L1058.0,236.0" marker-end="url(#c3-a-ink)"/><path class="e e-ink" d="M1128.0,120.0 L1128.0,236.0" marker-end="url(#c3-a-ink)"/><path class="e e-ink" d="M102.0,320.0 L102.0,392.0" marker-end="url(#c3-a-ink)"/><path class="e e-ink" d="M900.0,320.0 L900.0,392.0" marker-end="url(#c3-a-ink)"/><path class="e e-ink" d="M1098.0,320.0 L1098.0,392.0" marker-end="url(#c3-a-ink)"/><rect class="lp lp-bg" x="252.5" y="180.0" width="97.4" height="20" rx="4"/><text class="lab lab-ink" x="301.2" y="194.0" text-anchor="middle">apply_action</text><rect class="lp lp-bg" x="650.9" y="180.0" width="97.4" height="20" rx="4"/><text class="lab lab-ink" x="699.6" y="194.0" text-anchor="middle">apply_action</text><rect class="lp lp-bg" x="448.8" y="154.0" width="104.4" height="20" rx="4"/><text class="lab lab-ink" x="501.0" y="168.0" text-anchor="middle">checks status</text><rect class="lp lp-bg" x="81.1" y="168.0" width="41.8" height="20" rx="4"/><text class="lab lab-ink" x="102.0" y="182.0" text-anchor="middle">User</text><rect class="lp lp-bg" x="820.1" y="195.0" width="97.4" height="20" rx="4"/><text class="lab lab-ink" x="868.8" y="209.0" text-anchor="middle">upload_image</text><rect class="lp lp-bg" x="967.1" y="148.0" width="62.6" height="20" rx="4"/><text class="lab lab-ink" x="998.4" y="162.0" text-anchor="middle">enqueue</text><rect class="lp lp-bg" x="1096.7" y="195.0" width="62.6" height="20" rx="4"/><text class="lab lab-ink" x="1128.0" y="209.0" text-anchor="middle">enqueue</text><rect class="lp lp-bg" x="84.6" y="346.0" width="34.9" height="20" rx="4"/><text class="lab lab-ink" x="102.0" y="360.0" text-anchor="middle">SQL</text><rect class="lp lp-bg" x="872.1" y="346.0" width="55.7" height="20" rx="4"/><text class="lab lab-ink" x="900.0" y="360.0" text-anchor="middle">S3 API</text><rect class="lp lp-bg" x="1084.0" y="346.0" width="27.9" height="20" rx="4"/><text class="lab lab-ink" x="1098.0" y="360.0" text-anchor="middle">RQ</text></svg></figure>
+    <div class="paths"><span class="where"><b>api/app/main.py</b> registers the routers</span><span class="where"><b>api/app/routes/</b> one file per resource</span><span class="where"><b>api/app/state_machine.py</b></span></div>
+    <aside class="notes">
+      Not every import is drawn. Every route module also depends on auth.py (get_current_user or require_role) and on models.py; tasks.py and export.py also use storage.py to sign URLs.
+      apply_action lives in routes/tasks.py and is imported by routes/reviews.py.
+    </aside>
+  </section>
+
+  <section>
+    <span class="eyebrow">2 · Architecture</span>
+    <h2>One table decides every status change</h2>
+    <pre><code class="language-python" data-trim data-line-numbers="|1-7|9-13|14-16"><script type="text/template">
+TRANSITIONS: dict[tuple[TaskStatus, Action], tuple[TaskStatus, str]] = {
+    (TaskStatus.PENDING, Action.CLAIM): (TaskStatus.IN_PROGRESS, "annotator"),
+    (TaskStatus.IN_PROGRESS, Action.SUBMIT): (TaskStatus.SUBMITTED, "annotator"),
+    (TaskStatus.SUBMITTED, Action.APPROVE): (TaskStatus.APPROVED, "reviewer"),
+    (TaskStatus.SUBMITTED, Action.REJECT): (TaskStatus.REJECTED, "reviewer"),
+    (TaskStatus.REJECTED, Action.REOPEN): (TaskStatus.IN_PROGRESS, "annotator"),
+}
+
+def next_status(current: TaskStatus, action: Action, role: str) -> TaskStatus:
+    try:
+        target, allowed_role = TRANSITIONS[(current, action)]
+    except KeyError:
+        raise InvalidTransition(f"cannot {action.value} a task that is {current.value}") from None
+    if role != allowed_role:
+        raise RoleNotAllowed(f"only a {allowed_role} can {action.value} a task")
+    return target
+    </script></code></pre>
+    <p class="callout">A move that is not in the table becomes HTTP 409; the wrong role becomes 403. The module imports no framework and no database, so it is tested alone.</p>
+    <div class="paths"><span class="where"><b>api/app/state_machine.py</b> TRANSITIONS, next_status</span><span class="where"><b>api/app/routes/tasks.py</b> apply_action maps the errors</span></div>
+    <aside class="notes">
+      Press → to step through: the table, the lookup, the role check.
+      The excerpt is shortened: the comment above TRANSITIONS, the TERMINAL_STATUSES line and the docstring of next_status are left out.
+      Tests: api/tests/test_state_machine.py.
+    </aside>
+  </section>
+</section>
+
+<section>
+  <section>
+    <span class="eyebrow">3 · How it works</span>
+    <h2>One image, from upload to export</h2>
+    <div class="flowstack">
+    <figure class="dg-fig "><svg class="dg " viewBox="-2 -2 1204 294" role="img" aria-label="Six stages: upload, claim, draw boxes, submit, review, export. Upload and export each hand a job to the worker; a rejected task returns to drawing."  xmlns="http://www.w3.org/2000/svg"><defs><marker id="pl-a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-ink" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="pl-a-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-accent" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="pl-a-c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c1" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="pl-a-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c2" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="pl-a-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c3" d="M0,0.5 L10,5 L0,9.5 z"/></marker></defs><rect class="sh" x="0" y="27" width="180" height="72" rx="10"/><rect class="n n-c1" x="0" y="24" width="180" height="72" rx="10"/><text class="t tk-c1" x="90.0" y="57.0" text-anchor="middle">upload</text><text class="s tk-c1" x="90.0" y="73.0" text-anchor="middle">POST /api/images</text><rect class="sh" x="204" y="27" width="180" height="72" rx="10"/><rect class="n n-c2" x="204" y="24" width="180" height="72" rx="10"/><text class="t tk-c2" x="294.0" y="57.0" text-anchor="middle">claim</text><text class="s tk-c2" x="294.0" y="73.0" text-anchor="middle">POST /tasks/next</text><rect class="sh" x="408" y="27" width="180" height="72" rx="10"/><rect class="n n-c2" x="408" y="24" width="180" height="72" rx="10"/><text class="t tk-c2" x="498.0" y="57.0" text-anchor="middle">draw boxes</text><text class="s tk-c2" x="498.0" y="73.0" text-anchor="middle">PUT …/annotations</text><rect class="sh" x="612" y="27" width="180" height="72" rx="10"/><rect class="n n-c2" x="612" y="24" width="180" height="72" rx="10"/><text class="t tk-c2" x="702.0" y="57.0" text-anchor="middle">submit</text><text class="s tk-c2" x="702.0" y="73.0" text-anchor="middle">→ submitted</text><rect class="sh" x="816" y="27" width="180" height="72" rx="10"/><rect class="n n-c3" x="816" y="24" width="180" height="72" rx="10"/><text class="t tk-c3" x="906.0" y="57.0" text-anchor="middle">review</text><text class="s tk-c3" x="906.0" y="73.0" text-anchor="middle">approve or reject</text><rect class="sh" x="1020" y="27" width="180" height="72" rx="10"/><rect class="n n-c1" x="1020" y="24" width="180" height="72" rx="10"/><text class="t tk-c1" x="1110.0" y="57.0" text-anchor="middle">export</text><text class="s tk-c1" x="1110.0" y="73.0" text-anchor="middle">POST /api/exports</text><rect class="sh" x="0" y="209" width="180" height="70" rx="10"/><rect class="n n-code" x="0" y="206" width="180" height="70" rx="10"/><text class="t tk-code" x="90.0" y="238.0" text-anchor="middle">thumbnail job</text><text class="s tk-code" x="90.0" y="254.0" text-anchor="middle">worker</text><rect class="sh" x="1020" y="209" width="180" height="70" rx="10"/><rect class="n n-code" x="1020" y="206" width="180" height="70" rx="10"/><text class="t tk-code" x="1110.0" y="238.0" text-anchor="middle">COCO export job</text><text class="s tk-code" x="1110.0" y="254.0" text-anchor="middle">worker</text><path class="e e-c2" d="M180.0,60.0 L204.0,60.0" marker-end="url(#pl-a-c2)"/><path class="e e-c2" d="M384.0,60.0 L408.0,60.0" marker-end="url(#pl-a-c2)"/><path class="e e-c2" d="M588.0,60.0 L612.0,60.0" marker-end="url(#pl-a-c2)"/><path class="e e-c3" d="M792.0,60.0 L816.0,60.0" marker-end="url(#pl-a-c3)"/><path class="e e-c1" d="M996.0,60.0 L1020.0,60.0" marker-end="url(#pl-a-c1)"/><path class="e e-ink dash" d="M90.0,96.0 L90.0,206.0" marker-end="url(#pl-a-ink)"/><path class="e e-ink dash" d="M1110.0,96.0 L1110.0,206.0" marker-end="url(#pl-a-ink)"/><path class="e e-c3 dash" d="M906.0,96.0 L906.0,142.0 Q906.0,152.0 896.0,152.0 L508.0,152.0 Q498.0,152.0 498.0,142.0 L498.0,96.0" marker-end="url(#pl-a-c3)"/><rect class="lp lp-bg" x="58.7" y="142.0" width="62.6" height="20" rx="4"/><text class="lab lab-ink" x="90.0" y="156.0" text-anchor="middle">enqueue</text><rect class="lp lp-bg" x="1078.7" y="142.0" width="62.6" height="20" rx="4"/><text class="lab lab-ink" x="1110.0" y="156.0" text-anchor="middle">enqueue</text><rect class="lp lp-bg" x="583.8" y="142.0" width="236.4" height="20" rx="4"/><text class="lab lab-c3" x="702.0" y="156.0" text-anchor="middle">rejected with a comment → reopen</text></svg></figure>
+    <div class="small">
+      <ul>
+        <li><b>upload:</b> stores the original in MinIO and creates one <code>pending</code> task</li>
+        <li><b>claim:</b> the oldest pending task goes to the annotator who asks</li>
+        <li><b>draw + submit:</b> boxes are saved as a whole set; at least one is needed</li>
+        <li><b>review:</b> approve ends the task; reject needs a comment</li>
+        <li><b>export:</b> all approved tasks, written as one COCO JSON file</li>
+        <li><b>background jobs:</b> queued in Redis, run by the worker</li>
+      </ul>
+    </div>
+    </div>
+    <div class="paths"><span class="where"><b>api/app/routes/</b> images.py · tasks.py · annotations.py · reviews.py · export.py</span><span class="where"><b>worker/jobs/</b></span></div>
+    <p class="down-hint">↓ states, permissions, then three flows in detail</p>
+    <aside class="notes">
+      Box colours show who performs the stage. The dashed arrows are hand-offs to the worker through Redis.
+    </aside>
+  </section>
+
+  <section>
+    <span class="eyebrow">3 · How it works</span>
+    <h2>The states of a task and the records behind it</h2>
+    <div class="cols">
+      <div><figure class="dg-fig "><svg class="dg " viewBox="-2 -2 604 334" role="img" aria-label="Task states: pending, in_progress, submitted, then approved or rejected; a rejected task is reopened into in_progress."  xmlns="http://www.w3.org/2000/svg"><defs><marker id="st-a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-ink" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="st-a-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-accent" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="st-a-c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c1" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="st-a-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c2" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="st-a-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c3" d="M0,0.5 L10,5 L0,9.5 z"/></marker></defs><rect class="sh" x="0" y="33" width="140" height="54" rx="27.0"/><rect class="n n-code" x="0" y="30" width="140" height="54" rx="27.0"/><text class="t tk-code" x="70.0" y="62.0" text-anchor="middle">pending</text><rect class="sh" x="230" y="33" width="140" height="54" rx="27.0"/><rect class="n n-code" x="230" y="30" width="140" height="54" rx="27.0"/><text class="t tk-code" x="300.0" y="62.0" text-anchor="middle">in_progress</text><rect class="sh" x="460" y="33" width="140" height="54" rx="27.0"/><rect class="n n-code" x="460" y="30" width="140" height="54" rx="27.0"/><text class="t tk-code" x="530.0" y="62.0" text-anchor="middle">submitted</text><rect class="sh" x="230" y="233" width="140" height="54" rx="27.0"/><rect class="n n-code" x="230" y="230" width="140" height="54" rx="27.0"/><text class="t tk-code" x="300.0" y="262.0" text-anchor="middle">rejected</text><rect class="sh" x="460" y="233" width="140" height="54" rx="27.0"/><rect class="n n-code" x="460" y="230" width="140" height="54" rx="27.0"/><text class="t tk-code" x="530.0" y="254.0" text-anchor="middle">approved</text><text class="s tk-code" x="530.0" y="270.0" text-anchor="middle">final</text><path class="e e-c2" d="M140.0,57.0 L230.0,57.0" marker-end="url(#st-a-c2)"/><path class="e e-c2" d="M370.0,57.0 L460.0,57.0" marker-end="url(#st-a-c2)"/><path class="e e-c3" d="M560.0,84.0 L560.0,230.0" marker-end="url(#st-a-c3)"/><path class="e e-c3" d="M490.0,84.0 L490.0,147.0 Q490.0,157.0 480.0,157.0 L345.0,157.0 Q335.0,157.0 335.0,167.0 L335.0,230.0" marker-end="url(#st-a-c3)"/><path class="e e-c2" d="M265.0,230.0 L265.0,84.0" marker-end="url(#st-a-c2)"/><rect class="lp lp-bg" x="160.6" y="47.0" width="48.8" height="20" rx="4"/><text class="lab lab-c2" x="185.0" y="61.0" text-anchor="middle">claim</text><rect class="lp lp-bg" x="387.1" y="47.0" width="55.7" height="20" rx="4"/><text class="lab lab-c2" x="415.0" y="61.0" text-anchor="middle">submit</text><rect class="lp lp-bg" x="528.7" y="147.0" width="62.6" height="20" rx="4"/><text class="lab lab-c3" x="560.0" y="161.0" text-anchor="middle">approve</text><rect class="lp lp-bg" x="384.1" y="147.0" width="55.7" height="20" rx="4"/><text class="lab lab-c3" x="412.0" y="161.0" text-anchor="middle">reject</text><rect class="lp lp-bg" x="237.2" y="147.0" width="55.7" height="20" rx="4"/><text class="lab lab-c2" x="265.0" y="161.0" text-anchor="middle">reopen</text></svg></figure><p class="small">Lifecycle: <code>approved</code> is final. Arrow colour shows which role makes the move.</p></div>
+      <div><figure class="dg-fig "><svg class="dg " viewBox="-2 -2 604 334" role="img" aria-label="Data model: a task belongs to exactly one image and has many annotations and many reviews."  xmlns="http://www.w3.org/2000/svg"><defs><marker id="dm-a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-ink" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="dm-a-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-accent" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="dm-a-c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c1" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="dm-a-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c2" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="dm-a-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c3" d="M0,0.5 L10,5 L0,9.5 z"/></marker></defs><rect class="sh" x="0" y="13" width="230" height="116" rx="8"/><rect class="n n-code" x="0" y="10" width="230" height="116" rx="8"/><line class="uml" x1="0" x2="230" y1="56" y2="56"/><text class="t tk-code" x="115.0" y="37" text-anchor="middle">tasks</text><text class="code-t" x="12" y="76">image_id → images (unique)</text><text class="code-t" x="12" y="94">assignee_id → users?</text><text class="code-t" x="12" y="112">status</text><rect class="sh" x="0" y="203" width="230" height="116" rx="8"/><rect class="n n-code" x="0" y="200" width="230" height="116" rx="8"/><line class="uml" x1="0" x2="230" y1="246" y2="246"/><text class="t tk-code" x="115.0" y="227" text-anchor="middle">images</text><text class="code-t" x="12" y="266">batch_name · filename</text><text class="code-t" x="12" y="284">storage_key</text><text class="code-t" x="12" y="302">thumbnail_key?</text><rect class="sh" x="370" y="13" width="230" height="116" rx="8"/><rect class="n n-code" x="370" y="10" width="230" height="116" rx="8"/><line class="uml" x1="370" x2="600" y1="56" y2="56"/><text class="t tk-code" x="485.0" y="37" text-anchor="middle">annotations</text><text class="code-t" x="382" y="76">task_id → tasks</text><text class="code-t" x="382" y="94">label</text><text class="code-t" x="382" y="112">x, y, width, height</text><rect class="sh" x="370" y="203" width="230" height="116" rx="8"/><rect class="n n-code" x="370" y="200" width="230" height="116" rx="8"/><line class="uml" x1="370" x2="600" y1="246" y2="246"/><text class="t tk-code" x="485.0" y="227" text-anchor="middle">reviews</text><text class="code-t" x="382" y="266">task_id → tasks</text><text class="code-t" x="382" y="284">reviewer_id → users</text><text class="code-t" x="382" y="302">decision · comment</text><path class="e e-ink" d="M230.0,60.0 L370.0,60.0" marker-end="url(#dm-a-ink)"/><path class="e e-ink" d="M230.0,100.0 L290.0,100.0 Q300.0,100.0 300.0,110.0 L300.0,240.0 Q300.0,250.0 310.0,250.0 L370.0,250.0" marker-end="url(#dm-a-ink)"/><path class="e e-ink" d="M115.0,126.0 L115.0,200.0" marker-end="url(#dm-a-ink)"/><rect class="lp lp-bg" x="275.6" y="50.0" width="48.8" height="20" rx="4"/><text class="lab lab-ink" x="300.0" y="64.0" text-anchor="middle">1 → *</text><rect class="lp lp-bg" x="275.6" y="170.0" width="48.8" height="20" rx="4"/><text class="lab lab-ink" x="300.0" y="184.0" text-anchor="middle">1 → *</text><rect class="lp lp-bg" x="90.6" y="153.0" width="48.8" height="20" rx="4"/><text class="lab lab-ink" x="115.0" y="167.0" text-anchor="middle">1 → 1</text></svg></figure><p class="small">Four of the six tables; <code>users</code> and <code>exports</code> are left out here.</p></div>
+    </div>
+    <div class="paths"><span class="where"><b>api/app/state_machine.py</b></span><span class="where"><b>db/migrations/001_init.sql</b> the schema</span><span class="where"><b>api/app/models.py</b> ORM classes</span></div>
+    <aside class="notes">
+      A task that is rejected and resubmitted has several rows in reviews; that table is the history.
+      width, height and thumbnail_key on images stay null until the worker has run.
+      An export has its own, simpler status: queued, running, then done or failed.
+    </aside>
+  </section>
+
+  <section>
+    <span class="eyebrow">3 · How it works</span>
+    <h2>Who may do what, and what else the API checks</h2>
+    <table class="grid">
+      <thead><tr><th>Action</th><th class="c1">admin</th><th class="c2">annotator</th><th class="c3">reviewer</th><th>Extra check in the route</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST /api/images</code> upload a batch</td><td class="c on-c1">●</td><td class="c off">—</td><td class="c off">—</td><td>JPEG or PNG only, else 415</td></tr>
+        <tr><td><code>POST /api/tasks/next</code> claim</td><td class="c off">—</td><td class="c on-c2">●</td><td class="c off">—</td><td>returns your open task first, if you have one</td></tr>
+        <tr><td><code>PUT /api/tasks/{id}/annotations</code> save boxes</td><td class="c off">—</td><td class="c on-c2">●</td><td class="c off">—</td><td>assignee only; task must be <code>in_progress</code>, else 409</td></tr>
+        <tr><td><code>POST /api/tasks/{id}/submit</code></td><td class="c off">—</td><td class="c on-c2">●</td><td class="c off">—</td><td>assignee only; at least one box, else 422</td></tr>
+        <tr><td><code>GET /api/reviews/queue</code></td><td class="c off">—</td><td class="c off">—</td><td class="c on-c3">●</td><td>submitted tasks, oldest first</td></tr>
+        <tr><td><code>POST /api/tasks/{id}/reviews</code> decide</td><td class="c off">—</td><td class="c off">—</td><td class="c on-c3">●</td><td>a comment is required when rejecting, else 422</td></tr>
+        <tr><td><code>POST /api/tasks/{id}/reopen</code></td><td class="c off">—</td><td class="c on-c2">●</td><td class="c off">—</td><td>assignee only</td></tr>
+        <tr><td><code>POST /api/exports</code> · <code>GET /api/exports/{id}</code></td><td class="c on-c1">●</td><td class="c off">—</td><td class="c off">—</td><td>none</td></tr>
+        <tr><td><code>GET</code> tasks, one task, one image, annotations</td><td class="c on-c1">●</td><td class="c on-c2">●</td><td class="c on-c3">●</td><td>any signed-in user</td></tr>
+      </tbody>
+    </table>
+    <div class="paths"><span class="where"><b>api/app/auth.py</b> require_role</span><span class="where"><b>api/app/routes/tasks.py</b> require_assignee</span></div>
+    <aside class="notes">
+      Checked against the route modules on 2026-11-19. The role check is the require_role dependency on each route; status moves additionally pass through the state machine.
+    </aside>
+  </section>
+
+  <section>
+    <span class="eyebrow">3 · How it works</span>
+    <h2>Two annotators asking at once never get the same task</h2>
+    <pre><code class="language-python" data-trim data-line-numbers="|1-3|5-11|13-15"><script type="text/template">
+task = db.scalar(
+    select(Task).where(Task.assignee_id == annotator.id, Task.status == TaskStatus.IN_PROGRESS.value)
+)
+if task is None:
+    task = db.scalar(
+        select(Task)
+        .where(Task.status == TaskStatus.PENDING.value)
+        .order_by(Task.created_at)
+        .limit(1)
+        .with_for_update(skip_locked=True)
+    )
+    # ... 404 "no pending tasks" when the query finds nothing ...
+    apply_action(task, Action.CLAIM, annotator)
+    task.assignee_id = annotator.id
+    db.commit()
+return task_to_dict(task)
+    </script></code></pre>
+    <p class="callout">The oldest pending row is locked while it is claimed, and <code>skip_locked</code> makes a second request take the next row instead of waiting.</p>
+    <div class="paths"><span class="where"><b>api/app/routes/tasks.py</b> claim_next_task · POST /api/tasks/next</span></div>
+    <aside class="notes">
+      Press → to step through: resume the open task, lock the oldest pending one, claim it.
+      The excerpt is the body of claim_next_task; the two lines that raise 404 are replaced by the comment.
+    </aside>
+  </section>
+
+  <section>
+    <span class="eyebrow">3 · How it works</span>
+    <h2>Uploads pass through the api; downloads go straight to MinIO</h2>
+    <p class="step-hint">→ steps: upload · the signed URL · the direct download</p>
+    <div class="flowstack">
+    <figure class="dg-fig "><svg class="dg " viewBox="-2 -2 1204 254" role="img" aria-label="The browser uploads images through the api, which stores them in MinIO; the api returns signed URLs and the browser downloads from MinIO directly."  xmlns="http://www.w3.org/2000/svg"><defs><marker id="by-a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-ink" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="by-a-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-accent" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="by-a-c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c1" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="by-a-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c2" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="by-a-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c3" d="M0,0.5 L10,5 L0,9.5 z"/></marker></defs><rect class="sh" x="0" y="27" width="220" height="88" rx="10"/><rect class="n n-person" x="0" y="24" width="220" height="88" rx="10"/><text class="tg tk-person" x="110.0" y="53.5" text-anchor="middle">PERSON</text><text class="t tk-person" x="110.0" y="72.5" text-anchor="middle">Browser</text><text class="s tk-person" x="110.0" y="88.5" text-anchor="middle">the React app</text><rect class="sh" x="490" y="27" width="220" height="88" rx="10"/><rect class="n n-system" x="490" y="24" width="220" height="88" rx="10"/><text class="tg tk-system" x="600.0" y="53.5" text-anchor="middle">CONTAINER</text><text class="t tk-system" x="600.0" y="72.5" text-anchor="middle">api</text><text class="s tk-system" x="600.0" y="88.5" text-anchor="middle">storage.py</text><path class="sh" d="M980,33 a110.0,9 0 0 1 220,0 v70 a110.0,9 0 0 1 -220,0 z" transform="translate(0,3)"/><path class="n n-store" d="M980,33 a110.0,9 0 0 1 220,0 v70 a110.0,9 0 0 1 -220,0 z"/><path class="n n-rim n-store" d="M980,33 a110.0,9 0 0 0 220,0"/><text class="tg tk-store" x="1090.0" y="58.0" text-anchor="middle">DATA STORE</text><text class="t tk-store" x="1090.0" y="77.0" text-anchor="middle">minio</text><text class="s tk-store" x="1090.0" y="93.0" text-anchor="middle">3 buckets</text><g class="fragment" data-fragment-index="1"><path class="e e-accent" d="M220.0,48.0 L490.0,48.0" marker-end="url(#by-a-accent)"/><path class="e e-ink" d="M710.0,48.0 L980.0,48.0" marker-end="url(#by-a-ink)"/><rect class="lp lp-bg" x="292.4" y="38.0" width="125.2" height="20" rx="4"/><text class="lab lab-accent" x="355.0" y="52.0" text-anchor="middle">POST /api/images</text><rect class="lp lp-bg" x="803.2" y="38.0" width="83.5" height="20" rx="4"/><text class="lab lab-ink" x="845.0" y="52.0" text-anchor="middle">put_object</text></g><g class="fragment" data-fragment-index="2"><path class="e e-ink dash" d="M490.0,88.0 L220.0,88.0" marker-end="url(#by-a-ink)"/><rect class="lp lp-bg" x="275.0" y="78.0" width="160.0" height="20" rx="4"/><text class="lab lab-ink" x="355.0" y="92.0" text-anchor="middle">JSON with signed URLs</text></g><g class="fragment" data-fragment-index="3"><path class="e e-accent" d="M110.0,112.0 L110.0,190.0 Q110.0,200.0 120.0,200.0 L1080.0,200.0 Q1090.0,200.0 1090.0,190.0 L1090.0,112.0" marker-end="url(#by-a-accent)"/><rect class="lp lp-bg" x="426.2" y="190.0" width="347.6" height="20" rx="4"/><text class="lab lab-accent" x="600.0" y="204.0" text-anchor="middle">GET signed URL · image, thumbnail or export file</text></g></svg></figure>
+    <div class="small">
+      <ul>
+        <li><b>Upload:</b> the api reads each file and puts it in bucket <code>images</code></li>
+        <li><b>Signing:</b> every task and export response carries URLs valid for one hour</li>
+        <li><b>Two endpoints:</b> <code>S3_ENDPOINT</code> inside the network, <code>S3_PUBLIC_ENDPOINT</code> for the browser</li>
+        <li><b>Download:</b> images, thumbnails and the export file never pass through the api</li>
+      </ul>
+    </div>
+    </div>
+    <div class="paths"><span class="where"><b>api/app/storage.py</b> upload_image, presigned_url</span><span class="where"><b>.env.example</b> S3_ENDPOINT, S3_PUBLIC_ENDPOINT</span></div>
+    <aside class="notes">
+      One hour is the default expires_in=3600 of presigned_url. URLs are signed against the public endpoint because the browser, not the api, fetches the objects.
+      nginx accepts request bodies up to 200 MB for uploads (web/nginx.conf).
+    </aside>
+  </section>
+
+  <section>
+    <span class="step">Flow 1 · upload a batch</span>
+    <h2>The api answers at once; thumbnails are made afterwards</h2>
+    <p class="step-hint">→ steps through each message</p>
+    <figure class="dg-fig r-stretch"><svg class="dg seqsvg" viewBox="-2 -2 1204 491" role="img" aria-label="Sequence: the admin uploads a batch; the api stores each file, creates a pending task, enqueues a thumbnail job and replies; the worker later makes the thumbnail."  xmlns="http://www.w3.org/2000/svg"><defs><marker id="su-a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-ink" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="su-a-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-accent" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="su-a-c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c1" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="su-a-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c2" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="su-a-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c3" d="M0,0.5 L10,5 L0,9.5 z"/></marker></defs><rect class="band band-accent" x="8" y="273" width="1184" height="188" rx="8"/><text class="btag btag-accent" x="24" y="293">LATER</text><text class="btag btag-accent" x="24" y="307">IN THE WORKER</text><line class="life" x1="245.0" x2="245.0" y1="64" y2="481"/><line class="life" x1="417.0" x2="417.0" y1="64" y2="481"/><line class="life" x1="589.0" x2="589.0" y1="64" y2="481"/><line class="life" x1="761.0" x2="761.0" y1="64" y2="481"/><line class="life" x1="933.0" x2="933.0" y1="64" y2="481"/><line class="life" x1="1105.0" x2="1105.0" y1="64" y2="481"/><rect class="sh" x="165.0" y="13" width="160" height="50" rx="8"/><rect class="hdr" x="165.0" y="10" width="160" height="50" rx="8"/><text class="t" x="245.0" y="31" text-anchor="middle">Browser</text><text class="s" x="245.0" y="48" text-anchor="middle">admin</text><rect class="sh" x="337.0" y="13" width="160" height="50" rx="8"/><rect class="hdr" x="337.0" y="10" width="160" height="50" rx="8"/><text class="t" x="417.0" y="31" text-anchor="middle">api</text><text class="s" x="417.0" y="48" text-anchor="middle">routes/images.py</text><rect class="sh" x="509.0" y="13" width="160" height="50" rx="8"/><rect class="hdr" x="509.0" y="10" width="160" height="50" rx="8"/><text class="t" x="589.0" y="31" text-anchor="middle">minio</text><text class="s" x="589.0" y="48" text-anchor="middle">object storage</text><rect class="sh" x="681.0" y="13" width="160" height="50" rx="8"/><rect class="hdr" x="681.0" y="10" width="160" height="50" rx="8"/><text class="t" x="761.0" y="31" text-anchor="middle">postgres</text><text class="s" x="761.0" y="48" text-anchor="middle">images · tasks</text><rect class="sh" x="853.0" y="13" width="160" height="50" rx="8"/><rect class="hdr" x="853.0" y="10" width="160" height="50" rx="8"/><text class="t" x="933.0" y="31" text-anchor="middle">redis</text><text class="s" x="933.0" y="48" text-anchor="middle">queue thumbnails</text><rect class="sh" x="1025.0" y="13" width="160" height="50" rx="8"/><rect class="hdr" x="1025.0" y="10" width="160" height="50" rx="8"/><text class="t" x="1105.0" y="31" text-anchor="middle">worker</text><text class="s" x="1105.0" y="48" text-anchor="middle">jobs/thumbnail.py</text><g class="fragment"><path class="e e-accent" d="M255.0,113.0 L415.0,113.0" marker-end="url(#su-a-accent)"/><rect class="lp lp-bg" x="262.2" y="78.0" width="137.6" height="16" rx="3"/><text class="ml ml-accent" x="331.0" y="90.0" text-anchor="middle">POST /api/images</text><rect class="lp lp-bg" x="262.2" y="93.0" width="137.6" height="16" rx="3"/><text class="ml ml-accent" x="331.0" y="105.0" text-anchor="middle">batch_name + files</text><circle class="num" cx="245.0" cy="113.0" r="9"/><text class="num-t" x="245.0" y="116.5" text-anchor="middle">1</text></g><g class="fragment"><path class="e e-ink" d="M427.0,135 H451.0 V149 H421.0" marker-end="url(#su-a-ink)"/><rect class="lp lp-bg" x="457.0" y="134" width="216.8" height="16" rx="3"/><text class="ml ml-ink" x="461.0" y="146" text-anchor="start">admin only · JPEG or PNG only</text><circle class="num" cx="417.0" cy="135.0" r="9"/><text class="num-t" x="417.0" y="138.5" text-anchor="middle">2</text></g><g class="fragment"><path class="e e-ink" d="M427.0,175.0 L587.0,175.0" marker-end="url(#su-a-ink)"/><rect class="lp lp-bg" x="455.8" y="155.0" width="94.4" height="16" rx="3"/><text class="ml ml-ink" x="503.0" y="167.0" text-anchor="middle">put original</text><circle class="num" cx="417.0" cy="175.0" r="9"/><text class="num-t" x="417.0" y="178.5" text-anchor="middle">3</text></g><g class="fragment"><path class="e e-ink" d="M427.0,203.0 L759.0,203.0" marker-end="url(#su-a-ink)"/><rect class="lp lp-bg" x="487.8" y="183.0" width="202.4" height="16" rx="3"/><text class="ml ml-ink" x="589.0" y="195.0" text-anchor="middle">insert image + pending task</text><circle class="num" cx="417.0" cy="203.0" r="9"/><text class="num-t" x="417.0" y="206.5" text-anchor="middle">4</text></g><g class="fragment"><path class="e e-ink" d="M427.0,231.0 L931.0,231.0" marker-end="url(#su-a-ink)"/><rect class="lp lp-bg" x="541.4" y="211.0" width="267.2" height="16" rx="3"/><text class="ml ml-ink" x="675.0" y="223.0" text-anchor="middle">enqueue generate_thumbnail(image_id)</text><circle class="num" cx="417.0" cy="231.0" r="9"/><text class="num-t" x="417.0" y="234.5" text-anchor="middle">5</text></g><g class="fragment"><path class="e e-accent dash" d="M407.0,259.0 L247.0,259.0" marker-end="url(#su-a-accent)"/><rect class="lp lp-bg" x="273.0" y="239.0" width="116.0" height="16" rx="3"/><text class="ml ml-accent" x="331.0" y="251.0" text-anchor="middle">201 · image_ids</text><circle class="num" cx="417.0" cy="259.0" r="9"/><text class="num-t" x="417.0" y="262.5" text-anchor="middle">6</text></g><g class="fragment"><path class="e e-ink" d="M1095.0,301.0 L935.0,301.0" marker-end="url(#su-a-ink)"/><rect class="lp lp-none" x="986.2" y="281.0" width="65.6" height="16" rx="3"/><text class="ml ml-ink" x="1019.0" y="293.0" text-anchor="middle">take job</text><circle class="num" cx="1105.0" cy="301.0" r="9"/><text class="num-t" x="1105.0" y="304.5" text-anchor="middle">7</text></g><g class="fragment"><path class="e e-ink" d="M1095.0,329.0 L763.0,329.0" marker-end="url(#su-a-ink)"/><rect class="lp lp-none" x="864.2" y="309.0" width="137.6" height="16" rx="3"/><text class="ml ml-ink" x="933.0" y="321.0" text-anchor="middle">select storage_key</text><circle class="num" cx="1105.0" cy="329.0" r="9"/><text class="num-t" x="1105.0" y="332.5" text-anchor="middle">8</text></g><g class="fragment"><path class="e e-ink" d="M1095.0,357.0 L591.0,357.0" marker-end="url(#su-a-ink)"/><rect class="lp lp-none" x="799.8" y="337.0" width="94.4" height="16" rx="3"/><text class="ml ml-ink" x="847.0" y="349.0" text-anchor="middle">get original</text><circle class="num" cx="1105.0" cy="357.0" r="9"/><text class="num-t" x="1105.0" y="360.5" text-anchor="middle">9</text></g><g class="fragment"><path class="e e-ink" d="M1115.0,379 H1139.0 V393 H1109.0" marker-end="url(#su-a-ink)"/><rect class="lp lp-none" x="854.6" y="378" width="238.4" height="16" rx="3"/><text class="ml ml-ink" x="1089.0" y="390" text-anchor="end">Pillow: fit into 320 x 320, JPEG</text><circle class="num" cx="1105.0" cy="379.0" r="9"/><text class="num-t" x="1105.0" y="382.5" text-anchor="middle">10</text></g><g class="fragment"><path class="e e-ink" d="M1095.0,419.0 L591.0,419.0" marker-end="url(#su-a-ink)"/><rect class="lp lp-none" x="796.2" y="399.0" width="101.6" height="16" rx="3"/><text class="ml ml-ink" x="847.0" y="411.0" text-anchor="middle">put thumbnail</text><circle class="num" cx="1105.0" cy="419.0" r="9"/><text class="num-t" x="1105.0" y="422.5" text-anchor="middle">11</text></g><g class="fragment"><path class="e e-ink" d="M1095.0,447.0 L763.0,447.0" marker-end="url(#su-a-ink)"/><rect class="lp lp-none" x="803.0" y="427.0" width="260.0" height="16" rx="3"/><text class="ml ml-ink" x="933.0" y="439.0" text-anchor="middle">update thumbnail_key, width, height</text><circle class="num" cx="1105.0" cy="447.0" r="9"/><text class="num-t" x="1105.0" y="450.5" text-anchor="middle">12</text></g></svg></figure>
+    <div class="paths"><span class="where"><b>api/app/routes/images.py</b> upload_batch</span><span class="where"><b>api/app/queue.py</b> enqueue_thumbnail</span><span class="where"><b>worker/jobs/thumbnail.py</b> generate_thumbnail</span></div>
+    <aside class="notes">
+      Messages 3 and 4 repeat per file; there is one commit for the whole batch, then one job per image.
+      Tasks are claimable as soon as the request returns. The review queue shows a thumbnail only once the job has run; the page tolerates a missing one.
+    </aside>
+  </section>
+
+  <section>
+    <span class="step">Flow 2 · export approved annotations</span>
+    <h2>Request an export, poll for it, download the file</h2>
+    <p class="step-hint">→ steps through each message</p>
+    <figure class="dg-fig r-stretch"><svg class="dg seqsvg" viewBox="-2 -2 1204 528" role="img" aria-label="Sequence: the admin requests an export; the api records and enqueues it; the worker builds the COCO file; the page polls until done and downloads the file from MinIO."  xmlns="http://www.w3.org/2000/svg"><defs><marker id="se-a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-ink" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="se-a-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-accent" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="se-a-c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c1" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="se-a-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c2" d="M0,0.5 L10,5 L0,9.5 z"/></marker><marker id="se-a-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk mk-c3" d="M0,0.5 L10,5 L0,9.5 z"/></marker></defs><rect class="band band-accent" x="8" y="196" width="1184" height="188" rx="8"/><text class="btag btag-accent" x="24" y="216">LATER</text><text class="btag btag-accent" x="24" y="230">IN THE WORKER</text><line class="life" x1="245.0" x2="245.0" y1="64" y2="518"/><line class="life" x1="417.0" x2="417.0" y1="64" y2="518"/><line class="life" x1="589.0" x2="589.0" y1="64" y2="518"/><line class="life" x1="761.0" x2="761.0" y1="64" y2="518"/><line class="life" x1="933.0" x2="933.0" y1="64" y2="518"/><line class="life" x1="1105.0" x2="1105.0" y1="64" y2="518"/><rect class="sh" x="165.0" y="13" width="160" height="50" rx="8"/><rect class="hdr" x="165.0" y="10" width="160" height="50" rx="8"/><text class="t" x="245.0" y="31" text-anchor="middle">Browser</text><text class="s" x="245.0" y="48" text-anchor="middle">admin</text><rect class="sh" x="337.0" y="13" width="160" height="50" rx="8"/><rect class="hdr" x="337.0" y="10" width="160" height="50" rx="8"/><text class="t" x="417.0" y="31" text-anchor="middle">api</text><text class="s" x="417.0" y="48" text-anchor="middle">routes/export.py</text><rect class="sh" x="509.0" y="13" width="160" height="50" rx="8"/><rect class="hdr" x="509.0" y="10" width="160" height="50" rx="8"/><text class="t" x="589.0" y="31" text-anchor="middle">postgres</text><text class="s" x="589.0" y="48" text-anchor="middle">exports · tasks</text><rect class="sh" x="681.0" y="13" width="160" height="50" rx="8"/><rect class="hdr" x="681.0" y="10" width="160" height="50" rx="8"/><text class="t" x="761.0" y="31" text-anchor="middle">redis</text><text class="s" x="761.0" y="48" text-anchor="middle">queue exports</text><rect class="sh" x="853.0" y="13" width="160" height="50" rx="8"/><rect class="hdr" x="853.0" y="10" width="160" height="50" rx="8"/><text class="t" x="933.0" y="31" text-anchor="middle">worker</text><text class="s" x="933.0" y="48" text-anchor="middle">jobs/export_coco.py</text><rect class="sh" x="1025.0" y="13" width="160" height="50" rx="8"/><rect class="hdr" x="1025.0" y="10" width="160" height="50" rx="8"/><text class="t" x="1105.0" y="31" text-anchor="middle">minio</text><text class="s" x="1105.0" y="48" text-anchor="middle">bucket exports</text><g class="fragment"><path class="e e-accent" d="M255.0,98.0 L415.0,98.0" marker-end="url(#se-a-accent)"/><rect class="lp lp-bg" x="265.8" y="78.0" width="130.4" height="16" rx="3"/><text class="ml ml-accent" x="331.0" y="90.0" text-anchor="middle">POST /api/exports</text><circle class="num" cx="245.0" cy="98.0" r="9"/><text class="num-t" x="245.0" y="101.5" text-anchor="middle">1</text></g><g class="fragment"><path class="e e-ink" d="M427.0,126.0 L587.0,126.0" marker-end="url(#se-a-ink)"/><rect class="lp lp-bg" x="431.0" y="106.0" width="166.4" height="16" rx="3"/><text class="ml ml-ink" x="435.0" y="118.0" text-anchor="start">insert export · queued</text><circle class="num" cx="417.0" cy="126.0" r="9"/><text class="num-t" x="417.0" y="129.5" text-anchor="middle">2</text></g><g class="fragment"><path class="e e-ink" d="M427.0,154.0 L759.0,154.0" marker-end="url(#se-a-ink)"/><rect class="lp lp-bg" x="462.6" y="134.0" width="252.8" height="16" rx="3"/><text class="ml ml-ink" x="589.0" y="146.0" text-anchor="middle">enqueue export_approved(export_id)</text><circle class="num" cx="417.0" cy="154.0" r="9"/><text class="num-t" x="417.0" y="157.5" text-anchor="middle">3</text></g><g class="fragment"><path class="e e-accent dash" d="M407.0,182.0 L247.0,182.0" marker-end="url(#se-a-accent)"/><rect class="lp lp-bg" x="258.6" y="162.0" width="144.8" height="16" rx="3"/><text class="ml ml-accent" x="331.0" y="174.0" text-anchor="middle">202 · status queued</text><circle class="num" cx="417.0" cy="182.0" r="9"/><text class="num-t" x="417.0" y="185.5" text-anchor="middle">4</text></g><g class="fragment"><path class="e e-ink" d="M923.0,224.0 L763.0,224.0" marker-end="url(#se-a-ink)"/><rect class="lp lp-none" x="814.2" y="204.0" width="65.6" height="16" rx="3"/><text class="ml ml-ink" x="847.0" y="216.0" text-anchor="middle">take job</text><circle class="num" cx="933.0" cy="224.0" r="9"/><text class="num-t" x="933.0" y="227.5" text-anchor="middle">5</text></g><g class="fragment"><path class="e e-ink" d="M923.0,252.0 L591.0,252.0" marker-end="url(#se-a-ink)"/><rect class="lp lp-none" x="692.2" y="232.0" width="137.6" height="16" rx="3"/><text class="ml ml-ink" x="761.0" y="244.0" text-anchor="middle">set status running</text><circle class="num" cx="933.0" cy="252.0" r="9"/><text class="num-t" x="933.0" y="255.5" text-anchor="middle">6</text></g><g class="fragment"><path class="e e-ink" d="M923.0,280.0 L591.0,280.0" marker-end="url(#se-a-ink)"/><rect class="lp lp-none" x="649.0" y="260.0" width="224.0" height="16" rx="3"/><text class="ml ml-ink" x="761.0" y="272.0" text-anchor="middle">select boxes of approved tasks</text><circle class="num" cx="933.0" cy="280.0" r="9"/><text class="num-t" x="933.0" y="283.5" text-anchor="middle">7</text></g><g class="fragment"><path class="e e-ink" d="M943.0,302 H967.0 V316 H937.0" marker-end="url(#se-a-ink)"/><rect class="lp lp-none" x="973.0" y="301" width="123.2" height="16" rx="3"/><text class="ml ml-ink" x="977.0" y="313" text-anchor="start">build_coco(rows)</text><circle class="num" cx="933.0" cy="302.0" r="9"/><text class="num-t" x="933.0" y="305.5" text-anchor="middle">8</text></g><g class="fragment"><path class="e e-ink" d="M943.0,342.0 L1103.0,342.0" marker-end="url(#se-a-ink)"/><rect class="lp lp-none" x="947.0" y="322.0" width="188.0" height="16" rx="3"/><text class="ml ml-ink" x="951.0" y="334.0" text-anchor="start">put export-&lt;id&gt;.coco.json</text><circle class="num" cx="933.0" cy="342.0" r="9"/><text class="num-t" x="933.0" y="345.5" text-anchor="middle">9</text></g><g class="fragment"><path class="e e-ink" d="M923.0,370.0 L591.0,370.0" marker-end="url(#se-a-ink)"/><rect class="lp lp-none" x="631.0" y="350.0" width="260.0" height="16" rx="3"/><text class="ml ml-ink" x="761.0" y="362.0" text-anchor="middle">set done · storage_key · task_count</text><circle class="num" cx="933.0" cy="370.0" r="9"/><text class="num-t" x="933.0" y="373.5" text-anchor="middle">10</text></g><g class="fragment"><rect class="note" x="205.0" y="397.0" width="252.0" height="24" rx="5"/><text class="note-t" x="331.0" y="413.0" text-anchor="middle">the page polls every 2 s until done or failed</text></g><g class="fragment"><path class="e e-accent" d="M255.0,442.0 L415.0,442.0" marker-end="url(#se-a-accent)"/><rect class="lp lp-bg" x="259.0" y="422.0" width="159.2" height="16" rx="3"/><text class="ml ml-accent" x="263.0" y="434.0" text-anchor="start">GET /api/exports/{id}</text><circle class="num" cx="245.0" cy="442.0" r="9"/><text class="num-t" x="245.0" y="445.5" text-anchor="middle">11</text></g><g class="fragment"><path class="e e-accent dash" d="M407.0,470.0 L247.0,470.0" marker-end="url(#se-a-accent)"/><rect class="lp lp-bg" x="262.2" y="450.0" width="137.6" height="16" rx="3"/><text class="ml ml-accent" x="331.0" y="462.0" text-anchor="middle">200 · download_url</text><circle class="num" cx="417.0" cy="470.0" r="9"/><text class="num-t" x="417.0" y="473.5" text-anchor="middle">12</text></g><g class="fragment"><path class="e e-accent" d="M255.0,498.0 L1103.0,498.0" marker-end="url(#se-a-accent)"/><rect class="lp lp-bg" x="577.4" y="478.0" width="195.2" height="16" rx="3"/><text class="ml ml-accent" x="675.0" y="490.0" text-anchor="middle">GET the file by signed URL</text><circle class="num" cx="245.0" cy="498.0" r="9"/><text class="num-t" x="245.0" y="501.5" text-anchor="middle">13</text></g></svg></figure>
+    <div class="paths"><span class="where"><b>api/app/routes/export.py</b></span><span class="where"><b>worker/jobs/export_coco.py</b> export_approved</span><span class="where"><b>web/src/pages/AdminUploadPage.tsx</b> polling</span></div>
+    <aside class="notes">
+      If the job raises, the worker sets the export to failed and the page stops polling. The job timeout is 600 seconds (api/app/queue.py).
+      Category ids in the COCO file are assigned per distinct label, in order of first appearance.
+    </aside>
+  </section>
+</section>
+
+<section>
+  <section>
+    <span class="eyebrow">4 · Reference</span>
+    <h2>Folder map for finding your way around</h2>
+    <div class="cols">
+<pre class="tree"><code class="nohighlight language-plaintext">image-annotation-tool/
+├─ README.md                  ← start here
+├─ docker-compose.yml         ← the running parts (L2)
+├─ .env.example               ← every address and secret
+├─ db/migrations/001_init.sql ← the schema
+├─ api/app/
+│  ├─ main.py                 ← entry point, routers
+│  ├─ routes/                 ← one file per resource
+│  ├─ state_machine.py        ← task lifecycle
+│  ├─ auth.py                 ← login, JWT, roles
+│  └─ storage.py · queue.py   ← MinIO and Redis clients
+├─ api/tests/                 ← state machine tests
+├─ worker/
+│  ├─ main.py                 ← RQ worker, two queues
+│  └─ jobs/                   ← thumbnail, COCO export
+└─ web/src/
+   ├─ pages/                  ← one page per role
+   ├─ components/             ← BoundingBoxCanvas
+   └─ api/client.ts           ← every API call</code></pre>
+      <div class="small">
+        <p><b>Where to look first</b></p>
+        <ul>
+          <li><b>To run it:</b> <code>README.md</code>, section "Starting it"</li>
+          <li><b>To change a rule of the lifecycle:</b> <code>api/app/state_machine.py</code> and its tests</li>
+          <li><b>To add an endpoint:</b> a module in <code>api/app/routes/</code>, registered in <code>main.py</code></li>
+          <li><b>To add a background job:</b> a function in <code>worker/jobs/</code> and an enqueue helper in <code>api/app/queue.py</code></li>
+          <li><b>To change a table:</b> <code>db/migrations/</code> and <code>api/app/models.py</code> together</li>
+        </ul>
+      </div>
+    </div>
+    <p class="down-hint">↓ commands</p>
+    <aside class="notes">
+      The migration file is applied by PostgreSQL only when its data volume is first created; there is no migration tool in the repository.
+    </aside>
+  </section>
+
+  <section>
+    <span class="eyebrow">4 · Reference</span>
+    <h2>Commands, as the README gives them</h2>
+    <div class="cols">
+      <div>
+        <pre><code class="language-bash" data-trim><script type="text/template">
+# start everything
+cp .env.example .env
+docker compose up --build
+
+# then open
+#   http://localhost:3000        web UI
+#   http://localhost:8000/docs   API (OpenAPI docs)
+#   http://localhost:9001        MinIO console
+
+# demo users, all with password "demo"
+#   admin@example.com
+#   annotator@example.com
+#   reviewer@example.com
+        </script></code></pre>
+      </div>
+      <div>
+        <pre><code class="language-bash" data-trim><script type="text/template">
+# tests (the state machine)
+cd api && pytest
+
+# rebuild this deck
+cd communications/project-deck/src
+python figures.py figs.json
+python build.py deck.src.html --figs figs.json
+        </script></code></pre>
+      </div>
+    </div>
+    <p class="small">The README describes this as a theoretical example that has never been executed, so treat the commands as intended, not as tried.</p>
+    <div class="paths"><span class="where"><b>README.md</b> Starting it · Tests</span></div>
+  </section>
+</section>
+
+<section>
+  <section class="title-slide closing">
+    <span class="eyebrow">End of the overview · questions welcome</span>
+    <h1><span class="h1-org">examples/</span><span>image-annotation-tool</span></h1>
+    <p class="lede">A longer written version, with a file reference for every statement, is in the project brief.</p>
+    <div class="kv closing-kv">
+      <span>project brief</span><b>communications/project-brief.md</b>
+      <span>deck built</span><b>2026-11-19 12:20 UTC+0100</b>
+      <span>checked against</span><b>the working tree on 2026-11-19 (not a git repository; nothing was run)</b>
+      <span>sources</span><b>communications/project-deck/src/ (rebuild to refresh the timestamp)</b>
+    </div>
+    <aside class="notes">The build timestamp is written by build.py each time the deck is rebuilt.</aside>
+  </section>
+</section>
+
+</div>
+</div>
+
+<div class="deck-tools">
+  <button type="button" id="btn-view" title="Toggle reading view (V)">Reading view</button>
+  <button type="button" id="btn-keys" title="Keyboard shortcuts (?)">? Keys</button>
+</div>
+<div class="keys-panel" id="keys-panel" hidden role="dialog" aria-modal="true" aria-labelledby="keys-title">
+  <div class="keys-card">
+    <button type="button" class="close" id="keys-close">Esc · close</button>
+    <h2 id="keys-title">Keyboard shortcuts</h2>
+    <p>Chapters run left to right and their details run downward. Some diagrams build up step by step as you press →.</p>
+    <div class="keys-grid">
+      <div><h3>Move</h3><dl>
+        <dt><kbd>→</kbd> <kbd>Space</kbd></dt><dd>next step or slide</dd>
+        <dt><kbd>←</kbd></dt><dd>previous step or slide</dd>
+        <dt><kbd>↓</kbd> <kbd>↑</kbd></dt><dd>details in this chapter</dd>
+        <dt><kbd>Home</kbd> <kbd>End</kbd></dt><dd>first or last slide</dd>
+        <dt><kbd>G</kbd></dt><dd>jump to slide number</dd>
+      </dl></div>
+      <div><h3>View</h3><dl>
+        <dt><kbd>Esc</kbd> <kbd>O</kbd></dt><dd>overview grid</dd>
+        <dt><kbd>V</kbd></dt><dd>reading view (scroll) on / off</dd>
+        <dt><kbd>F</kbd></dt><dd>fullscreen</dd>
+        <dt><kbd>Alt</kbd> + click</dt><dd>zoom into a spot</dd>
+        <dt><kbd>B</kbd> <kbd>.</kbd></dt><dd>pause (black screen)</dd>
+      </dl></div>
+      <div><h3>Presenter</h3><dl>
+        <dt><kbd>S</kbd></dt><dd>speaker notes window (local file)</dd>
+        <dt><kbd>?</kbd></dt><dd>this panel</dd>
+      </dl></div>
+      <div><h3>In this deck</h3><dl>
+        <dt>zoom levels</dt><dd>↓ zooms from L1 to L2 to L3</dd>
+        <dt>code slides</dt><dd>→ moves the highlight</dd>
+        <dt>image bytes</dt><dd>→ builds the diagram in three steps</dd>
+        <dt>flow 1 and 2</dt><dd>→ reveals one message at a time</dd>
+      </dl></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/zoom/zoom.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script>
+(function () {
+  var VIEW_KEY = 'project-deck-view';
+  function storedView() { try { return localStorage.getItem(VIEW_KEY); } catch (e) { return null; } }
+  var scroll = storedView() === 'scroll' || /[?&]view=scroll/.test(location.search) || location.hash === '#reading';
+
+  function setView(next) {
+    try { localStorage.setItem(VIEW_KEY, next); } catch (e) {}
+    if (next === 'scroll') { location.hash = 'reading'; } else if (location.hash === '#reading') { location.hash = ''; }
+    location.reload();
+  }
+  function toggleView() { setView(scroll ? 'slides' : 'scroll'); }
+
+  var panel = document.getElementById('keys-panel');
+  var lastFocus = null;
+  function openKeys() { lastFocus = document.activeElement; panel.hidden = false; document.getElementById('keys-close').focus(); }
+  function closeKeys() { panel.hidden = true; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+  function toggleKeys() { if (panel.hidden) openKeys(); else closeKeys(); }
+
+  window.addEventListener('keydown', function (e) {
+    var tag = (e.target && e.target.tagName) || '';
+    if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
+    if (!panel.hidden) {
+      if (e.key === 'Escape' || e.key === '?') { closeKeys(); }
+      if (e.key !== 'Tab') { e.preventDefault(); e.stopImmediatePropagation(); }
+      return;
+    }
+    if (e.key === '?') { e.preventDefault(); e.stopImmediatePropagation(); openKeys(); }
+    else if ((e.key === 'v' || e.key === 'V') && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); e.stopImmediatePropagation(); toggleView(); }
+  }, true);
+  panel.addEventListener('click', function (e) { if (e.target === panel) closeKeys(); });
+  document.getElementById('keys-close').addEventListener('click', closeKeys);
+  document.getElementById('btn-keys').addEventListener('click', toggleKeys);
+  var btnView = document.getElementById('btn-view');
+  btnView.textContent = scroll ? 'Slide view' : 'Reading view';
+  btnView.addEventListener('click', toggleView);
+
+  if (typeof Reveal === 'undefined') {
+    // reveal.js did not load (CDN unreachable): fall back to a plain scrolling page with every step shown
+    document.documentElement.classList.add('no-reveal');
+    document.querySelectorAll('.reveal .slides > section').forEach(function (sec) { if (sec.querySelector(':scope > section')) sec.classList.add('stack'); });
+    document.body.insertAdjacentHTML('afterbegin', '<p class="no-reveal-note">reveal.js could not be loaded, so this deck is shown as a plain page. Go online, or rebuild it with <code>--inline-js</code> for an offline deck.</p>');
+    return;
+  }
+
+  // variant toggle: the last visible .v-step fragment on the slide decides which variant its diagram shows
+  function syncVariant(slide) {
+    if (!slide) return;
+    var svg = slide.querySelector('.vsvg');
+    if (!svg) return;
+    var steps = slide.querySelectorAll('.v-step.visible');
+    svg.setAttribute('data-v', steps.length ? steps[steps.length - 1].getAttribute('data-v') : 'all');
+  }
+  function syncAll() { document.querySelectorAll('.vsvg').forEach(function (svg) { syncVariant(svg.closest('section')); }); }
+
+  Reveal.initialize({
+    hash: false, history: false, controls: true, progress: true, help: false,
+    slideNumber: function (slide) { var i = Reveal.getIndices(slide); return [i.h + '.' + ((i.v || 0) + 1)]; },
+    center: false, transition: 'fade', transitionSpeed: 'fast',
+    autoAnimateDuration: 0.9, autoAnimateEasing: 'ease-in-out',
+    view: scroll ? 'scroll' : null, scrollProgress: true, scrollLayout: 'full',
+    width: 1280, height: 760, margin: 0.08, minScale: 0.2, maxScale: 2.0,
+    plugins: [typeof RevealNotes !== 'undefined' && RevealNotes, typeof RevealZoom !== 'undefined' && RevealZoom, typeof RevealHighlight !== 'undefined' && RevealHighlight].filter(Boolean)
+  }).then(syncAll);
+  Reveal.on('fragmentshown', function (e) { syncVariant(e.fragment.closest('section')); });
+  Reveal.on('fragmenthidden', function (e) { syncVariant(e.fragment.closest('section')); });
+  Reveal.on('slidechanged', function (e) { syncVariant(e.currentSlide); });
+})();
+</script>
+
+</body>
+</html>

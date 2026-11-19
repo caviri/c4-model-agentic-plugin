@@ -1,0 +1,11 @@
+{
+  "name": "c4-model-agentic-plugin",
+  "owner": { "name": "caviri" },
+  "plugins": [
+    {
+      "name": "c4-model-agentic-plugin",
+      "source": "./",
+      "description": "Explore any codebase and generate an explainer deck and an interactive C4 model architecture explorer as self-contained HTML."
+    }
+  ]
+}

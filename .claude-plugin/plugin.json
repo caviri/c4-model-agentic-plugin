@@ -1,0 +1,10 @@
+{
+  "name": "c4-model-agentic-plugin",
+  "version": "0.1.0",
+  "description": "Explore any codebase and generate two self-contained interactive HTML pages: a reveal.js deck explaining what the project is about, and a C4 model architecture explorer with RDF (JSON-LD and .rete) export.",
+  "author": { "name": "caviri" },
+  "homepage": "https://github.com/caviri/c4-model-agentic-plugin",
+  "repository": "https://github.com/caviri/c4-model-agentic-plugin",
+  "keywords": ["c4-model", "architecture", "documentation", "reveal.js", "diagrams", "rdf", "json-ld", "onboarding"],
+  "license": "Apache-2.0"
+}

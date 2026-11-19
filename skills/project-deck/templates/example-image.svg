@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
+  <rect width="960" height="540" fill="#e9eef3"/>
+  <rect x="0" y="0" width="960" height="44" fill="#cfd8e1"/>
+  <circle cx="24" cy="22" r="7" fill="#9aa8b7"/><circle cx="48" cy="22" r="7" fill="#9aa8b7"/><circle cx="72" cy="22" r="7" fill="#9aa8b7"/>
+  <rect x="40" y="84" width="260" height="416" rx="8" fill="#ffffff" stroke="#c3ccd6"/>
+  <rect x="330" y="84" width="590" height="190" rx="8" fill="#ffffff" stroke="#c3ccd6"/>
+  <rect x="330" y="304" width="590" height="196" rx="8" fill="#ffffff" stroke="#c3ccd6"/>
+  <text x="480" y="290" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="30" fill="#5a6878">Placeholder image: replace with a real screenshot</text>
+</svg>

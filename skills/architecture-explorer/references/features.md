@@ -1,0 +1,261 @@
+# Explorer features, layout, extension, and diagram guidance
+
+The explorer is one HTML file made of five script blocks: `model` (the data), `validator`, `core` (layout, edge lifting and routing, no DOM), `rdf` (RDF mapping, no DOM) and `engine` (rendering and interaction, SVG). No build step, no libraries. It runs from `file://`. The scripts in `scripts/` run the `validator`, `core` and `rdf` blocks of a page in Node, so command-line checks see exactly what the browser computes.
+
+## What the page does
+
+### Map view (default)
+
+- **Nested boxes.** The map starts at `view.startLevel`. A box with children shows a `+ N inside` badge; clicking the badge or double-clicking the box opens it in place, and its children appear inside a dashed boundary. `− close` collapses it and everything opened below it. Layout and camera animate (skipped under `prefers-reduced-motion`).
+- **Level buttons** `L1`–`L4` (keys `1`–`4`) open every box above that level and fit the result. Only levels that exist in the model are shown. The highlighted button follows what is actually open.
+- **Edge lifting.** Each edge is declared once, between specific elements. It is drawn between the nearest visible ancestors of its ends, so closed boxes carry the relationships of their contents. Edges that land on the same pair merge into one arrow, labelled with the edges' `summary` if one is given, else `first label +N`. An edge that ends up inside a single box is hidden.
+- **Arrow routing.** An arrow is a straight line between box centres unless a closed box lies on it; then it bends around the corners of the boxes in the way, with rounded bends. See "How layout is decided".
+- **Lifecycles.** Boxes of type `state` are drawn as pills (dot = initial, double border = final), their transitions as arrows, a self-transition as a loop.
+- **Selection.** Clicking a box selects it: its arrows stay bright, the rest fade, and the panel shows its details. Clicking empty canvas or `Esc` clears it.
+- **Pan and zoom.** Drag to pan, wheel or pinch to zoom at the pointer, `+` / `−` / fit buttons, `F` to fit. Below 34% zoom, sub-lines, arrow labels and variant dots hide to keep the overview legible.
+- **Minimap** (bottom left, hidden on phones) shows all visible boxes and the viewport; click to jump.
+- **Breadcrumb** (top left) lists what is open, or what is selected.
+- **Arrow labels** toggle with the `labels` button or `L`. A label is one line up to 16 characters, else two lines of up to 20, and is slid along its arrow to avoid boxes and other labels.
+
+### Details panel
+
+Right column on desktop, bottom sheet under 820 px (with a collapse toggle). For the selected box: ancestor breadcrumb (clickable), level and tag, name, `sub`, `desc`, `notes`, action buttons (open/close, show on map, pin), technology chips, variant chips, source path and link, children, and **Uses / Used by** lists (**Transitions to / Reached from** for a state). Those lists include the relationships of everything inside the box and say which inner element each comes from; every entry navigates to the other end.
+
+With nothing selected the panel shows `project.intro`, node counts per level, the key reference, a legend built from the kinds actually used, and an explanation of the variant filter.
+
+### Search
+
+`/` focuses the search box. It matches name, tag, path, sub-line and tech, lists up to 12 hits with their level and ancestry, supports arrow keys and Enter, and reveals the hit: opens its ancestors, selects it, centres the camera.
+
+### Variant filter
+
+Present only when `MODEL.variants` exists. Each box carries one dot per variant (filled when the element exists in it). Choosing a variant in the toolbar fades boxes and arrows that do not belong to it, dims the matching entries in the panel lists, and removes the other steps from dynamic diagrams. Arrows that exist only in some variants are dashed and take that variant's tone.
+
+### Pinned board
+
+A second view (`B`). Pin any box with `P` or the panel button. The board draws one lane per level with only the pinned boxes and the relationships between them, each edge lifted to its nearest pinned ancestor. This lets a reader compose a cross-level diagram, for example two externals, one container and three functions. Cards have `▲` (replace by parent), `▼` (replace by children) and `× unpin`. Pins persist in `localStorage` per project; `default pins` restores `MODEL.defaultPins`, `clear` empties the board.
+
+### Dynamic diagrams
+
+A third view (`D`), present only when `MODEL.scenarios` is non-empty. For the chosen scenario:
+
+- **Draw at** `L1`–`L4`, `map` (whatever is open on the map) or `pins` (your pinned boxes). Steps are lifted to that granularity; steps internal to one box are folded and counted; consecutive steps between the same pair merge.
+- **As** a collaboration diagram (boxes in columns by call depth, numbered arrows), a sequence diagram (sticky participant header and sticky step list), or a step table. Collaboration is the default at L1 and L2; from L3 on, and for `map` and `pins`, the sequence diagram is the default until the reader picks a style.
+- Collaboration columns follow message flow: the first sender is column 0 and each receiver sits one column right of whoever first sent to it. A participant that first appears as a sender (a worker picking up a job) is placed one column left of what it sends to. This only reads well if steps are written in the direction messages travel.
+- **Step through** with `◀ ▶`, arrow keys, clicking any step, or `play` / space (1.5 s per step). The panel shows the current step, its variants and the underlying raw interactions with source paths; each links back to the map.
+
+### Sequence inside a box (map)
+
+Present only when `MODEL.scenarios` is non-empty; no model fields are needed. An open box that some scenario passes through gets a `⇅ sequence` button in its header. It replaces the children drawn as boxes with a sequence diagram of one scenario, in place on the map, so the reader sees what happens inside a container without leaving it.
+
+- **Lifelines** are the box's children that take part in the scenario, plus the outside elements it talks to, as dashed grey cards: callers on the left, callees on the right. Outside elements are named as the map currently shows them (a closed container stands for everything in it).
+- **Messages** are the scenario steps that cross the box's border or run between two of its children, lifted to those lifelines. Steps that stay inside one child are folded and counted in the scenario bar; consecutive steps between the same two lifelines merge.
+- **Scenario bar** `‹ ›` cycles through the scenarios that pass through this box. The details panel lists them too ("Sequence inside").
+- **Click a message** to pick it: the panel shows the step, its underlying interactions with source paths, `◀ ▶` and **Open in Dynamic** (the same scenario on the Dynamic tab, one level below the box, on that step). `←` `→` step, `Esc` clears.
+- **Click a lifeline card** to select that element. A selected element keeps its own messages bright and fades the rest. Its panel offers `⇅ Sequence inside` again, which drills down: the child shows its own sequence and the parent goes back to boxes.
+- `▦ boxes` goes back to the children as boxes, `− close` or a double-click closes the box, `S` toggles the selected box, and a level button (`1`–`4`) resets every box to boxes.
+- For layout and arrows a box showing its sequence counts as closed: map arrows attach to its border and route around it.
+
+### Keyboard
+
+| Key | Action |
+|---|---|
+| `1`–`4` | Open the map to that level |
+| `/` | Search |
+| `F`, `+`, `−` | Fit, zoom in, zoom out |
+| `M`, `B`, `D` | Map, Pinned board, Dynamic |
+| `P` | Pin or unpin the selected box |
+| `S` | Sequence inside the selected box, or its boxes again (Map) |
+| `L`, `T` | Arrow labels, colour theme |
+| `Esc` | Clear the selection |
+| `←` `→` `space` | Previous step, next step, play (Dynamic) |
+| `Tab`, `Enter`, `Space` on a box | Focus, select, open or close |
+
+### Theming and persistence
+
+Light and dark palettes are CSS custom properties on `:root`. `theme: auto` follows the operating system; the button (`T`) cycles auto → light → dark and remembers the choice in `localStorage`.
+
+### URL state
+
+The URL hash mirrors what is on screen and is read at load, so any state can be linked, reloaded or screenshotted from the command line. Parameters are joined with `&`.
+
+| Parameter | Meaning |
+|---|---|
+| `level=3` | Map opened to that level |
+| `open=api,orders` | Exactly these boxes open (their ancestors too). Written instead of `level` when the open set is not a whole level. |
+| `sel=place-order` | Selected box; its ancestors are opened |
+| `variant=cloud` | Variant filter, by variant id |
+| `labels=0` | Arrow labels off |
+| `theme=dark` / `light` | Theme for this visit (not saved) |
+| `view=pins` / `view=dynamic` | The other two views (`#pins` and `#dynamic` alone also work) |
+| `scenario=checkout` `at=3` `style=seq` `step=4` | Dynamic view: scenario id, level (`1`–`4`, `map`, `pins`), style (`collab`, `seq`, `list`), step number from 1 |
+| `seq=api:checkout,worker` | Boxes showing the sequence inside, each with a scenario id (default: the first scenario through that box). Their ancestors open. |
+| `seqstep=api:3` | Message picked in that box's sequence, numbered from 1 |
+| `zoom=api` | Read only: fit the camera to that box instead of the whole map |
+| `pins=a,b,c` | Read only: use these pins for this visit |
+
+Example: `index.html#open=api&zoom=api&theme=dark`.
+
+### Export as an RDF graph
+
+`export ▾` in the toolbar downloads the model as JSON-LD (generated locally) or as a `.rete` file (built in the browser; the builder is fetched from a CDN only when that entry is clicked, and a message explains what to do if it cannot be loaded). Vocabulary, mapping and example SPARQL queries: `rdf-graph.md`.
+
+### Model errors
+
+A broken model never renders half a diagram. Schema errors replace the page with a list (unknown ids, duplicate ids, overlapping `at` cells, missing labels, …). A syntax error in the MODEL block shows "The MODEL block did not load". Warnings (truncated names, missing descriptions, crowded groups, undocumented colours) go to the console and to `check-model.mjs`.
+
+For automated checks the page sets `data-explorer="ready"` or `"error"` on `<html>` and exposes `window.ARCH_EXPLORER` (`ready`, `errors`, `warnings`, `counts`, `layout()`, `rdf`, and an `api` with `setView`, `setLevel`, `setMode`, `reveal`, `toggle`, `setScenario`, `setDynStyle`, `setDynLevel`, `sourceUrl`).
+
+### Command-line checks
+
+| Script | What it does |
+|---|---|
+| `check-model.mjs index.html` | Syntax of every script, the validator, and a LAYOUT report: for each group of boxes (that box open, the rest closed) the arrows that bend around a box (`bend`), the arrows that could not be routed and still run behind a box (`BEHIND`, a warning), and crossings (`cross`). `--verbose` lists everything, `--no-layout` skips it. |
+| `check-model.mjs index.html --root <repo>` | Also checks that every `path` exists in the repository, that directories end in `/`, and that each `line` is inside its file. |
+| `screenshot.mjs index.html [outDir] [state …]` | PNGs of the page in the given URL states with headless Chrome or Edge, after confirming the page booted. Finds the browser itself; `--browser <path>` or `CHROME_PATH` overrides. |
+| `build-explorer.mjs model.js index.html` | Template + model → page, runs the check, writes `architecture.jsonld` and, when `rete` is available, `architecture.rete`. |
+
+## How layout is decided
+
+1. Each group of siblings sits on a grid. Cells come from `at: [col, row]` when every sibling has one; otherwise the engine assigns them (see data-model.md, "Layout").
+2. A closed box has a fixed size per type:
+
+   | Type | w × h (px) |
+   |---|---|
+   | `system` | 300 × 124 |
+   | `code` | 272 × 84 |
+   | `component` | 264 × 96 |
+   | `container` | 260 × 108 |
+   | `person`, `sibling` | 250 × 104 |
+   | `store` | 240 × 108 |
+   | `ext` | 224 × 96 |
+   | `state` | 200 × 68 |
+
+3. Column width is the widest box in the column, row height the tallest in the row. Gaps: 112 px between columns, 76 px between rows; at the top level 90 px between boxes and 110 px between rows. An open box is its children's grid plus a 66 px header and 30 px padding.
+4. Opening a box pushes its siblings apart rather than overlaying them. Sizes are computed bottom-up, positions top-down.
+5. Top level: the row holding the system is centred; boxes in the other rows slide sideways to line up with what they talk to.
+6. Arrows run centre to centre, clipped at the box edge. If a closed box lies on that line, the arrow takes the shortest path around box corners (14 px clearance, a small penalty per bend) and is drawn with rounded bends. Routes are computed once per layout change and follow the boxes while the layout animates. A pair of arrows running both ways is drawn as two parallel lines. If a box is completely walled in, the arrow stays straight and `check-model.mjs` reports it as `BEHIND`.
+
+What this means for placing boxes:
+
+- **Adjacency rule.** An arrow is straight when nothing sits between its two ends: same row with no box between them, same column with no box between them, or a diagonal that misses the other boxes. Neighbouring cells are always straight. Everything else bends, which is legible but busier.
+- **Label room.** The 112 px gap between two horizontal neighbours holds a label of 14 to 16 characters on a line. Vertical neighbours have room for any label. Long labels on short horizontal arrows are the usual cause of overlap: shorten the label, or stack the two boxes vertically.
+- **Entry on top, stores at the bottom.** Automatic layout already pulls boxes reached from outside the group to the top row and boxes that only reach out to the bottom row.
+- **Cross-cutting hubs** (auth, ORM/session, logging, a shared client) are used by most siblings. Three ways to handle one, in order of preference:
+  1. Draw it and let the arrows route. Put the hub in the middle of the bottom row (or the middle column), so that most users are in the row above it and reach it with straight or one-bend arrows. Give the edges into it the same short label so the diagram reads as a fan.
+  2. If the fan drowns the rest, declare the dependency once at a higher level of the *users* (the `routers/` component uses `auth`, instead of each of five route modules), when such a common parent exists.
+  3. Only as a last resort mention it in `notes` instead of drawing it, and say so in the hub's `desc`. Routing exists so that this is rarely needed.
+- **Fix loop.** Build, read the LAYOUT lines, move one end of a bent or crossing arrow into a neighbouring cell of the other with `at` on that whole group, rebuild. Zero bends is not the goal; a hub with five users will have some. `BEHIND` lines are the ones that must be fixed.
+
+## Extending and switching off
+
+Model-only switches (no engine edits):
+
+| To | Do |
+|---|---|
+| Remove the Dynamic tab | Omit `scenarios` |
+| Remove the variant filter, dots and chips | Omit `variants` |
+| Remove levels 3 and 4 | Do not add `component` / `code` nodes |
+| Start with an empty Pinned board | Omit `defaultPins` |
+| Remove source links | Omit `source.repoUrl` (paths still show) or omit `path` |
+| Start on a different drill-down | `view.startLevel` or `view.open` |
+| Rename levels or legend entries | `levelNames`, `legend` |
+
+Small edits outside the MODEL block (keep them minimal and say so in your report):
+
+| To | Edit |
+|---|---|
+| Work fully offline, no font request | Delete the three Google Fonts `<link>` lines in `<head>`; system fonts take over |
+| Change brand colours | The custom properties in the three `:root` blocks (light, dark-by-media-query, dark-by-attribute); keep the dark blocks identical to each other |
+| Force a theme | `<html lang="en" data-theme="dark">` and delete the `#btn-theme` button |
+| Hide the minimap or hint | Delete `#minimap` / `.hint` in the markup, or add `display: none` |
+| Start with labels off | Remove `class="labels"` from `#map` and set `aria-pressed="false"` on `#btn-labels`, and `showLabels = false` in the engine |
+| Change box sizes or spacing | `SIZE`, `HEAD`, `PAD`, `GX`, `GY`, `RGX`, `RGY` in the `core` script; keep `BOXW` in the validator in step |
+| Add a colour tone | Add `--name` / `--name-soft` to all three `:root` blocks, a `.tone-name` rule, and the name to both `TONES` arrays (validator and core) |
+| Add a node type | Add it to `LEVEL` and `BOXW` in the validator, to `BASE_LEVEL`, `DEFAULT_KIND`, `DEFAULT_TAG`, `SIZE` in the core, and to `CLASS` and `BASE_LEVEL` in the `rdf` script |
+| Add a field to the details panel | Carry it through the `NODES = MODEL.nodes.map(...)` normaliser in the core and print it in `renderPanel()`; escape with `esc()`. Add it to the `rdf` script if it should be exported. |
+| Remove the export menu | Delete the `<div class="export">` element; the page then never contacts the CDN |
+| Turn arrow routing off | In the core, make `route()` return `agg` immediately; arrows are straight again |
+
+All text from the model is HTML-escaped before it is inserted, and `javascript:` / `data:` URLs are rejected. Keep that property when extending.
+
+## Making a good architecture diagram with it
+
+### Decide what the levels mean for this project
+
+The four levels are C4's: context, containers, components, code. Map them honestly:
+
+- **System** is the thing being documented. One box, unless the repository really ships several products.
+- **Containers** are things that run or are deployed separately, plus the stores they own: a service, a web app, a CLI, a worker, a scheduled job, a database, a queue. A library has few of these; then model the library as one container and put the weight on components.
+- **Components** are the modules a maintainer thinks in: usually top-level packages or directories, not every file.
+- **Code** is optional. Add it only for the elements someone will look for by name: public entry points, the orchestrating function, the central types, the one tricky algorithm.
+
+Stop at the level where your knowledge stops. Two accurate levels beat four invented ones.
+
+### How many boxes
+
+| Group | Aim for | Hard to read beyond |
+|---|---|---|
+| Top level (people, system, externals) | 4–8 | 10 |
+| Containers in a system | 3–8 | 10 |
+| Components in a container | 4–9 | 12 |
+| Code in a component | 2–6 | 9 |
+
+The validator warns above 12 children. Whole model: a few dozen nodes is typical, about 150 is a practical ceiling for comfortable navigation.
+
+When a group is too big, split the level instead of shrinking the text:
+
+- Group by responsibility into intermediate boxes (five `*_provider` modules become one `providers/` component with five code children).
+- Merge externals of the same role into one box (`PyPI · npm` as "Package registries") and list the members in `desc`.
+- Drop pure utilities (logging, config, helpers) unless they explain something. An element nothing points at and that points at nothing usually does not belong.
+- Only expand the containers that matter. It is normal for one container to have components and the others to stay leaves.
+
+### Naming
+
+- `name`: what the team calls it. Containers and components get role names (`API service`, `Order service`) or their real directory names (`pipeline/stages/`) when those are what people search for. Code gets its real identifier with call parentheses for functions (`place_order()`).
+- `tag`: what kind of thing it is, plus technology: `CONTAINER · FASTAPI`, `DATA STORE · POSTGRES`, `CLASS`, `GET /v2/jobs/{id}`.
+- `sub`: what it does in about five words, separated by `·`. It is the only description visible without clicking.
+- Text is cut to the box: roughly 22 to 30 characters for `name`, a little more for `tag` and `sub`, depending on the type (table in data-model.md, "What fits on a box"). Do not repeat the parent's name in the child.
+
+### Edges and labels
+
+- Draw an edge when one element calls, reads, writes, sends to or depends at runtime on another. Skip pure import relationships that say nothing about behaviour.
+- Declare each edge at the lowest level you know. Never declare the same relationship twice at two levels; lifting does that for you.
+- Label with a verb phrase specific to this pair: `reads stock + prices`, `POST /orders`, `publishes OrderPlaced`. Avoid `uses` and `calls` when anything more precise is known. Use the protocol or function name when it is the thing a reader would grep for.
+- Length: 16 characters or fewer stays on one line and fits between neighbouring boxes; up to about 36 wraps to two lines; more is cut. Put the full call signature in a scenario step instead, where there is room.
+- Give code-level edges a `summary` wherever several of them collapse into one arrow at container level, so the container diagram shows `JSON over HTTPS` rather than whichever call was declared first.
+- Direction follows the call or the data push: caller → callee, producer → queue, consumer → queue it reads from. Be consistent.
+- `kind: 'accent'` for the few edges where the outside world enters the system. `dashed: true` for asynchronous or optional paths.
+- Aim for one to three outgoing edges per box at the level where it is drawn. A box with eight is either a real hub (fine, place it centrally) or a sign that the edges belong to its children.
+
+### What goes in the details panel
+
+The box shows a name and five words; the panel is where the explanation lives.
+
+- `desc`: what it is responsible for and, if not obvious, why it exists. One to three sentences. State facts found in the code, not guesses.
+- `notes`: the things that bite. Configuration flags and their defaults, auth requirements, invariants, limits, "only runs when X", known caveats.
+- `tech`: language, framework, storage engine.
+- `path` and `line`: always, for anything that maps to code. This is what makes the explorer useful to a developer. Use a trailing `/` for directories.
+- `url`: documentation for externals.
+
+### Variants
+
+Use them when a meaningful part of the architecture only exists in some mode: a runtime switch, cloud vs. self-hosted, a feature flag that swaps a subsystem. Tag the minority; leave everything shared untagged. If only two or three elements differ, a `dashed` border and a note are simpler than a filter.
+
+### Lifecycles
+
+If an entity's status drives the domain (order, task, payment, job), model it as a state machine: a box for the lifecycle with `state` children and the transitions as edges, labelled with the event that causes them. Add an edge from the function that performs a transition to the state it produces. Five to nine states read well; fold rare error states into one.
+
+### Scenarios
+
+- Write every step in the direction the message travels (caller → callee; `reply: true` for an answer going back). The collaboration diagram derives its columns from that.
+- Two to four scenarios: the main happy path, then the flows that explain a design decision (cache hit, failure and retry, the alternative mode).
+- Write steps between the most specific nodes available, in real execution order, 8 to 40 steps. The reader chooses the level; the engine folds the rest.
+- Use `reply: true` for returned values worth showing, not for every call.
+- Labels are concrete: function call with key arguments, HTTP method and path, the message name, the status code.
+- Collaboration diagrams read best at L1–L2, which is why deeper levels open as sequence diagrams; the step table stays readable at any level.
+- The same steps drive "Sequence inside a box" on the map. A container only gets a useful inner sequence if steps name its components (or code), not the container itself. A step written as `web → api` shows nothing inside `api`.
+
+### Default pins
+
+Choose the handful of elements, across levels, that you would draw on a whiteboard to explain the system in two minutes: the actor, the entry point, the orchestrator, the main store, the one or two externals that matter.

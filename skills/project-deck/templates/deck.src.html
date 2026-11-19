@@ -1,0 +1,853 @@
+<title>Project name: overview</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/*REVEAL_CSS*/
+</style>
+<style>
+/* Deck design. 16:9 reveal.js stage, left-aligned slides, light + dark themes from tokens.
+   --c1 / --c2 / --c3 are three category colours (teal / orange / green). Give each one meaning for
+   this deck (three modes, three subsystems, sync / async / batch ...) and use it consistently in
+   cards, tags, tables and diagrams. Leave them unused if the project has no such split. */
+:root {
+  --bg: #f6f8fa;
+  --surface: #ffffff;
+  --ink: #142231;
+  --muted: #5a6878;
+  --line: #d5dce4;
+  --accent: #1d4f7a;
+  --c1: #0e7490;
+  --c1-soft: #e0f2f6;
+  --c2: #c2410c;
+  --c2-soft: #fdeee4;
+  --c3: #3f7d20;
+  --c3-soft: #e9f3e2;
+  --ext: #6b7785;
+  --code-bg: #eef2f6;
+  --accent-soft: #e4eef7;
+  --syn-kw: #cf222e; --syn-str: #0a3069; --syn-com: #6e7781; --syn-num: #0550ae; --syn-fn: #8250df; --syn-type: #953800; --syn-attr: #116329;
+  --shadow: rgba(20, 34, 49, 0.07);
+  --f-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1720; --surface: #16212d; --ink: #e5ebf1; --muted: #9aa8b7; --line: #2a3847;
+    --accent: #8fb8de; --c1: #4fc3d9; --c1-soft: #12333b; --c2: #f39a62; --c2-soft: #3a2418;
+    --c3: #8cc66a; --c3-soft: #1f3319; --ext: #8995a3; --code-bg: #1b2734; --accent-soft: #1b3045; --syn-kw: #ff7b72; --syn-str: #a5d6ff; --syn-com: #8b949e; --syn-num: #79c0ff; --syn-fn: #d2a8ff; --syn-type: #ffa657; --syn-attr: #7ee787; --shadow: rgba(0, 0, 0, 0.35); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1720; --surface: #16212d; --ink: #e5ebf1; --muted: #9aa8b7; --line: #2a3847;
+  --accent: #8fb8de; --c1: #4fc3d9; --c1-soft: #12333b; --c2: #f39a62; --c2-soft: #3a2418;
+  --c3: #8cc66a; --c3-soft: #1f3319; --ext: #8995a3; --code-bg: #1b2734; --accent-soft: #1b3045; --syn-kw: #ff7b72; --syn-str: #a5d6ff; --syn-com: #8b949e; --syn-num: #79c0ff; --syn-fn: #d2a8ff; --syn-type: #ffa657; --syn-attr: #7ee787; --shadow: rgba(0, 0, 0, 0.35); color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); margin: 0; }
+.reveal-viewport { background: var(--bg); }
+.reveal { font-family: var(--f-body); font-size: 26px; color: var(--ink); line-height: 1.45; }
+.reveal .slides section { text-align: left; }
+.reveal h1, .reveal h2, .reveal h3 { font-family: var(--f-display); color: var(--ink); text-wrap: balance; margin: 0 0 .4em; letter-spacing: -0.01em; }
+.reveal h1 { font-size: 2.6em; line-height: 1.05; font-weight: 700; }
+.reveal h2 { font-size: 1.55em; line-height: 1.15; font-weight: 700; }
+.reveal h3 { font-size: 1.0em; font-weight: 500; }
+.reveal p { margin: 0 0 .6em; }
+.reveal ul { margin: 0 0 .6em 1.1em; padding: 0; }
+.reveal li { margin: .2em 0; }
+.reveal code, .reveal pre { font-family: var(--f-mono); }
+.reveal code { font-size: .82em; background: var(--code-bg); padding: .05em .3em; border-radius: 4px; }
+.reveal pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: .7em .9em; font-size: .6em; line-height: 1.5; overflow-x: auto; margin: 0 0 .6em; box-shadow: none; width: auto; }
+.reveal pre code { background: none; padding: 0; font-size: 1em; max-height: none; }
+.reveal a { color: var(--accent); }
+.reveal .progress { color: var(--accent); }
+.reveal .controls { color: var(--accent); }
+.reveal .slide-number { left: max(20px, env(safe-area-inset-left, 0px)); right: auto; bottom: 14px; background: transparent; color: var(--muted); font-family: var(--f-mono); font-size: 14px; }
+
+.eyebrow { font-family: var(--f-mono); font-size: .52em; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin-bottom: .6em; display: block; }
+.lede { font-size: 1.05em; color: var(--muted); max-width: 36em; }
+.small { font-size: .7em; color: var(--muted); }
+.where { display: inline-flex; gap: .5em; align-items: center; font-family: var(--f-mono); font-size: .5em; color: var(--muted); border: 1px dashed var(--line); border-radius: 6px; padding: .25em .7em; margin-top: .3em; }
+.where b { color: var(--ink); font-weight: 500; }
+/* inside .small or .card the em sizes would compound to about 9px: bring the label back to its normal 13px */
+.small .where { font-size: .715em; } .card .where { font-size: .735em; }
+.where::before { content: "path"; text-transform: uppercase; letter-spacing: .12em; font-size: .85em; color: var(--accent); }
+
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2em; align-items: start; }
+.cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: .9em; }
+.cols > *, .cols-3 > * { min-width: 0; }
+.wide-left { grid-template-columns: 1.35fr 1fr; }
+.flowstack { display: flex; flex-direction: column; gap: .5em; }
+.flowstack .small ul { columns: 2; column-gap: 2.2em; }
+.flowstack .small li { break-inside: avoid; margin: 0; padding: .2em 0; }
+
+.card { border: 1px solid var(--line); border-radius: 10px; padding: .8em .9em; background: var(--surface); font-size: .68em; }
+.card h3 { font-family: var(--f-mono); font-size: 1.05em; margin-bottom: .5em; }
+.card.c1 { border-top: 5px solid var(--c1); } .card.c1 h3 { color: var(--c1); }
+.card.c2 { border-top: 5px solid var(--c2); }  .card.c2 h3 { color: var(--c2); }
+.card.c3 { border-top: 5px solid var(--c3); }  .card.c3 h3 { color: var(--c3); }
+.card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: .35em .8em; }
+.card dt { color: var(--muted); font-family: var(--f-mono); font-size: .85em; text-transform: uppercase; letter-spacing: .06em; padding-top: .1em; }
+.card dd { margin: 0; }
+
+.tag { display: inline-block; font-family: var(--f-mono); font-size: .78em; padding: .05em .45em; border-radius: 4px; font-weight: 500; }
+.tag.c1 { color: var(--c1); background: var(--c1-soft); }
+.tag.c2 { color: var(--c2); background: var(--c2-soft); }
+.tag.c3 { color: var(--c3); background: var(--c3-soft); }
+
+table.grid { border-collapse: collapse; width: 100%; font-size: .56em; font-variant-numeric: tabular-nums; }
+table.grid th, table.grid td { color: var(--ink); border-bottom: 1px solid var(--line); padding: .32em .6em; text-align: left; vertical-align: top; }
+table.grid th { color: var(--muted); font-family: var(--f-mono); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; font-size: .9em; color: var(--muted); }
+table.grid td.c { text-align: center; font-family: var(--f-mono); width: 8.5em; }
+table.grid td code { font-size: .95em; }
+table.grid td.on-c1 { color: var(--c1); font-weight: 600; } table.grid td.on-c2 { color: var(--c2); font-weight: 600; } table.grid td.on-c3 { color: var(--c3); font-weight: 600; }
+table.grid td.off { color: var(--muted); opacity: .5; }
+table.grid td.opt { color: var(--muted); }
+table.grid th.c1 { color: var(--c1); } table.grid th.c2 { color: var(--c2); } table.grid th.c3 { color: var(--c3); }
+
+.legend { display: flex; flex-wrap: wrap; gap: .4em 1.2em; font-size: .52em; color: var(--muted); font-family: var(--f-mono); margin-top: .4em; }
+.legend span { display: inline-flex; align-items: center; gap: .4em; }
+.legend i { width: .9em; height: .9em; border-radius: 3px; display: inline-block; border: 1.5px solid currentColor; }
+
+
+.title-slide h1 span { display: block; }
+.reveal .title-slide h1 .h1-org { font-size: .42em; font-weight: 500; color: var(--muted); letter-spacing: 0; margin-bottom: .1em; }
+.reveal .title-slide h1 .h1-sub { color: var(--accent); }
+.title-slide .tag-row { display: flex; gap: .6em; flex-wrap: wrap; margin: 1.1em 0 1.3em; }
+.title-slide .tag-row .tag { font-size: .62em; padding: .35em .8em; }
+.kv { font-family: var(--f-mono); font-size: .52em; color: var(--muted); display: grid; grid-template-columns: auto 1fr; gap: .25em 1em; }
+.kv b { color: var(--ink); font-weight: 500; }
+.callout { border-left: 3px solid var(--accent); padding: .3em 0 .3em .8em; font-size: .7em; color: var(--muted); margin: .4em 0 .6em; }
+.step { font-family: var(--f-mono); font-size: .5em; color: var(--accent); letter-spacing: .1em; text-transform: uppercase; }
+.tree { font-size: .5em; }
+
+/* ---- hand-drawn SVG diagrams ---- */
+.dg-fig { margin: 0; width: 100%; display: flex; justify-content: center; }
+.dg-fig svg { width: 100%; height: auto; max-height: 580px; }
+.flowstack .dg-fig svg { max-height: 300px; }
+.dg text { font-family: var(--f-body); fill: var(--ink); }
+.dg .t { font-size: 14px; font-weight: 600; }
+.dg .s { font-family: var(--f-mono); font-size: 11.5px; fill: var(--muted); }
+.dg .tg { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .14em; fill: var(--muted); }
+.dg .sh { fill: var(--shadow); }
+.dg .n { stroke-width: 1.5; }
+.dg .n-code { fill: var(--surface); stroke: var(--line); }
+.dg .n-system { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+.dg .n-container { fill: var(--surface); stroke: var(--accent); }
+.dg .n-person { fill: var(--accent); stroke: var(--accent); }
+.dg .tk-person { fill: var(--bg); }
+.dg .n-ext, .dg .n-store { fill: var(--code-bg); stroke: var(--ext); }
+.dg .n-sibling { fill: var(--surface); stroke: var(--muted); stroke-dasharray: 6 4; }
+.dg .n-c1 { fill: var(--c1-soft); stroke: var(--c1); }
+.dg .n-c2 { fill: var(--c2-soft); stroke: var(--c2); }
+.dg .n-c3 { fill: var(--c3-soft); stroke: var(--c3); }
+.dg .n.dash { stroke-dasharray: 6 4; }
+.dg .n-rim { fill: none; }
+.dg .e { fill: none; stroke-width: 1.6; stroke: var(--muted); }
+.dg .e-c1 { stroke: var(--c1); } .dg .e-c2 { stroke: var(--c2); } .dg .e-c3 { stroke: var(--c3); } .dg .e-accent { stroke: var(--accent); }
+.dg .dash { stroke-dasharray: 6 5; }
+.dg .mk-ink { fill: var(--muted); } .dg .mk-c1 { fill: var(--c1); } .dg .mk-c2 { fill: var(--c2); } .dg .mk-c3 { fill: var(--c3); } .dg .mk-accent { fill: var(--accent); }
+.dg .lp-bg { fill: var(--bg); } .dg .lp-c2 { fill: var(--c2-soft); } .dg .lp-c3 { fill: var(--c3-soft); } .dg .lp-c1 { fill: var(--c1-soft); } .dg .lp-none { fill: none; }
+.dg .lab { font-family: var(--f-mono); font-size: 11.5px; fill: var(--muted); }
+.dg .lab-c1, .dg .ml-c1 { fill: var(--c1); } .dg .lab-c2, .dg .ml-c2 { fill: var(--c2); } .dg .lab-c3, .dg .ml-c3 { fill: var(--c3); } .dg .lab-accent, .dg .ml-accent { fill: var(--accent); }
+.dg .bound { fill: none; stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 4 5; }
+.dg .bound-t { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .14em; fill: var(--muted); }
+.dg .hdr { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.dg .life { stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 2 5; }
+.dg .ml { font-family: var(--f-mono); font-size: 12px; fill: var(--ink); }
+.dg .num { fill: var(--accent); }
+.dg .num-t { font-family: var(--f-mono); font-size: 10px; font-weight: 500; fill: var(--bg); }
+.dg .band { fill-opacity: .6; }
+.dg .band-c2 { fill: var(--c2-soft); } .dg .band-c3 { fill: var(--c3-soft); } .dg .band-c1 { fill: var(--c1-soft); } .dg .band-accent { fill: var(--accent-soft); }
+.dg .box { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.dg .divider { stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.dg .btag { font-family: var(--f-mono); font-size: 10px; font-weight: 500; letter-spacing: .1em; fill: var(--muted); }
+.dg .btag-c2 { fill: var(--c2); } .dg .btag-c3 { fill: var(--c3); } .dg .btag-c1 { fill: var(--c1); } .dg .btag-accent { fill: var(--accent); }
+.dg .note { fill: var(--surface); stroke: var(--line); }
+.dg .note-t { font-size: 12px; font-style: italic; fill: var(--muted); }
+
+/* ---- syntax colours (GitHub-like, token driven) ---- */
+.reveal pre { position: relative; padding: 0; overflow: hidden; }
+.reveal pre code, .reveal pre code.hljs { display: block; background: var(--code-bg); padding: .7em .9em; color: var(--ink); overflow: visible; border-radius: 8px; }
+.reveal pre code.hljs.fragment:not(:first-child) { inset: 0; height: 100%; }
+.reveal pre { font-size: .56em; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in.hljs-keyword, .hljs-meta .hljs-keyword { color: var(--syn-kw); }
+.hljs-string, .hljs-regexp, .hljs-meta .hljs-string { color: var(--syn-str); }
+.hljs-comment, .hljs-quote { color: var(--syn-com); font-style: italic; }
+.hljs-number, .hljs-literal, .hljs-variable, .hljs-template-variable { color: var(--syn-num); }
+.hljs-title, .hljs-title.function_, .hljs-section { color: var(--syn-fn); }
+.hljs-title.class_, .hljs-type, .hljs-built_in, .hljs-params { color: var(--syn-type); }
+.hljs-attr, .hljs-attribute, .hljs-name, .hljs-symbol, .hljs-bullet { color: var(--syn-attr); }
+.hljs-meta, .hljs-doctag { color: var(--syn-num); }
+.hljs-subst { color: var(--ink); }
+.reveal .hljs-ln-numbers { color: var(--muted); opacity: .6; padding-right: 1em !important; text-align: right; user-select: none; vertical-align: top; }
+.reveal .hljs-ln-code { padding: 0 !important; }
+.reveal .hljs table, .reveal .hljs td { border: 0; margin: 0; padding: 0; }
+/* ---- chapter navigation ---- */
+.reveal .down-hint { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); white-space: nowrap; margin: 0; font-family: var(--f-mono); font-size: .5em; color: var(--accent); letter-spacing: .04em; }
+.nav-hint { font-family: var(--f-mono); font-size: .48em; color: var(--muted); margin-top: 1.4em; display: flex; gap: .5em 1.1em; flex-wrap: wrap; align-items: center; }
+.reveal kbd { font-family: var(--f-mono); font-size: .95em; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: .05em .4em; color: var(--ink); background: var(--surface); margin-right: .25em; }
+.map { display: grid; grid-template-columns: repeat(5, 1fr); gap: .8em; margin: .6em 0 1em; }
+.map-col { display: flex; flex-direction: column; gap: .35em; font-size: .56em; min-width: 0; }
+.map-col b { font-family: var(--f-display); font-size: 1.15em; border-bottom: 2px solid var(--accent); padding-bottom: .35em; margin-bottom: .2em; }
+.map-col span { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .3em .6em; color: var(--muted); }
+.map-col span:first-of-type { color: var(--ink); border-color: var(--accent); }
+.crumbs { display: flex; gap: .4em; align-items: center; font-family: var(--f-mono); font-size: .48em; margin-bottom: .55em; flex-wrap: wrap; }
+.crumbs span { color: var(--accent); letter-spacing: .14em; margin-right: .3em; }
+.crumbs b { font-weight: 500; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: .15em .8em; }
+.crumbs b.on { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+.cols-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1em; margin-top: .3em; }
+.cols-4 > * { min-width: 0; margin: 0; }
+.cols-4 b { color: var(--ink); }
+.lede-wide { font-size: .82em; max-width: none; margin-bottom: .4em; }
+.rules > div { display: flex; flex-direction: column; gap: .3em; border-top: 2px solid var(--accent); padding-top: .5em; }
+.rules b { color: var(--ink); }
+.rules { margin-bottom: .8em; }
+/* ---- C4 explainer svg extras ---- */
+.dg .panel { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.dg .wedge { fill: var(--accent); fill-opacity: .07; }
+.dg .zoomline { fill: none; stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 4 4; opacity: .8; }
+.dg .hl { stroke: var(--accent); stroke-width: 3; }
+.dg .mini { font-size: 12px; font-weight: 600; }
+.dg .micro { font-family: var(--f-mono); font-size: 10.5px; fill: var(--muted); }
+.dg .uml { stroke: var(--line); stroke-width: 1.2; }
+.dg .code-t { font-family: var(--f-mono); font-size: 11.5px; fill: var(--ink); }
+
+/* ---- spacing fixes: beat `.reveal p { margin }` specificity ---- */
+.reveal .nav-hint { margin: 2.2em 0 0; }
+.reveal .callout { margin: .4em 0 .6em; }
+.reveal .lede-wide { margin: 0 0 .5em; }
+.reveal .step-hint { margin: -.2em 0 .5em; font-family: var(--f-mono); font-size: .5em; color: var(--accent); }
+.nav-hint span { display: inline-flex; align-items: center; gap: .1em; }
+/* every slide uses the cover's arrangement: a centred column */
+.reveal .slides section:not(.stack):not([style*="display: none"]) { display: flex !important; flex-direction: column; justify-content: flex-start; height: 100%; box-sizing: border-box; padding-bottom: 28px; }
+/* cover + closing: everything centred */
+.reveal .slides section.title-slide:not(.stack):not([style*="display: none"]) { justify-content: center; }
+/* other slides: heading pinned top, path labels pinned bottom, body centred between them */
+.reveal .slides section:not(.title-slide) > h2 + :not(.step-hint),
+.reveal .slides section:not(.title-slide) > .step-hint + * { margin-top: auto; }
+.reveal .slides section:not(.title-slide) > .paths { margin-top: auto; }
+.reveal .slides section:not(.stack):not(.title-slide):not(:has(> .paths))::after { content: ""; display: block; margin-top: auto; }
+.reveal .slides section:not(.stack) > * { flex: 0 0 auto; }
+.reveal .slides section:not(.stack) > .r-stretch { flex: 1 1 auto; min-height: 0; }
+.paths { display: flex; flex-wrap: wrap; gap: .4em .6em; align-items: center; margin-top: .4em; }
+.reveal .slides section:not(.stack) > h2 { margin-bottom: .5em; }
+.keys-panel[hidden] { display: none; }
+.reveal .repo-link { display: inline-flex; align-self: flex-start; gap: .4em; align-items: center; font-family: var(--f-mono); font-size: .8em; color: var(--accent); text-decoration: none; border: 1.5px solid var(--accent); border-radius: 10px; padding: .45em .9em; margin: .2em 0 1.2em; }
+.reveal .repo-link:hover, .reveal .repo-link:focus-visible { background: var(--accent-soft); outline: none; }
+.closing-kv { row-gap: .45em; }
+.title-slide .eyebrow { margin-bottom: 1.4em; }
+.reveal .title-slide h1 { margin-bottom: .55em; }
+.reveal .title-slide .lede { margin-bottom: 1em; }
+.title-slide .kv { margin-top: .4em; row-gap: .45em; }
+/* ---- figures: r-stretch + zoom frames ---- */
+.dg-fig.r-stretch svg { width: 100%; height: 100%; max-height: none; }
+.dg-fig.zoomfig { position: relative; display: block; margin: 0 auto; }
+.dg-fig.zoomfig svg { display: block; max-height: none; }
+.zf { position: absolute; border: 2.5px solid var(--accent); border-radius: 14px; pointer-events: none; }
+.zf-depart { border-style: dashed; border-width: 2px; }
+.zf-arrive { opacity: 0; }
+/* ---- sequence steps: focus the current message ---- */
+.seqsvg g.fragment.visible:not(.current-fragment) { opacity: .5; }
+.seqsvg g.fragment.current-fragment .ml { font-weight: 600; }
+/* ---- variant toggle: one diagram, re-coloured per variant (a / b / c = c1 / c2 / c3) ---- */
+.vsvg .v { display: none; }
+.vsvg[data-v="all"] .v-all, .vsvg[data-v="a"] .v-a, .vsvg[data-v="b"] .v-b, .vsvg[data-v="c"] .v-c { display: inline; }
+.vsvg .v-head { font-family: var(--f-mono); font-size: 15px; fill: var(--ink); }
+.vsvg[data-v="a"] .v-head { fill: var(--c1); } .vsvg[data-v="b"] .v-head { fill: var(--c2); } .vsvg[data-v="c"] .v-head { fill: var(--c3); }
+.vsvg .gate { transition: opacity .45s ease; }
+.vsvg .gbox { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; transition: fill .45s ease, stroke .45s ease; }
+.vsvg .dot { stroke-width: 1.5; }
+.vsvg .dot-a { stroke: var(--c1); } .vsvg .dot-b { stroke: var(--c2); } .vsvg .dot-c { stroke: var(--c3); }
+.vsvg .dot-a.dot-on, .vsvg .dot-a.dot-key { fill: var(--c1); }
+.vsvg .dot-b.dot-on, .vsvg .dot-b.dot-key { fill: var(--c2); }
+.vsvg .dot-c.dot-on, .vsvg .dot-c.dot-key { fill: var(--c3); }
+.vsvg .dot.dot-off { fill: none; opacity: .5; }
+.vsvg .dot.dot-opt { fill: none; stroke-dasharray: 2 2; }
+.vsvg[data-v="a"] .a-off, .vsvg[data-v="b"] .b-off, .vsvg[data-v="c"] .c-off { opacity: .16; }
+.vsvg[data-v="a"] .a-on .gbox, .vsvg[data-v="b"] .b-on .gbox, .vsvg[data-v="c"] .c-on .gbox { fill: var(--accent-soft); stroke: var(--accent); }
+.vsvg[data-v="a"] .a-key .gbox { fill: var(--c1-soft); stroke: var(--c1); stroke-width: 2.5; }
+.vsvg[data-v="b"] .b-key .gbox { fill: var(--c2-soft); stroke: var(--c2); stroke-width: 2.5; }
+.vsvg[data-v="c"] .c-key .gbox { fill: var(--c3-soft); stroke: var(--c3); stroke-width: 2.5; }
+.vsvg[data-v="a"] .a-opt .gbox { fill: var(--c1-soft); stroke: var(--c1); stroke-dasharray: 6 4; }
+.vsvg[data-v="b"] .b-opt .gbox { fill: var(--c2-soft); stroke: var(--c2); stroke-dasharray: 6 4; }
+.vsvg[data-v="c"] .c-opt .gbox { fill: var(--c3-soft); stroke: var(--c3); stroke-dasharray: 6 4; }
+.vsvg[data-v="a"] .a-opt, .vsvg[data-v="b"] .b-opt, .vsvg[data-v="c"] .c-opt { opacity: .7; }
+.v-step { position: absolute; width: 0; height: 0; overflow: hidden; }
+/* ---- screenshots and other raster images ---- */
+.reveal figure.shot { margin: 0; display: flex; flex-direction: column; align-items: center; gap: .5em; }
+.reveal figure.shot img { display: block; max-width: 100%; max-height: 520px; margin: 0; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 20px var(--shadow); }
+.reveal figure.shot.plain img { border: 0; box-shadow: none; border-radius: 0; }
+.reveal figure.shot figcaption { font-size: .6em; color: var(--muted); }
+.cols figure.shot img { max-height: 420px; }
+/* ---- deck tools + keyboard help ---- */
+.deck-tools { position: fixed; z-index: 40; top: calc(env(safe-area-inset-top, 0px) + 12px); right: max(14px, env(safe-area-inset-right, 0px)); display: flex; gap: 8px; }
+.deck-tools button { font-family: var(--f-mono); font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+.deck-tools button:hover, .deck-tools button:focus-visible { color: var(--ink); border-color: var(--accent); outline: none; }
+.keys-panel { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 72%, transparent); padding: 16px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); }
+.keys-card { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; padding: 22px 26px; width: min(760px, 100%); max-height: 90%; overflow: auto; box-shadow: 0 18px 50px var(--shadow); font-family: var(--f-body); }
+.keys-card h2 { font-family: var(--f-display); font-size: 22px; margin: 0 0 4px; }
+.keys-card p { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+.keys-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px 28px; }
+.keys-grid h3 { font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; font-weight: 500; }
+.keys-grid dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 7px 12px; align-items: center; font-size: 14px; }
+.keys-grid dt { white-space: nowrap; }
+.keys-grid dd { margin: 0; color: var(--muted); }
+.keys-card kbd { font-family: var(--f-mono); font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; background: var(--bg); color: var(--ink); }
+.keys-card .close { float: right; font-family: var(--f-mono); font-size: 12px; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 6px; padding: 3px 9px; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .reveal .slides section { transition: none !important; } }
+/* ---- print / PDF (open index.html?print-pdf, then print) ---- */
+html.reveal-print .deck-tools, html.reveal-print .keys-panel { display: none; }
+@media print { .deck-tools, .keys-panel { display: none; } }
+/* ---- fallback when reveal.js cannot be loaded (CDN unreachable): a plain scrolling page ---- */
+html.no-reveal, html.no-reveal body { height: auto; overflow: auto; }
+.no-reveal .reveal, .no-reveal .reveal .slides { position: static; width: auto; height: auto; overflow: visible; transform: none; }
+.no-reveal .reveal .slides { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+.no-reveal .reveal .slides section:not(.stack) { position: static !important; display: block !important; height: auto; min-height: 0; padding: 36px 0; border-bottom: 1px solid var(--line); opacity: 1; visibility: visible; transform: none; }
+.no-reveal .reveal .slides section.stack { position: static; display: block; height: auto; padding: 0; opacity: 1; visibility: visible; transform: none; }
+.no-reveal .reveal .fragment { opacity: 1; visibility: visible; }
+.no-reveal .reveal aside.notes, .no-reveal .down-hint, .no-reveal .nav-hint, .no-reveal .step-hint, .no-reveal #btn-view { display: none; }
+.no-reveal .dg-fig.r-stretch svg { height: auto; }
+.no-reveal-note { font: 14px var(--f-body); color: var(--muted); padding: 14px 20px; margin: 0; border-bottom: 1px solid var(--line); }
+</style>
+
+<!--
+  HOW THIS FILE WORKS
+  - Everything above the "reveal" div becomes the page head. Keep exactly one div with class="reveal".
+  - Each top-level section is a CHAPTER (→ moves between chapters); the sections inside it are its
+    slides (↓ moves through them). A chapter with a single slide still uses the nested form.
+  - A FIG marker (an HTML comment reading FIG:name) is replaced at build time by the figure of that
+    name from your figures script.
+  - aside class="notes" holds speaker notes (press S). Put caveats and sources there, not on the slide.
+  - The slides below are PATTERNS. Copy the ones you need, delete the rest, replace every placeholder,
+    and delete these authoring comments.
+-->
+<div class="reveal">
+<div class="slides">
+
+<!-- ================================================================ CH 0 · OPENING -->
+<section>
+  <!-- PATTERN: title slide. eyebrow · h1 (owner / name / subtitle) · lede · optional tag row · key-value facts · key hints.
+       The h1-org line and the key-value rows are free-form. Use "repository" only if the project is hosted somewhere;
+       otherwise delete the h1-org span and write e.g. "location" with the project folder. -->
+  <section class="title-slide">
+    <span class="eyebrow">Short context line · version · date</span>
+    <h1><span class="h1-org">owner-or-org/</span><span>project-name</span><span class="h1-sub">An overview.</span></h1>
+    <p class="lede">One or two sentences: what the project does, for whom, and what this deck will walk through.</p>
+    <!-- optional: delete the row if the project has no natural three-way split -->
+    <div class="tag-row">
+      <span class="tag c1">category one</span>
+      <span class="tag c2">category two</span>
+      <span class="tag c3">category three</span>
+    </div>
+    <div class="kv">
+      <span>repository</span><b>host/owner/project-name</b>
+      <span>main package</span><b>path/to/package/</b>
+      <span>this deck</span><b>communications/project-deck/index.html</b>
+    </div>
+    <p class="nav-hint"><span><kbd>→</kbd> next chapter</span><span><kbd>↓</kbd> details</span><span><kbd>Esc</kbd> overview</span><span><kbd>V</kbd> reading view</span><span><kbd>?</kbd> all keys</span></p>
+    <aside class="notes">
+      Chapters run left to right and their details run downward. Press Esc for the grid overview.
+    </aside>
+  </section>
+
+  <!-- PATTERN: deck map. One column per chapter, one chip per slide. Set repeat(N, 1fr) to the number of chapters. -->
+  <section>
+    <span class="eyebrow">Deck map</span>
+    <h2>Four chapters, details below each one</h2>
+    <div class="map" style="grid-template-columns: repeat(4, 1fr)">
+      <div class="map-col"><b>1 · What it is</b><span>Purpose</span><span>Options compared</span><span>What it looks like</span></div>
+      <div class="map-col"><b>2 · Architecture</b><span>Zoom levels</span><span>Notation</span><span>L1 Context</span><span>L2 Containers</span><span>L3 Components</span><span>Key code</span><span>Code, full width</span></div>
+      <div class="map-col"><b>3 · How it works</b><span>Main flow</span><span>Step by step</span><span>Modes</span><span>Feature table</span><span>One request</span><span>States and data</span></div>
+      <div class="map-col"><b>4 · Reference</b><span>Folder map</span><span>Commands</span></div>
+    </div>
+    <p class="small">One sentence on how to read the deck, or what the closing slide contains.</p>
+  </section>
+</section>
+
+<!-- ================================================================ CH 1 · WHAT IT IS -->
+<section>
+  <!-- PATTERN: text + cards. Left: the claim and a short list. Right: two or three cards, each with a "path" label. -->
+  <section>
+    <span class="eyebrow">1 · What it is</span>
+    <h2>Headline that states the point: input in, output out</h2>
+    <div class="cols wide-left">
+      <div>
+        <p>One paragraph in plain language: what a user gives the project and what they get back.</p>
+        <ul class="small">
+          <li><code>thing_one</code> what it is</li>
+          <li><code>thing_two</code> what it is</li>
+          <li><code>thing_three</code> what it is</li>
+        </ul>
+      </div>
+      <div>
+        <p class="small">The work happens in two parts:</p>
+        <div class="card" style="margin-bottom:.6em">
+          <h3>Part 1 · name</h3>
+          <p>What this part is responsible for, in one or two sentences.</p>
+          <span class="where"><b>path/to/part_one.py</b></span>
+        </div>
+        <div class="card">
+          <h3>Part 2 · name</h3>
+          <p>What this part is responsible for, in one or two sentences.</p>
+          <span class="where"><b>path/to/part_two.py</b></span>
+        </div>
+      </div>
+    </div>
+    <p class="down-hint">↓ the options compared</p>
+    <aside class="notes">
+      Speaker notes: what to say that is not on the slide, and where the facts come from.
+    </aside>
+  </section>
+
+  <!-- PATTERN: comparison cards. Two or three options side by side, the same rows in each (cols for two, cols-3 for three). -->
+  <section>
+    <span class="eyebrow">1 · What it is</span>
+    <h2>Three options at a glance</h2>
+    <div class="cols-3">
+      <div class="card c1">
+        <h3>option_one</h3>
+        <dl>
+          <dt>How</dt><dd>What it does differently.</dd>
+          <dt>Cost</dt><dd>What you pay for it.</dd>
+          <dt>Use for</dt><dd>When to pick it.</dd>
+        </dl>
+      </div>
+      <div class="card c2">
+        <h3>option_two</h3>
+        <dl>
+          <dt>How</dt><dd>What it does differently.</dd>
+          <dt>Cost</dt><dd>What you pay for it.</dd>
+          <dt>Use for</dt><dd>When to pick it.</dd>
+        </dl>
+      </div>
+      <div class="card c3">
+        <h3>option_three</h3>
+        <dl>
+          <dt>How</dt><dd>What it does differently.</dd>
+          <dt>Cost</dt><dd>What you pay for it.</dd>
+          <dt>Use for</dt><dd>When to pick it.</dd>
+        </dl>
+      </div>
+    </div>
+    <aside class="notes">Keep the row labels identical across the cards so the eye can compare along a row.</aside>
+  </section>
+
+  <!-- PATTERN: screenshot / image. Local image paths are relative to this file; the build embeds them. Always write an alt text. -->
+  <section>
+    <span class="eyebrow">1 · What it is</span>
+    <h2>What the user sees</h2>
+    <figure class="shot">
+      <img src="example-image.svg" alt="Describe what the screenshot shows and what to look at.">
+      <figcaption>Caption: which screen this is and the one thing to notice.</figcaption>
+    </figure>
+  </section>
+</section>
+
+<!-- ================================================================ CH 2 · ARCHITECTURE -->
+<section>
+  <!-- PATTERN: explainer = diagram that builds up (→) + a column of text per panel. -->
+  <section>
+    <span class="eyebrow">2 · Architecture</span>
+    <h2>The architecture at three zoom levels</h2>
+    <p class="lede lede-wide">Each level zooms into one box of the level before it, and each suits a different reader.</p>
+    <p class="step-hint">→ steps: one level at a time</p>
+    <!--FIG:levels-->
+    <div class="cols-3 small">
+      <p><b>Context:</b> the system as one box, with its users and the outside systems it depends on.</p>
+      <p><b>Containers:</b> the separately running parts, such as apps, services and data stores.</p>
+      <p><b>Components:</b> the main building blocks inside one container.</p>
+    </div>
+    <p class="down-hint">↓ how to read the diagrams</p>
+  </section>
+
+  <!-- PATTERN: rules + notation key. Explain once how to read every later diagram. -->
+  <section>
+    <span class="eyebrow">2 · Architecture</span>
+    <h2>How to read the diagrams in this deck</h2>
+    <div class="cols-3 small rules">
+      <div><b>Every box shows</b><span>its type, such as PERSON or CONTAINER</span><span>a name</span><span>a short description of its job</span></div>
+      <div><b>Every arrow shows</b><span>a direction</span><span>what it does, such as <code>reads</code> or <code>calls</code></span><span>dashed = a reply, or optional</span></div>
+      <div><b>Colours</b><span>teal = what category one means here</span><span>orange = what category two means here</span><span>green = what category three means here</span></div>
+    </div>
+    <!--FIG:legend-->
+  </section>
+
+  <!-- PATTERN: zoom between levels with auto-animate (three slides: context, containers, components). Consecutive
+       slides carry data-auto-animate; elements with the same data-id (breadcrumbs, the diagram's zoom frame) morph
+       from one slide to the next. For two levels, delete the third slide and the third crumb on the other two.
+       For a fourth level, add a crumb (data-id="cr4") to every slide and chain another depart / arrive frame pair. -->
+  <section data-auto-animate>
+    <div class="crumbs" data-id="crumbs"><span>LEVEL</span><b class="on" data-id="cr1">L1 Context</b><b data-id="cr2">L2 Containers</b><b data-id="cr3">L3 Components</b></div>
+    <h2>Who uses the system and what it depends on</h2>
+    <!--FIG:context-->
+    <!-- keep the down-hint AFTER the figure: the element right after the h2 is the one that gets centred -->
+    <p class="down-hint">↓ zoom into the system</p>
+    <aside class="notes">The outlined box is the one the next slide zooms into.</aside>
+  </section>
+
+  <section data-auto-animate>
+    <div class="crumbs" data-id="crumbs"><span>LEVEL</span><b data-id="cr1">L1 Context</b><b class="on" data-id="cr2">L2 Containers</b><b data-id="cr3">L3 Components</b></div>
+    <h2>The running parts, as deployed</h2>
+    <!--FIG:containers-->
+    <div class="paths"><span class="where"><b>path/to/deployment.yml</b></span><span class="where"><b>path/to/service/</b> a short remark</span></div>
+    <p class="down-hint">↓ zoom into the api</p>
+  </section>
+
+  <!-- component level (L3): the main modules inside ONE container, and what they depend on. Draw it only for the
+       container the audience will work in; name folders or packages, not classes. -->
+  <section data-auto-animate>
+    <div class="crumbs" data-id="crumbs"><span>LEVEL</span><b data-id="cr1">L1 Context</b><b data-id="cr2">L2 Containers</b><b class="on" data-id="cr3">L3 Components</b></div>
+    <h2>The main modules inside the api</h2>
+    <!--FIG:components-->
+    <div class="paths"><span class="where"><b>path/to/package/</b> all module paths are relative to this folder</span></div>
+  </section>
+
+  <!-- PATTERN: code. Wrap code in <script type="text/template"> so < and & need no escaping. data-line-numbers="|1-2|4-5"
+       highlights those line ranges one step at a time (the leading | shows the whole block first).
+       Two columns: at most 58 characters per line and about 16 lines per block. Longer lines are cut off, not wrapped. -->
+  <section>
+    <span class="eyebrow">2 · Architecture</span>
+    <h2>The code behind the key decision</h2>
+    <div class="cols">
+      <div>
+        <pre><code class="language-json" data-trim><script type="text/template">
+{
+  "input": "what the caller sends",
+  "mode": "option_two"
+}
+        </script></code></pre>
+        <p class="small">A sentence that says what to notice in the snippet, and what the default is.</p>
+        <span class="where"><b>path/to/schema.py</b></span>
+      </div>
+      <div>
+        <pre><code class="language-python" data-trim data-line-numbers="|1-2|4-7|8"><script type="text/template">
+if mode == Mode.OPTION_TWO:
+    return self._special_handler.run
+
+handler = self._handlers.get(stage)
+if handler is None:
+    raise ValueError(f"No handler for '{stage}'")
+# option_one AND option_three land here
+return handler
+        </script></code></pre>
+        <p class="callout">The one-sentence takeaway from this code: the thing a reader would otherwise miss.</p>
+        <span class="where"><b>path/to/registry.py</b> resolve_handler</span>
+      </div>
+    </div>
+    <aside class="notes">Press → to step through the highlighted lines. Say here if the excerpt was shortened.</aside>
+  </section>
+
+  <!-- PATTERN: code, full width. One block across the slide, for a function whose overall shape is the point.
+       At most 110 characters per line and about 16 lines. Longer lines are cut off, not wrapped. -->
+  <section>
+    <span class="eyebrow">2 · Architecture</span>
+    <h2>The whole handler, from request to reply</h2>
+    <pre><code class="language-python" data-trim data-line-numbers="|3-6|8-11"><script type="text/template">
+def handle(request: Request, registry: Registry, store: Store) -> Response:
+    """Submit a job: answer from the cache when possible, otherwise queue it."""
+    job = Job.from_payload(request.json(), submitted_by=request.user)
+    cached = store.find_result(job.fingerprint)
+    if cached is not None:
+        # the widest line a full-width block shows uncut is 110 characters, like this one ....................
+        return Response(200, cached)
+    handler = registry.resolve_handler(job.stage, mode=request.mode)
+    store.insert(job, status="queued")
+    registry.queue.enqueue(job.id, handler=handler.name)
+    return Response(202, {"job_id": job.id})
+    </script></code></pre>
+    <p class="small">A sentence that says what to notice, such as which lines are the fast path and which the normal one.</p>
+    <div class="paths"><span class="where"><b>path/to/routes.py</b> handle</span></div>
+    <aside class="notes">Use the full width only when the lines need it; two columns leave room for an explanation beside the code.</aside>
+  </section>
+</section>
+
+<!-- ================================================================ CH 3 · HOW IT WORKS -->
+<section>
+  <!-- PATTERN: flow + details. A wide, short diagram on top; a two-column bullet list underneath (class flowstack). -->
+  <section>
+    <span class="eyebrow">3 · How it works</span>
+    <h2>The main flow, one stage after another</h2>
+    <div class="flowstack">
+    <!--FIG:pipeline-->
+    <div class="small">
+      <ul>
+        <li><b>step one:</b> what it reads and what it produces</li>
+        <li><b>step two:</b> what it reads and what it produces</li>
+        <li><b>step three:</b> what it reads and what it produces</li>
+        <li><b>step four:</b> what it reads and what it produces</li>
+      </ul>
+      <span class="where"><b>path/to/pipeline/</b>&lt;step&gt;.py</span>
+    </div>
+    </div>
+    <p class="down-hint">↓ step by step, then the modes</p>
+  </section>
+
+  <!-- PATTERN: step-through diagram. Parts of the figure are fragments (g.step() in the figures script); the
+       step-hint line tells the presenter what each press of → adds. -->
+  <section>
+    <span class="eyebrow">3 · How it works</span>
+    <h2>A proposed change is checked before it is applied</h2>
+    <p class="step-hint">→ steps: the helper · its proposal · accept or reject</p>
+    <div class="flowstack">
+    <!--FIG:stepwise-->
+    <div class="small">
+      <ul>
+        <li><b>First rule:</b> what is allowed</li>
+        <li><b>Second rule:</b> what is allowed, and when</li>
+        <li><b>Third rule:</b> what is never allowed</li>
+        <li><b>On rejection:</b> what happens to the request</li>
+      </ul>
+      <span class="where"><b>path/to/check.py</b></span>
+    </div>
+    </div>
+  </section>
+
+  <!-- PATTERN: variant toggle. One diagram, re-coloured per mode. Keep one empty v-step fragment per variant
+       (data-v = a, b, c in the order given to variant_toggle); each press of → selects the next. -->
+  <section>
+    <span class="eyebrow">3 · How it works</span>
+    <h2>One pipeline, three modes</h2>
+    <p class="step-hint">→ switch mode: mode-a · mode-b · mode-c</p>
+    <!--FIG:variants-->
+    <span class="fragment v-step" data-v="a"></span>
+    <span class="fragment v-step" data-v="b"></span>
+    <span class="fragment v-step" data-v="c"></span>
+    <aside class="notes">Stages that do not run in the selected mode fade out.</aside>
+  </section>
+
+  <!-- PATTERN: table. td.c = centred mono cell; on-c1 / on-c2 / on-c3 = coloured "yes"; off = faded "no"; opt = optional. -->
+  <section>
+    <span class="eyebrow">3 · How it works</span>
+    <h2>Which stages run in each mode</h2>
+    <table class="grid">
+      <thead><tr><th>Stage (in execution order)</th><th class="c1">mode-a</th><th class="c2">mode-b</th><th class="c3">mode-c</th><th>Condition / note</th></tr></thead>
+      <tbody>
+        <tr><td><code>prepare</code></td><td class="c on-c1">●</td><td class="c on-c2">●</td><td class="c on-c3">●</td><td>always</td></tr>
+        <tr><td><code>fast_path</code></td><td class="c on-c1">●</td><td class="c off">—</td><td class="c off">—</td><td>skips the slow steps</td></tr>
+        <tr><td><code>enrich</code></td><td class="c off">—</td><td class="c on-c2">basic</td><td class="c on-c3">full</td><td><code>ENRICH_LEVEL</code></td></tr>
+        <tr><td><code>review</code></td><td class="c off">—</td><td class="c opt">opt-in</td><td class="c on-c3">●</td><td><code>REVIEW_ENABLED=true</code></td></tr>
+        <tr><td><code>validate</code> · <code>emit</code></td><td class="c on-c1">●</td><td class="c on-c2">●</td><td class="c on-c3">●</td><td>always</td></tr>
+      </tbody>
+    </table>
+    <div class="paths"><span class="where"><b>path/to/pipeline.py</b> where to look for the conditions</span></div>
+    <aside class="notes">Up to about 13 rows fit. Say in the notes when the table was last checked against the code.</aside>
+  </section>
+
+  <!-- PATTERN: sequence diagram. One figure fills the slide (it is rendered with r-stretch); each → shows the next message. -->
+  <section>
+    <span class="step">One request, end to end</span>
+    <h2>Submit a job, run it, fetch the result</h2>
+    <p class="step-hint">→ steps through each message</p>
+    <!--FIG:sequence-->
+    <div class="paths"><span class="where"><b>path/to/routes.py</b> submit_job</span><span class="where"><b>path/to/worker.py</b> run</span></div>
+    <aside class="notes">Name the real functions and files, so a reader can follow the same path in the code.</aside>
+  </section>
+
+  <!-- PATTERN: two small diagrams side by side (here: a state machine and a data model). -->
+  <section>
+    <span class="eyebrow">3 · How it works</span>
+    <h2>The states of a job and the records behind it</h2>
+    <div class="cols">
+      <div><!--FIG:states--><p class="small">Lifecycle: which event moves a job from one state to the next.</p></div>
+      <div><!--FIG:model--><p class="small">Data model: the records and how they refer to each other.</p></div>
+    </div>
+  </section>
+</section>
+
+<!-- ================================================================ CH 4 · REFERENCE -->
+<section>
+  <!-- PATTERN: folder map. An annotated tree on the left (escape < as &lt; here), pointers on the right. -->
+  <section>
+    <span class="eyebrow">4 · Reference</span>
+    <h2>Folder map for finding your way around</h2>
+    <div class="cols">
+<pre class="tree"><code class="nohighlight language-plaintext">project-name/
+├─ README.md                 ← start here
+├─ docs/                     ← longer explanations
+├─ deploy/deployment.yml     ← the running parts (L2)
+└─ package/
+   ├─ routes.py              ← entry points
+   ├─ pipeline/              ← one file per stage
+   ├─ storage/               ← database access
+   └─ worker.py              ← background jobs</code></pre>
+      <div class="small">
+        <p><b>Where to look first</b></p>
+        <ul>
+          <li><b>To run it:</b> <code>README.md</code>, section "Getting started"</li>
+          <li><b>To change a stage:</b> <code>package/pipeline/</code></li>
+          <li><b>To add an endpoint:</b> <code>package/routes.py</code></li>
+        </ul>
+      </div>
+    </div>
+    <p class="down-hint">↓ commands</p>
+  </section>
+
+  <!-- PATTERN: commands. Two code blocks; comments in the code say what each group is for. -->
+  <section>
+    <span class="eyebrow">4 · Reference</span>
+    <h2>Commands to try it yourself</h2>
+    <div class="cols">
+      <div>
+        <pre><code class="language-bash" data-trim><script type="text/template">
+cd project-name
+
+# configuration
+export SOME_TOKEN=…        # required
+export MODE=option_two     # optional
+
+make serve                 # starts on $PORT
+        </script></code></pre>
+      </div>
+      <div>
+        <pre><code class="language-bash" data-trim><script type="text/template">
+make test      # fast tests
+make check     # lint + type-check
+
+# rebuild this deck
+cd communications/project-deck/src
+python -B figures.py figs.json
+python -B build.py deck.src.html --figs figs.json
+        </script></code></pre>
+      </div>
+    </div>
+    <p class="small">One sentence on what to compare or look for in the output.</p>
+  </section>
+</section>
+
+<!-- ================================================================ CLOSING -->
+<section>
+  <!-- PATTERN: closing slide. Same layout as the title slide, plus a link and the build time.
+       The repo-link is OPTIONAL: delete it when the project has no hosted repository, or point it at the docs or
+       the issue tracker instead. "checked against": a commit, tag or branch when the project is under version
+       control; otherwise write "working copy, read on YYYY-MM-DD" with the date you read the code. -->
+  <section class="title-slide closing">
+    <span class="eyebrow">Thank you · questions welcome</span>
+    <h1><span class="h1-org">owner-or-org/</span><span>project-name</span></h1>
+    <a class="repo-link" href="https://example.com/owner/project-name" target="_blank" rel="noopener">example.com/owner/project-name <span aria-hidden="true">↗</span></a>
+    <div class="kv closing-kv">
+      <span>deck built</span><b><!--BUILD_TS--></b>
+      <span>checked against</span><b>commit or tag the slides were verified against (or: working copy, read on YYYY-MM-DD)</b>
+      <span>sources</span><b>communications/project-deck/src/ (rebuild to refresh the timestamp)</b>
+    </div>
+    <aside class="notes">The build timestamp is written by build.py each time the deck is rebuilt.</aside>
+  </section>
+</section>
+
+</div>
+</div>
+
+<div class="deck-tools">
+  <button type="button" id="btn-view" title="Toggle reading view (V)">Reading view</button>
+  <button type="button" id="btn-keys" title="Keyboard shortcuts (?)">? Keys</button>
+</div>
+<div class="keys-panel" id="keys-panel" hidden role="dialog" aria-modal="true" aria-labelledby="keys-title">
+  <div class="keys-card">
+    <button type="button" class="close" id="keys-close">Esc · close</button>
+    <h2 id="keys-title">Keyboard shortcuts</h2>
+    <p>Chapters run left to right and their details run downward. Some diagrams build up step by step as you press →.</p>
+    <div class="keys-grid">
+      <div><h3>Move</h3><dl>
+        <dt><kbd>→</kbd> <kbd>Space</kbd></dt><dd>next step or slide</dd>
+        <dt><kbd>←</kbd></dt><dd>previous step or slide</dd>
+        <dt><kbd>↓</kbd> <kbd>↑</kbd></dt><dd>details in this chapter</dd>
+        <dt><kbd>Home</kbd> <kbd>End</kbd></dt><dd>first or last slide</dd>
+        <dt><kbd>G</kbd></dt><dd>jump to slide number</dd>
+      </dl></div>
+      <div><h3>View</h3><dl>
+        <dt><kbd>Esc</kbd> <kbd>O</kbd></dt><dd>overview grid</dd>
+        <dt><kbd>V</kbd></dt><dd>reading view (scroll) on / off</dd>
+        <dt><kbd>F</kbd></dt><dd>fullscreen</dd>
+        <dt><kbd>Alt</kbd> + click</dt><dd>zoom into a spot</dd>
+        <dt><kbd>B</kbd> <kbd>.</kbd></dt><dd>pause (black screen)</dd>
+      </dl></div>
+      <div><h3>Presenter</h3><dl>
+        <dt><kbd>S</kbd></dt><dd>speaker notes window (local file)</dd>
+        <dt><kbd>?</kbd></dt><dd>this panel</dd>
+      </dl></div>
+      <!-- list only the interactive slides this deck really has -->
+      <div><h3>In this deck</h3><dl>
+        <dt>sequence slides</dt><dd>→ reveals one message at a time</dd>
+        <dt>mode toggle</dt><dd>→ cycles through the modes</dd>
+        <dt>zoom levels</dt><dd>↓ zooms from L1 to L3</dd>
+      </dl></div>
+    </div>
+  </div>
+</div>
+
+<!-- reveal.js 5.1.0 and its plugins load from the CDN. `build.py --inline-js DIR` embeds local copies instead. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/zoom/zoom.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script>
+(function () {
+  var VIEW_KEY = 'project-deck-view';
+  function storedView() { try { return localStorage.getItem(VIEW_KEY); } catch (e) { return null; } }
+  var scroll = storedView() === 'scroll' || /[?&]view=scroll/.test(location.search) || location.hash === '#reading';
+
+  function setView(next) {
+    try { localStorage.setItem(VIEW_KEY, next); } catch (e) {}
+    if (next === 'scroll') { location.hash = 'reading'; } else if (location.hash === '#reading') { location.hash = ''; }
+    location.reload();
+  }
+  function toggleView() { setView(scroll ? 'slides' : 'scroll'); }
+
+  var panel = document.getElementById('keys-panel');
+  var lastFocus = null;
+  function openKeys() { lastFocus = document.activeElement; panel.hidden = false; document.getElementById('keys-close').focus(); }
+  function closeKeys() { panel.hidden = true; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+  function toggleKeys() { if (panel.hidden) openKeys(); else closeKeys(); }
+
+  window.addEventListener('keydown', function (e) {
+    var tag = (e.target && e.target.tagName) || '';
+    if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
+    if (!panel.hidden) {
+      if (e.key === 'Escape' || e.key === '?') { closeKeys(); }
+      if (e.key !== 'Tab') { e.preventDefault(); e.stopImmediatePropagation(); }
+      return;
+    }
+    if (e.key === '?') { e.preventDefault(); e.stopImmediatePropagation(); openKeys(); }
+    else if ((e.key === 'v' || e.key === 'V') && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); e.stopImmediatePropagation(); toggleView(); }
+  }, true);
+  panel.addEventListener('click', function (e) { if (e.target === panel) closeKeys(); });
+  document.getElementById('keys-close').addEventListener('click', closeKeys);
+  document.getElementById('btn-keys').addEventListener('click', toggleKeys);
+  var btnView = document.getElementById('btn-view');
+  btnView.textContent = scroll ? 'Slide view' : 'Reading view';
+  btnView.addEventListener('click', toggleView);
+
+  if (typeof Reveal === 'undefined') {
+    // reveal.js did not load (CDN unreachable): fall back to a plain scrolling page with every step shown
+    document.documentElement.classList.add('no-reveal');
+    document.querySelectorAll('.reveal .slides > section').forEach(function (sec) { if (sec.querySelector(':scope > section')) sec.classList.add('stack'); });
+    document.body.insertAdjacentHTML('afterbegin', '<p class="no-reveal-note">reveal.js could not be loaded, so this deck is shown as a plain page. Go online, or rebuild it with <code>--inline-js</code> for an offline deck.</p>');
+    return;
+  }
+
+  // variant toggle: the last visible .v-step fragment on the slide decides which variant its diagram shows
+  function syncVariant(slide) {
+    if (!slide) return;
+    var svg = slide.querySelector('.vsvg');
+    if (!svg) return;
+    var steps = slide.querySelectorAll('.v-step.visible');
+    svg.setAttribute('data-v', steps.length ? steps[steps.length - 1].getAttribute('data-v') : 'all');
+  }
+  function syncAll() { document.querySelectorAll('.vsvg').forEach(function (svg) { syncVariant(svg.closest('section')); }); }
+
+  Reveal.initialize({
+    hash: false, history: false, controls: true, progress: true, help: false,
+    slideNumber: function (slide) { var i = Reveal.getIndices(slide); return [i.h + '.' + ((i.v || 0) + 1)]; },
+    center: false, transition: 'fade', transitionSpeed: 'fast',
+    autoAnimateDuration: 0.9, autoAnimateEasing: 'ease-in-out',
+    view: scroll ? 'scroll' : null, scrollProgress: true, scrollLayout: 'full',
+    width: 1280, height: 760, margin: 0.08, minScale: 0.2, maxScale: 2.0,
+    plugins: [typeof RevealNotes !== 'undefined' && RevealNotes, typeof RevealZoom !== 'undefined' && RevealZoom, typeof RevealHighlight !== 'undefined' && RevealHighlight].filter(Boolean)
+  }).then(syncAll);
+  Reveal.on('fragmentshown', function (e) { syncVariant(e.fragment.closest('section')); });
+  Reveal.on('fragmenthidden', function (e) { syncVariant(e.fragment.closest('section')); });
+  Reveal.on('slidechanged', function (e) { syncVariant(e.currentSlide); });
+})();
+</script>

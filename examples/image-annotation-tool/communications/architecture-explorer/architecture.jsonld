@@ -1,0 +1,2868 @@
+{
+  "@context": {
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "schema": "https://schema.org/",
+    "arch": "urn:arch-explorer:vocab#",
+    "name": "rdfs:label",
+    "description": "dcterms:description",
+    "identifier": "dcterms:identifier",
+    "title": "dcterms:title",
+    "isPartOf": {
+      "@id": "dcterms:isPartOf",
+      "@type": "@id"
+    },
+    "hasPart": {
+      "@id": "dcterms:hasPart",
+      "@type": "@id"
+    },
+    "seeAlso": {
+      "@id": "rdfs:seeAlso",
+      "@type": "@id"
+    },
+    "repository": {
+      "@id": "dcterms:source",
+      "@type": "@id"
+    },
+    "position": "schema:position",
+    "summary": "arch:summary",
+    "tag": "arch:tag",
+    "note": "arch:note",
+    "technology": "arch:technology",
+    "level": "arch:level",
+    "kind": "arch:kind",
+    "path": "arch:path",
+    "line": "arch:line",
+    "link": "arch:link",
+    "branch": "arch:branch",
+    "dashed": "arch:dashed",
+    "initial": "arch:initial",
+    "final": "arch:final",
+    "inVariant": {
+      "@id": "arch:inVariant",
+      "@type": "@id"
+    },
+    "variantDimension": "arch:variantDimension",
+    "uses": {
+      "@id": "arch:uses",
+      "@type": "@id"
+    },
+    "transitionsTo": {
+      "@id": "arch:transitionsTo",
+      "@type": "@id"
+    },
+    "source": {
+      "@id": "arch:source",
+      "@type": "@id"
+    },
+    "target": {
+      "@id": "arch:target",
+      "@type": "@id"
+    },
+    "summaryLabel": "arch:summaryLabel",
+    "scenario": {
+      "@id": "arch:scenario",
+      "@type": "@id"
+    },
+    "step": {
+      "@id": "arch:step",
+      "@type": "@id"
+    },
+    "reply": "arch:reply"
+  },
+  "@graph": [
+    {
+      "@id": "urn:architecture:image-annotation-tool:model:image-annotation-tool",
+      "@type": "arch:Model",
+      "title": "Image Annotation Tool architecture",
+      "name": "Image Annotation Tool",
+      "description": "Humans draw labelled bounding boxes on images; every task is reviewed before it can be exported as COCO JSON. Start at the API service, then open \"Task lifecycle\" to see the statuses a task moves through. The Dynamic tab walks through upload, annotate, review and export.",
+      "identifier": "image-annotation-tool",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:admin",
+        "urn:architecture:image-annotation-tool:annotator",
+        "urn:architecture:image-annotation-tool:reviewer",
+        "urn:architecture:image-annotation-tool:iat"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:admin",
+      "@type": [
+        "arch:Element",
+        "arch:Person"
+      ],
+      "name": "Admin",
+      "identifier": "admin",
+      "description": "Uploads batches of images and triggers exports of approved annotations. Role \"admin\" in the users table.",
+      "summary": "uploads batches · exports",
+      "level": 1,
+      "path": "README.md",
+      "line": 14,
+      "isPartOf": "urn:architecture:image-annotation-tool:model:image-annotation-tool",
+      "uses": "urn:architecture:image-annotation-tool:admin-page"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:annotator",
+      "@type": [
+        "arch:Element",
+        "arch:Person"
+      ],
+      "name": "Annotator",
+      "identifier": "annotator",
+      "description": "Claims a task, draws and labels bounding boxes on the image, submits it for review, and fixes rejected tasks.",
+      "summary": "draws + labels boxes",
+      "level": 1,
+      "path": "README.md",
+      "line": 15,
+      "isPartOf": "urn:architecture:image-annotation-tool:model:image-annotation-tool",
+      "uses": "urn:architecture:image-annotation-tool:annotate-page"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:reviewer",
+      "@type": [
+        "arch:Element",
+        "arch:Person"
+      ],
+      "name": "Reviewer",
+      "identifier": "reviewer",
+      "description": "Works through the review queue and approves each submitted task or rejects it with a mandatory comment.",
+      "summary": "approves or rejects",
+      "level": 1,
+      "path": "README.md",
+      "line": 16,
+      "isPartOf": "urn:architecture:image-annotation-tool:model:image-annotation-tool",
+      "uses": "urn:architecture:image-annotation-tool:review-page"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:iat",
+      "@type": [
+        "arch:Element",
+        "arch:SoftwareSystem"
+      ],
+      "name": "Image Annotation Tool",
+      "identifier": "iat",
+      "description": "Bounding-box annotation with a review step. Each uploaded image gets exactly one task; only approved tasks are exported as COCO-style JSON.",
+      "summary": "annotate · review · export",
+      "level": 1,
+      "note": [
+        "Everything runs from one docker-compose.yml; there are no external systems. PostgreSQL, Redis and MinIO come from public images.",
+        "Theoretical example project: a documentation fixture that has never been executed."
+      ],
+      "path": ".",
+      "isPartOf": "urn:architecture:image-annotation-tool:model:image-annotation-tool",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:web",
+        "urn:architecture:image-annotation-tool:api",
+        "urn:architecture:image-annotation-tool:worker",
+        "urn:architecture:image-annotation-tool:postgres",
+        "urn:architecture:image-annotation-tool:redis",
+        "urn:architecture:image-annotation-tool:minio",
+        "urn:architecture:image-annotation-tool:minio-init"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:web",
+      "@type": [
+        "arch:Element",
+        "arch:Container"
+      ],
+      "name": "Web app",
+      "identifier": "web",
+      "description": "React single-page app built with Vite and served by nginx. The same nginx proxies /api/ to the API container, so the browser only ever talks to one origin for API calls.",
+      "summary": "SPA · one page per role",
+      "tag": "CONTAINER · REACT + NGINX",
+      "level": 2,
+      "note": [
+        "Published on host port 3000 (container port 80).",
+        "Images, thumbnails and export files are NOT proxied: the browser fetches them straight from MinIO through presigned URLs."
+      ],
+      "technology": [
+        "TypeScript",
+        "React 18",
+        "react-router 6",
+        "Vite",
+        "nginx 1.27"
+      ],
+      "path": "web/",
+      "isPartOf": "urn:architecture:image-annotation-tool:iat",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:app",
+        "urn:architecture:image-annotation-tool:annotate-page",
+        "urn:architecture:image-annotation-tool:review-page",
+        "urn:architecture:image-annotation-tool:admin-page",
+        "urn:architecture:image-annotation-tool:canvas",
+        "urn:architecture:image-annotation-tool:client",
+        "urn:architecture:image-annotation-tool:nginx"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:api",
+      "@type": [
+        "arch:Element",
+        "arch:Container"
+      ],
+      "name": "API service",
+      "identifier": "api",
+      "description": "Owns all business rules: login, image upload, task claiming, annotations, review decisions and export requests. The only writer of task status.",
+      "summary": "REST · auth · task rules",
+      "tag": "CONTAINER · FASTAPI",
+      "level": 2,
+      "kind": "highlight",
+      "note": [
+        "Entry point: api/app/main.py registers six routers and seeds one demo user per role on startup (lifespan).",
+        "Published on host port 8000; OpenAPI docs at /docs. GET /api/health is the only route without auth besides login.",
+        "Only enqueues background jobs, by dotted path, so it never imports worker code."
+      ],
+      "technology": [
+        "Python 3.12",
+        "FastAPI",
+        "SQLAlchemy 2",
+        "PyJWT",
+        "boto3",
+        "RQ"
+      ],
+      "path": "api/",
+      "isPartOf": "urn:architecture:image-annotation-tool:iat",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:auth",
+        "urn:architecture:image-annotation-tool:images",
+        "urn:architecture:image-annotation-tool:tasks",
+        "urn:architecture:image-annotation-tool:annotations",
+        "urn:architecture:image-annotation-tool:reviews",
+        "urn:architecture:image-annotation-tool:export",
+        "urn:architecture:image-annotation-tool:sm",
+        "urn:architecture:image-annotation-tool:models",
+        "urn:architecture:image-annotation-tool:storage",
+        "urn:architecture:image-annotation-tool:queue",
+        "urn:architecture:image-annotation-tool:lifecycle"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:worker",
+      "@type": [
+        "arch:Element",
+        "arch:Container"
+      ],
+      "name": "Worker",
+      "identifier": "worker",
+      "description": "Background worker that consumes the \"thumbnails\" and \"exports\" queues from Redis and runs the matching job.",
+      "summary": "thumbnails · COCO export",
+      "tag": "CONTAINER · RQ WORKER",
+      "level": 2,
+      "note": [
+        "Talks to PostgreSQL and MinIO directly through worker/clients.py; it never calls the API.",
+        "No retry or failure queue is configured in the code."
+      ],
+      "technology": [
+        "Python 3.12",
+        "RQ",
+        "Pillow",
+        "SQLAlchemy Core",
+        "boto3"
+      ],
+      "path": "worker/",
+      "isPartOf": "urn:architecture:image-annotation-tool:iat",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:wmain",
+        "urn:architecture:image-annotation-tool:thumb",
+        "urn:architecture:image-annotation-tool:coco"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:postgres",
+      "@type": [
+        "arch:Element",
+        "arch:DataStore"
+      ],
+      "name": "PostgreSQL",
+      "identifier": "postgres",
+      "description": "System of record: users, images, tasks, annotations, reviews and exports.",
+      "summary": "users · tasks · boxes · reviews",
+      "tag": "DATA STORE · POSTGRES 16",
+      "level": 2,
+      "note": [
+        "Schema is created by mounting db/migrations into /docker-entrypoint-initdb.d; there is no migration tool.",
+        "CHECK constraints repeat the allowed task statuses, review decisions and export statuses.",
+        "tasks.image_id is UNIQUE: exactly one task per image."
+      ],
+      "technology": "PostgreSQL 16",
+      "path": "db/migrations/001_init.sql",
+      "isPartOf": "urn:architecture:image-annotation-tool:iat"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:redis",
+      "@type": [
+        "arch:Element",
+        "arch:DataStore"
+      ],
+      "name": "Redis",
+      "identifier": "redis",
+      "description": "Job queue between the API (producer) and the worker (consumer). Two RQ queues: \"thumbnails\" and \"exports\".",
+      "summary": "RQ queues: thumbnails · exports",
+      "tag": "QUEUE · REDIS 7",
+      "level": 2,
+      "technology": [
+        "Redis 7",
+        "RQ"
+      ],
+      "path": "docker-compose.yml",
+      "line": 46,
+      "isPartOf": "urn:architecture:image-annotation-tool:iat"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:minio",
+      "@type": [
+        "arch:Element",
+        "arch:DataStore"
+      ],
+      "name": "MinIO",
+      "identifier": "minio",
+      "description": "S3-compatible object storage with three buckets: original images, thumbnails and export files.",
+      "summary": "images · thumbnails · exports",
+      "tag": "OBJECT STORE · S3 API",
+      "level": 2,
+      "note": [
+        "Internal endpoint S3_ENDPOINT (http://minio:9000) for uploads; S3_PUBLIC_ENDPOINT (http://localhost:9000) is what presigned URLs are signed against.",
+        "Console on host port 9001."
+      ],
+      "technology": [
+        "MinIO",
+        "S3 API"
+      ],
+      "path": "docker-compose.yml",
+      "line": 51,
+      "isPartOf": "urn:architecture:image-annotation-tool:iat"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:minio-init",
+      "@type": [
+        "arch:Element",
+        "arch:Container"
+      ],
+      "name": "minio-init",
+      "identifier": "minio-init",
+      "description": "One-shot container that creates the three buckets and exits. The API and the worker wait for it to complete successfully before starting.",
+      "summary": "creates buckets · exits",
+      "tag": "ONE-SHOT JOB · MC",
+      "level": 2,
+      "kind": "plain",
+      "technology": "minio/mc",
+      "path": "docker-compose.yml",
+      "line": 62,
+      "dashed": true,
+      "isPartOf": "urn:architecture:image-annotation-tool:iat",
+      "uses": "urn:architecture:image-annotation-tool:minio"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:app",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "App shell",
+      "identifier": "app",
+      "description": "Shows the login form until a role is known, then mounts exactly one route for that role and redirects everything else to it.",
+      "summary": "login · route by role",
+      "level": 3,
+      "note": [
+        "Role comes from localStorage, set at login; the API enforces roles independently.",
+        "Mounts AnnotatePage, ReviewQueuePage or AdminUploadPage at /annotate, /review or /admin. These render relationships are not drawn as arrows."
+      ],
+      "path": "web/src/App.tsx",
+      "line": 16,
+      "isPartOf": "urn:architecture:image-annotation-tool:web",
+      "uses": "urn:architecture:image-annotation-tool:client"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:annotate-page",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "AnnotatePage",
+      "identifier": "annotate-page",
+      "description": "Annotator view: works on one task at a time and lists the annotator's rejected tasks with the reviewer comment and a Fix button.",
+      "summary": "one task · rejected list",
+      "level": 3,
+      "note": "Submit saves the boxes first, then submits, then claims the next task.",
+      "path": "web/src/pages/AnnotatePage.tsx",
+      "line": 15,
+      "isPartOf": "urn:architecture:image-annotation-tool:web",
+      "uses": [
+        "urn:architecture:image-annotation-tool:canvas",
+        "urn:architecture:image-annotation-tool:client"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:review-page",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "ReviewQueuePage",
+      "identifier": "review-page",
+      "description": "Reviewer view: submitted tasks with thumbnails, the selected task read-only, and approve / reject buttons.",
+      "summary": "queue · approve / reject",
+      "level": 3,
+      "note": [
+        "Reject is disabled until a comment is typed; the API enforces the same rule.",
+        "Thumbnails in the queue list are loaded by the browser straight from MinIO through presigned URLs (not drawn as an arrow)."
+      ],
+      "path": "web/src/pages/ReviewQueuePage.tsx",
+      "line": 7,
+      "isPartOf": "urn:architecture:image-annotation-tool:web",
+      "uses": [
+        "urn:architecture:image-annotation-tool:canvas",
+        "urn:architecture:image-annotation-tool:client"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:admin-page",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "AdminUploadPage",
+      "identifier": "admin-page",
+      "description": "Admin view: uploads a named batch of JPEG/PNG files and starts a COCO export, polling until the worker has finished.",
+      "summary": "upload batch · export",
+      "level": 3,
+      "note": [
+        "Polls GET /exports/{id} every 2000 ms until status is done or failed.",
+        "The download link is a presigned MinIO URL, so the file is fetched from MinIO directly (not drawn as an arrow)."
+      ],
+      "path": "web/src/pages/AdminUploadPage.tsx",
+      "line": 8,
+      "isPartOf": "urn:architecture:image-annotation-tool:web",
+      "uses": "urn:architecture:image-annotation-tool:client"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:canvas",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "BoundingBoxCanvas",
+      "identifier": "canvas",
+      "description": "Shows an image with its boxes. In edit mode dragging draws a new box and double-click removes one; without onChange it is read-only (review).",
+      "summary": "draw boxes on image",
+      "level": 3,
+      "note": [
+        "Boxes are stored in original-image pixels; screen coordinates are divided by the display scale.",
+        "Boxes smaller than 2 px in either direction are discarded."
+      ],
+      "path": "web/src/components/BoundingBoxCanvas.tsx",
+      "line": 15,
+      "isPartOf": "urn:architecture:image-annotation-tool:web",
+      "uses": "urn:architecture:image-annotation-tool:minio"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:client",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "API client",
+      "identifier": "client",
+      "description": "Thin typed wrapper around fetch for every API call. Keeps the JWT and the role in localStorage and adds the Authorization header.",
+      "summary": "fetch /api · bearer token",
+      "level": 3,
+      "note": [
+        "All calls go to the relative path /api, which nginx proxies to the API container.",
+        "claimNextTask() turns any failure (including 404 \"no pending tasks\") into null."
+      ],
+      "path": "web/src/api/client.ts",
+      "isPartOf": "urn:architecture:image-annotation-tool:web",
+      "uses": [
+        "urn:architecture:image-annotation-tool:login",
+        "urn:architecture:image-annotation-tool:upload-batch",
+        "urn:architecture:image-annotation-tool:claim-next",
+        "urn:architecture:image-annotation-tool:list-tasks",
+        "urn:architecture:image-annotation-tool:submit-task",
+        "urn:architecture:image-annotation-tool:reopen-task",
+        "urn:architecture:image-annotation-tool:annotations",
+        "urn:architecture:image-annotation-tool:review-queue",
+        "urn:architecture:image-annotation-tool:review-task",
+        "urn:architecture:image-annotation-tool:request-export",
+        "urn:architecture:image-annotation-tool:get-export"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:nginx",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "nginx",
+      "identifier": "nginx",
+      "description": "Serves the built SPA with an index.html fallback for client-side routes and proxies /api/ to http://api:8000.",
+      "summary": "static files · /api proxy",
+      "tag": "COMPONENT · NGINX",
+      "level": 3,
+      "note": "client_max_body_size 200m, because image batches are uploaded through the API.",
+      "path": "web/nginx.conf",
+      "isPartOf": "urn:architecture:image-annotation-tool:web",
+      "uses": "urn:architecture:image-annotation-tool:api"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:auth",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "Auth",
+      "identifier": "auth",
+      "description": "Password login, HS256 bearer tokens and the role-check dependencies used by every router.",
+      "summary": "login · JWT · role checks",
+      "level": 3,
+      "note": [
+        "Every router depends on it: Depends(require_role(...)) for role-restricted routes, Depends(get_current_user) for the rest. These cross-cutting dependencies are not drawn as arrows.",
+        "JWT_SECRET defaults to \"change-me\"; JWT_TTL_MINUTES defaults to 480.",
+        "Roles: admin, annotator, reviewer."
+      ],
+      "path": "api/app/auth.py",
+      "isPartOf": "urn:architecture:image-annotation-tool:api",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:login",
+        "urn:architecture:image-annotation-tool:get-current-user",
+        "urn:architecture:image-annotation-tool:require-role",
+        "urn:architecture:image-annotation-tool:seed"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:images",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "Images routes",
+      "identifier": "images",
+      "description": "Batch upload for admins, plus the image serialiser that adds presigned URLs.",
+      "summary": "batch upload",
+      "tag": "COMPONENT · /api/images",
+      "level": 3,
+      "note": "Accepts image/jpeg and image/png only (415 otherwise).",
+      "path": "api/app/routes/images.py",
+      "isPartOf": "urn:architecture:image-annotation-tool:api",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:upload-batch",
+        "urn:architecture:image-annotation-tool:image-to-dict"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:tasks",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "Tasks routes",
+      "identifier": "tasks",
+      "description": "Listing, claiming, submitting and reopening annotation tasks. Also holds the helpers the annotation and review routers reuse.",
+      "summary": "claim · submit · reopen",
+      "tag": "COMPONENT · /api/tasks",
+      "level": 3,
+      "kind": "highlight",
+      "note": [
+        "require_assignee() (line 48): only the assigned annotator may change, submit or reopen a task (403).",
+        "get_task_or_404() (line 31) is shared with the annotations and reviews routers."
+      ],
+      "path": "api/app/routes/tasks.py",
+      "isPartOf": "urn:architecture:image-annotation-tool:api",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:claim-next",
+        "urn:architecture:image-annotation-tool:submit-task",
+        "urn:architecture:image-annotation-tool:reopen-task",
+        "urn:architecture:image-annotation-tool:list-tasks",
+        "urn:architecture:image-annotation-tool:apply-action",
+        "urn:architecture:image-annotation-tool:task-to-dict"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:annotations",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "Annotations routes",
+      "identifier": "annotations",
+      "description": "replace_annotations() swaps all boxes of a task in one PUT; list_annotations() reads them.",
+      "summary": "replace boxes of a task",
+      "tag": "COMPONENT · …/annotations",
+      "level": 3,
+      "note": [
+        "Boxes are writable only while the task is in_progress (409 otherwise) and only by the assignee.",
+        "Validation: label non-empty, x and y >= 0, width and height > 0.",
+        "Reuses get_task_or_404(), require_assignee() and task_to_dict() from the tasks router."
+      ],
+      "path": "api/app/routes/annotations.py",
+      "line": 33,
+      "isPartOf": "urn:architecture:image-annotation-tool:api",
+      "uses": "urn:architecture:image-annotation-tool:models"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:reviews",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "Reviews routes",
+      "identifier": "reviews",
+      "description": "The review queue and the endpoint that records a decision and moves the task to approved or rejected.",
+      "summary": "queue · decisions",
+      "tag": "COMPONENT · /api/reviews",
+      "level": 3,
+      "path": "api/app/routes/reviews.py",
+      "isPartOf": "urn:architecture:image-annotation-tool:api",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:review-queue",
+        "urn:architecture:image-annotation-tool:review-task"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:export",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "Export routes",
+      "identifier": "export",
+      "description": "Lets an admin request a COCO export and poll its status. The file itself is built by the worker.",
+      "summary": "request · poll export",
+      "tag": "COMPONENT · /api/exports",
+      "level": 3,
+      "path": "api/app/routes/export.py",
+      "isPartOf": "urn:architecture:image-annotation-tool:api",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:request-export",
+        "urn:architecture:image-annotation-tool:get-export",
+        "urn:architecture:image-annotation-tool:export-to-dict"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:sm",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "Task state machine",
+      "identifier": "sm",
+      "description": "The annotation task lifecycle: which action moves a task from which status to which, and which role may perform it. The statuses themselves are drawn in the Task lifecycle box beside it.",
+      "summary": "status lifecycle · pure logic",
+      "level": 3,
+      "kind": "highlight",
+      "note": [
+        "Pure logic with no database or framework imports; unit-tested in api/tests/test_state_machine.py.",
+        "approved is the only terminal status (TERMINAL_STATUSES)."
+      ],
+      "path": "api/app/state_machine.py",
+      "isPartOf": "urn:architecture:image-annotation-tool:api",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:next-status",
+        "urn:architecture:image-annotation-tool:transitions",
+        "urn:architecture:image-annotation-tool:allowed-actions"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:models",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "ORM models + session",
+      "identifier": "models",
+      "description": "SQLAlchemy models User, Image, Task, Annotation, Review and Export, with the engine and the per-request session from api/app/db.py.",
+      "summary": "SQLAlchemy · 6 tables",
+      "level": 3,
+      "note": [
+        "The schema itself is owned by db/migrations/001_init.sql; the models only map it.",
+        "get_db() (api/app/db.py line 20) yields one session per request.",
+        "Route handlers use the Session directly; there is no repository layer."
+      ],
+      "path": "api/app/models.py",
+      "isPartOf": "urn:architecture:image-annotation-tool:api",
+      "uses": "urn:architecture:image-annotation-tool:postgres"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:storage",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "Object storage client",
+      "identifier": "storage",
+      "description": "boto3 wrapper for MinIO. Uses two clients: an internal one for uploads and a public one for signing URLs the browser will fetch.",
+      "summary": "upload · presign",
+      "level": 3,
+      "path": "api/app/storage.py",
+      "isPartOf": "urn:architecture:image-annotation-tool:api",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:upload-image",
+        "urn:architecture:image-annotation-tool:presigned-url"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:queue",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "Job queue client",
+      "identifier": "queue",
+      "description": "RQ producer. Jobs are referenced by dotted path so the API does not import worker code.",
+      "summary": "enqueue only",
+      "level": 3,
+      "path": "api/app/queue.py",
+      "isPartOf": "urn:architecture:image-annotation-tool:api",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:enqueue-thumbnail",
+        "urn:architecture:image-annotation-tool:enqueue-export"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:wmain",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "Worker entrypoint",
+      "identifier": "wmain",
+      "description": "Connects to Redis and runs an RQ Worker on the queues \"thumbnails\" and \"exports\".",
+      "summary": "RQ Worker loop",
+      "level": 3,
+      "path": "worker/main.py",
+      "line": 16,
+      "isPartOf": "urn:architecture:image-annotation-tool:worker",
+      "uses": [
+        "urn:architecture:image-annotation-tool:redis",
+        "urn:architecture:image-annotation-tool:thumb",
+        "urn:architecture:image-annotation-tool:export-approved"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:thumb",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "Thumbnail job",
+      "identifier": "thumb",
+      "description": "Reads the original image, records its width and height, and stores a JPEG thumbnail of at most 320 x 320.",
+      "summary": "generate_thumbnail(image_id)",
+      "tag": "COMPONENT · RQ JOB",
+      "level": 3,
+      "note": [
+        "Thumbnail key is \"<image_id>.jpg\" in the thumbnails bucket, JPEG quality 85.",
+        "Until this job has run, images.width, height and thumbnail_key are NULL."
+      ],
+      "path": "worker/jobs/thumbnail.py",
+      "line": 14,
+      "isPartOf": "urn:architecture:image-annotation-tool:worker",
+      "uses": [
+        "urn:architecture:image-annotation-tool:postgres",
+        "urn:architecture:image-annotation-tool:minio"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:coco",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "COCO export job",
+      "identifier": "coco",
+      "description": "Exports the annotations of all approved tasks as one COCO-style JSON file and tracks the run in the exports table.",
+      "summary": "approved tasks → COCO JSON",
+      "tag": "COMPONENT · RQ JOB",
+      "level": 3,
+      "path": "worker/jobs/export_coco.py",
+      "isPartOf": "urn:architecture:image-annotation-tool:worker",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:export-approved",
+        "urn:architecture:image-annotation-tool:build-coco",
+        "urn:architecture:image-annotation-tool:approved-boxes"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:login",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "login()",
+      "identifier": "login",
+      "description": "Verifies email and password and returns an HS256 token carrying the user id and role, plus the role.",
+      "summary": "bcrypt verify → JWT",
+      "tag": "POST /api/auth/login",
+      "level": 4,
+      "path": "api/app/auth.py",
+      "line": 36,
+      "isPartOf": "urn:architecture:image-annotation-tool:auth",
+      "uses": "urn:architecture:image-annotation-tool:models"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:get-current-user",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "get_current_user()",
+      "identifier": "get-current-user",
+      "description": "Decodes the bearer token and loads the user; 401 when the token is invalid or the user is unknown.",
+      "summary": "decode token → User",
+      "tag": "DEPENDENCY",
+      "level": 4,
+      "path": "api/app/auth.py",
+      "line": 45,
+      "isPartOf": "urn:architecture:image-annotation-tool:auth",
+      "uses": "urn:architecture:image-annotation-tool:models"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:require-role",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "require_role()",
+      "identifier": "require-role",
+      "description": "Builds a FastAPI dependency that returns the current user only if their role is one of the given roles.",
+      "summary": "403 unless role matches",
+      "tag": "DEPENDENCY FACTORY",
+      "level": 4,
+      "path": "api/app/auth.py",
+      "line": 59,
+      "isPartOf": "urn:architecture:image-annotation-tool:auth",
+      "uses": "urn:architecture:image-annotation-tool:get-current-user"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:seed",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "seed_demo_users()",
+      "identifier": "seed",
+      "description": "Creates admin@, annotator@ and reviewer@example.com with password \"demo\" when the users table is empty. Called from the API lifespan hook.",
+      "summary": "one user per role",
+      "tag": "FUNCTION",
+      "level": 4,
+      "path": "api/app/auth.py",
+      "line": 70,
+      "isPartOf": "urn:architecture:image-annotation-tool:auth",
+      "uses": "urn:architecture:image-annotation-tool:models"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:upload-batch",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "upload_batch()",
+      "identifier": "upload-batch",
+      "description": "For each file: stores it in MinIO, inserts the Image row and its pending Task. After the commit, queues one thumbnail job per image.",
+      "summary": "store · create task · enqueue",
+      "tag": "POST /api/images",
+      "level": 4,
+      "note": [
+        "Storage key: \"<batch_name>/<uuid hex>-<filename>\".",
+        "Objects are uploaded before the commit, so a failure mid-batch can leave objects without rows."
+      ],
+      "path": "api/app/routes/images.py",
+      "line": 30,
+      "isPartOf": "urn:architecture:image-annotation-tool:images",
+      "uses": [
+        "urn:architecture:image-annotation-tool:models",
+        "urn:architecture:image-annotation-tool:upload-image",
+        "urn:architecture:image-annotation-tool:enqueue-thumbnail"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:image-to-dict",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "image_to_dict()",
+      "identifier": "image-to-dict",
+      "description": "Serialises an Image and adds presigned URLs for the original and, when it exists, the thumbnail.",
+      "summary": "adds presigned URLs",
+      "tag": "FUNCTION",
+      "level": 4,
+      "path": "api/app/routes/images.py",
+      "line": 17,
+      "isPartOf": "urn:architecture:image-annotation-tool:images",
+      "uses": "urn:architecture:image-annotation-tool:presigned-url"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:claim-next",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "claim_next_task()",
+      "identifier": "claim-next",
+      "description": "Returns the annotator's in_progress task if there is one; otherwise claims the oldest pending task and assigns it.",
+      "summary": "resume or claim oldest",
+      "tag": "POST /api/tasks/next",
+      "level": 4,
+      "note": [
+        "Uses SELECT ... FOR UPDATE SKIP LOCKED so two annotators never get the same task.",
+        "404 when no task is pending."
+      ],
+      "path": "api/app/routes/tasks.py",
+      "line": 69,
+      "isPartOf": "urn:architecture:image-annotation-tool:tasks",
+      "uses": [
+        "urn:architecture:image-annotation-tool:apply-action",
+        "urn:architecture:image-annotation-tool:models"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:submit-task",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "submit_task()",
+      "identifier": "submit-task",
+      "description": "Moves the assignee's task to submitted. 422 when the task has no annotations.",
+      "summary": "needs ≥ 1 box",
+      "tag": "POST /api/tasks/{id}/submit",
+      "level": 4,
+      "path": "api/app/routes/tasks.py",
+      "line": 103,
+      "isPartOf": "urn:architecture:image-annotation-tool:tasks",
+      "uses": [
+        "urn:architecture:image-annotation-tool:apply-action",
+        "urn:architecture:image-annotation-tool:models"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:reopen-task",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "reopen_task()",
+      "identifier": "reopen-task",
+      "description": "Takes a rejected task back into work for its assignee.",
+      "summary": "rejected → in_progress",
+      "tag": "POST /api/tasks/{id}/reopen",
+      "level": 4,
+      "path": "api/app/routes/tasks.py",
+      "line": 118,
+      "isPartOf": "urn:architecture:image-annotation-tool:tasks",
+      "uses": [
+        "urn:architecture:image-annotation-tool:apply-action",
+        "urn:architecture:image-annotation-tool:models"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:list-tasks",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "list_tasks()",
+      "identifier": "list-tasks",
+      "description": "Lists tasks, optionally filtered by status and by \"assigned to me\". Any authenticated role may call it.",
+      "summary": "filter: status · mine",
+      "tag": "GET /api/tasks",
+      "level": 4,
+      "path": "api/app/routes/tasks.py",
+      "line": 54,
+      "isPartOf": "urn:architecture:image-annotation-tool:tasks",
+      "uses": "urn:architecture:image-annotation-tool:models"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:apply-action",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "apply_action()",
+      "identifier": "apply-action",
+      "description": "The single place where task.status is changed. Asks the state machine for the next status and maps InvalidTransition to 409 and RoleNotAllowed to 403.",
+      "summary": "state machine → HTTP errors",
+      "tag": "FUNCTION",
+      "level": 4,
+      "kind": "highlight",
+      "path": "api/app/routes/tasks.py",
+      "line": 38,
+      "isPartOf": "urn:architecture:image-annotation-tool:tasks",
+      "uses": "urn:architecture:image-annotation-tool:next-status"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:task-to-dict",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "task_to_dict()",
+      "identifier": "task-to-dict",
+      "description": "Serialises a task with its image, its annotations and the most recent review decision and comment.",
+      "summary": "task + image + boxes + review",
+      "tag": "FUNCTION",
+      "level": 4,
+      "path": "api/app/routes/tasks.py",
+      "line": 15,
+      "isPartOf": "urn:architecture:image-annotation-tool:tasks",
+      "uses": "urn:architecture:image-annotation-tool:image-to-dict"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:review-queue",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "review_queue()",
+      "identifier": "review-queue",
+      "description": "Submitted tasks waiting for a decision, ordered by updated_at.",
+      "summary": "submitted, oldest first",
+      "tag": "GET /api/reviews/queue",
+      "level": 4,
+      "path": "api/app/routes/reviews.py",
+      "line": 24,
+      "isPartOf": "urn:architecture:image-annotation-tool:reviews",
+      "uses": "urn:architecture:image-annotation-tool:models"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:review-task",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "review_task()",
+      "identifier": "review-task",
+      "description": "Applies APPROVE or REJECT to the task and inserts a Review row. 422 when rejecting without a comment.",
+      "summary": "decide · record review",
+      "tag": "POST /api/tasks/{id}/reviews",
+      "level": 4,
+      "path": "api/app/routes/reviews.py",
+      "line": 34,
+      "isPartOf": "urn:architecture:image-annotation-tool:reviews",
+      "uses": [
+        "urn:architecture:image-annotation-tool:apply-action",
+        "urn:architecture:image-annotation-tool:models"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:request-export",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "request_export()",
+      "identifier": "request-export",
+      "description": "Inserts an Export row with status queued, enqueues the export job and returns 202.",
+      "summary": "202 · queued",
+      "tag": "POST /api/exports",
+      "level": 4,
+      "path": "api/app/routes/export.py",
+      "line": 25,
+      "isPartOf": "urn:architecture:image-annotation-tool:export",
+      "uses": [
+        "urn:architecture:image-annotation-tool:models",
+        "urn:architecture:image-annotation-tool:enqueue-export"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:get-export",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "get_export()",
+      "identifier": "get-export",
+      "description": "Returns the export status; download_url is set once the worker has stored the file.",
+      "summary": "poll status",
+      "tag": "GET /api/exports/{id}",
+      "level": 4,
+      "path": "api/app/routes/export.py",
+      "line": 37,
+      "isPartOf": "urn:architecture:image-annotation-tool:export",
+      "uses": "urn:architecture:image-annotation-tool:models"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:export-to-dict",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "export_to_dict()",
+      "identifier": "export-to-dict",
+      "description": "Serialises an Export and presigns a download URL when storage_key is set.",
+      "summary": "adds download_url",
+      "tag": "FUNCTION",
+      "level": 4,
+      "path": "api/app/routes/export.py",
+      "line": 13,
+      "isPartOf": "urn:architecture:image-annotation-tool:export",
+      "uses": "urn:architecture:image-annotation-tool:presigned-url"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:next-status",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "next_status()",
+      "identifier": "next-status",
+      "description": "Returns the status a task moves to, or raises InvalidTransition (no such move) or RoleNotAllowed (wrong role).",
+      "summary": "(status, action, role) → status",
+      "tag": "FUNCTION",
+      "level": 4,
+      "kind": "highlight",
+      "path": "api/app/state_machine.py",
+      "line": 49,
+      "isPartOf": "urn:architecture:image-annotation-tool:sm",
+      "uses": [
+        "urn:architecture:image-annotation-tool:transitions",
+        "urn:architecture:image-annotation-tool:lifecycle"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:transitions",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "TRANSITIONS",
+      "identifier": "transitions",
+      "description": "Table mapping (current status, action) to (next status, role allowed to perform it). The five transitions drawn between the status boxes are exactly its entries.",
+      "summary": "5 allowed moves",
+      "tag": "CONSTANT",
+      "level": 4,
+      "path": "api/app/state_machine.py",
+      "line": 38,
+      "isPartOf": "urn:architecture:image-annotation-tool:sm"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:allowed-actions",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "allowed_actions()",
+      "identifier": "allowed-actions",
+      "description": "Lists the actions a role may perform on a task in a given status. Only used by the tests.",
+      "summary": "actions for status + role",
+      "tag": "FUNCTION",
+      "level": 4,
+      "path": "api/app/state_machine.py",
+      "line": 60,
+      "isPartOf": "urn:architecture:image-annotation-tool:sm",
+      "uses": "urn:architecture:image-annotation-tool:transitions"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:lifecycle",
+      "@type": [
+        "arch:Element",
+        "arch:Component"
+      ],
+      "name": "Task lifecycle",
+      "identifier": "lifecycle",
+      "description": "The statuses a task moves through, from pending to approved, with rejected tasks going back to in_progress. Each arrow is labelled with the action and the role allowed to take it.",
+      "summary": "five statuses · five moves",
+      "level": 3,
+      "path": "api/app/state_machine.py",
+      "line": 14,
+      "isPartOf": "urn:architecture:image-annotation-tool:api",
+      "hasPart": [
+        "urn:architecture:image-annotation-tool:st-pending",
+        "urn:architecture:image-annotation-tool:st-in-progress",
+        "urn:architecture:image-annotation-tool:st-submitted",
+        "urn:architecture:image-annotation-tool:st-approved",
+        "urn:architecture:image-annotation-tool:st-rejected"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:st-pending",
+      "@type": [
+        "arch:Element",
+        "arch:State"
+      ],
+      "name": "pending",
+      "identifier": "st-pending",
+      "description": "Initial status of every task, created together with its image at upload.",
+      "summary": "new · unassigned",
+      "level": 4,
+      "path": "api/app/state_machine.py",
+      "line": 14,
+      "initial": true,
+      "isPartOf": "urn:architecture:image-annotation-tool:lifecycle",
+      "transitionsTo": "urn:architecture:image-annotation-tool:st-in-progress"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:st-in-progress",
+      "@type": [
+        "arch:Element",
+        "arch:State"
+      ],
+      "name": "in_progress",
+      "identifier": "st-in-progress",
+      "description": "An annotator has claimed the task. The only status in which annotations can be changed.",
+      "summary": "claimed · boxes editable",
+      "level": 4,
+      "path": "api/app/state_machine.py",
+      "line": 15,
+      "isPartOf": "urn:architecture:image-annotation-tool:lifecycle",
+      "transitionsTo": "urn:architecture:image-annotation-tool:st-submitted"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:st-submitted",
+      "@type": [
+        "arch:Element",
+        "arch:State"
+      ],
+      "name": "submitted",
+      "identifier": "st-submitted",
+      "description": "Waiting for a reviewer. Annotations are read-only.",
+      "summary": "in the review queue",
+      "level": 4,
+      "path": "api/app/state_machine.py",
+      "line": 16,
+      "isPartOf": "urn:architecture:image-annotation-tool:lifecycle",
+      "transitionsTo": [
+        "urn:architecture:image-annotation-tool:st-approved",
+        "urn:architecture:image-annotation-tool:st-rejected"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:st-approved",
+      "@type": [
+        "arch:Element",
+        "arch:State"
+      ],
+      "name": "approved",
+      "identifier": "st-approved",
+      "description": "Final status. Only approved tasks are included in COCO exports.",
+      "summary": "final · exported",
+      "level": 4,
+      "path": "api/app/state_machine.py",
+      "line": 17,
+      "final": true,
+      "isPartOf": "urn:architecture:image-annotation-tool:lifecycle"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:st-rejected",
+      "@type": [
+        "arch:Element",
+        "arch:State"
+      ],
+      "name": "rejected",
+      "identifier": "st-rejected",
+      "description": "A reviewer rejected the task with a comment. The assignee can reopen it.",
+      "summary": "needs rework",
+      "level": 4,
+      "path": "api/app/state_machine.py",
+      "line": 18,
+      "isPartOf": "urn:architecture:image-annotation-tool:lifecycle",
+      "transitionsTo": "urn:architecture:image-annotation-tool:st-in-progress"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:upload-image",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "upload_image()",
+      "identifier": "upload-image",
+      "description": "Stores the original image bytes in the images bucket through the internal endpoint.",
+      "summary": "PUT to images bucket",
+      "tag": "FUNCTION",
+      "level": 4,
+      "path": "api/app/storage.py",
+      "line": 32,
+      "isPartOf": "urn:architecture:image-annotation-tool:storage",
+      "uses": "urn:architecture:image-annotation-tool:minio"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:presigned-url",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "presigned_url()",
+      "identifier": "presigned-url",
+      "description": "Signs a GET URL against the public endpoint, valid for 3600 s by default. Returns None when the key is None.",
+      "summary": "signed GET · 1 h",
+      "tag": "FUNCTION",
+      "level": 4,
+      "note": "Signing is local computation; no request is sent to MinIO.",
+      "path": "api/app/storage.py",
+      "line": 36,
+      "isPartOf": "urn:architecture:image-annotation-tool:storage"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:enqueue-thumbnail",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "enqueue_thumbnail()",
+      "identifier": "enqueue-thumbnail",
+      "description": "Enqueues jobs.thumbnail.generate_thumbnail(image_id).",
+      "summary": "queue \"thumbnails\"",
+      "tag": "FUNCTION",
+      "level": 4,
+      "path": "api/app/queue.py",
+      "line": 17,
+      "isPartOf": "urn:architecture:image-annotation-tool:queue",
+      "uses": "urn:architecture:image-annotation-tool:redis"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:enqueue-export",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "enqueue_export()",
+      "identifier": "enqueue-export",
+      "description": "Enqueues jobs.export_coco.export_approved(export_id) with a job timeout of 600 s.",
+      "summary": "queue \"exports\" · 600 s",
+      "tag": "FUNCTION",
+      "level": 4,
+      "path": "api/app/queue.py",
+      "line": 22,
+      "isPartOf": "urn:architecture:image-annotation-tool:queue",
+      "uses": "urn:architecture:image-annotation-tool:redis"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:export-approved",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "export_approved()",
+      "identifier": "export-approved",
+      "description": "Marks the export running, builds the COCO document, stores it as \"export-<id>.coco.json\" and marks the export done; on any exception marks it failed and re-raises.",
+      "summary": "running → done / failed",
+      "tag": "RQ JOB",
+      "level": 4,
+      "note": "task_count is the number of images in the export.",
+      "path": "worker/jobs/export_coco.py",
+      "line": 51,
+      "isPartOf": "urn:architecture:image-annotation-tool:coco",
+      "uses": [
+        "urn:architecture:image-annotation-tool:approved-boxes",
+        "urn:architecture:image-annotation-tool:build-coco",
+        "urn:architecture:image-annotation-tool:postgres",
+        "urn:architecture:image-annotation-tool:minio"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:build-coco",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "build_coco()",
+      "identifier": "build-coco",
+      "description": "Turns the query rows into COCO images, annotations (bbox, area) and categories. Category ids are assigned in order of first appearance of each label.",
+      "summary": "rows → images · boxes · categories",
+      "tag": "FUNCTION",
+      "level": 4,
+      "path": "worker/jobs/export_coco.py",
+      "line": 24,
+      "isPartOf": "urn:architecture:image-annotation-tool:coco"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:approved-boxes",
+      "@type": [
+        "arch:Element",
+        "arch:CodeElement"
+      ],
+      "name": "APPROVED_BOXES",
+      "identifier": "approved-boxes",
+      "description": "Joins tasks, images and annotations and keeps only tasks whose status is approved.",
+      "summary": "WHERE status = 'approved'",
+      "tag": "SQL QUERY",
+      "level": 4,
+      "path": "worker/jobs/export_coco.py",
+      "line": 11,
+      "isPartOf": "urn:architecture:image-annotation-tool:coco"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:1",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:admin",
+      "target": "urn:architecture:image-annotation-tool:admin-page",
+      "name": "uploads batches, exports",
+      "kind": "accent"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:2",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:annotator",
+      "target": "urn:architecture:image-annotation-tool:annotate-page",
+      "name": "draws + submits boxes",
+      "kind": "accent"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:3",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:reviewer",
+      "target": "urn:architecture:image-annotation-tool:review-page",
+      "name": "approves / rejects",
+      "kind": "accent"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:4",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:app",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "login() · getRole()"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:5",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:annotate-page",
+      "target": "urn:architecture:image-annotation-tool:canvas",
+      "name": "edit boxes"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:6",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:review-page",
+      "target": "urn:architecture:image-annotation-tool:canvas",
+      "name": "show boxes read-only"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:7",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:annotate-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "claim · save · submit · reopen"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:8",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:review-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "getReviewQueue · reviewTask"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:9",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:admin-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "uploadBatch · requestExport"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:10",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:nginx",
+      "target": "urn:architecture:image-annotation-tool:api",
+      "name": "proxies /api/"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:11",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:login",
+      "name": "POST /api/auth/login"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:12",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:upload-batch",
+      "name": "POST /api/images"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:13",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:claim-next",
+      "name": "POST /api/tasks/next"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:14",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:list-tasks",
+      "name": "GET rejected tasks"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:15",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:submit-task",
+      "name": "POST /tasks/{id}/submit"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:16",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:reopen-task",
+      "name": "POST /tasks/{id}/reopen"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:17",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:annotations",
+      "name": "PUT annotations"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:18",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:review-queue",
+      "name": "GET /api/reviews/queue"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:19",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:review-task",
+      "name": "POST /tasks/{id}/reviews"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:20",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:request-export",
+      "name": "POST /api/exports"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:21",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:get-export",
+      "name": "GET /api/exports/{id}"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:22",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:canvas",
+      "target": "urn:architecture:image-annotation-tool:minio",
+      "name": "GET presigned URLs",
+      "dashed": true
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:23",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:require-role",
+      "target": "urn:architecture:image-annotation-tool:get-current-user",
+      "name": "resolves the user"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:24",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:get-current-user",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "loads User by token sub"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:25",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:login",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "SELECT user by email"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:26",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:seed",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "inserts demo users"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:27",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:claim-next",
+      "target": "urn:architecture:image-annotation-tool:apply-action",
+      "name": "CLAIM"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:28",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:submit-task",
+      "target": "urn:architecture:image-annotation-tool:apply-action",
+      "name": "SUBMIT"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:29",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:reopen-task",
+      "target": "urn:architecture:image-annotation-tool:apply-action",
+      "name": "REOPEN"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:30",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:review-task",
+      "target": "urn:architecture:image-annotation-tool:apply-action",
+      "name": "APPROVE / REJECT"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:31",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:apply-action",
+      "target": "urn:architecture:image-annotation-tool:next-status",
+      "name": "next_status(status, action, role)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:32",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:next-status",
+      "target": "urn:architecture:image-annotation-tool:transitions",
+      "name": "looks up (status, action)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:33",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:allowed-actions",
+      "target": "urn:architecture:image-annotation-tool:transitions",
+      "name": "filters by status + role"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:34",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:next-status",
+      "target": "urn:architecture:image-annotation-tool:lifecycle",
+      "name": "moves a task"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:35",
+      "@type": [
+        "arch:Relationship",
+        "arch:Transition"
+      ],
+      "source": "urn:architecture:image-annotation-tool:st-pending",
+      "target": "urn:architecture:image-annotation-tool:st-in-progress",
+      "name": "claim · annotator"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:36",
+      "@type": [
+        "arch:Relationship",
+        "arch:Transition"
+      ],
+      "source": "urn:architecture:image-annotation-tool:st-in-progress",
+      "target": "urn:architecture:image-annotation-tool:st-submitted",
+      "name": "submit · annotator"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:37",
+      "@type": [
+        "arch:Relationship",
+        "arch:Transition"
+      ],
+      "source": "urn:architecture:image-annotation-tool:st-submitted",
+      "target": "urn:architecture:image-annotation-tool:st-approved",
+      "name": "approve · reviewer"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:38",
+      "@type": [
+        "arch:Relationship",
+        "arch:Transition"
+      ],
+      "source": "urn:architecture:image-annotation-tool:st-submitted",
+      "target": "urn:architecture:image-annotation-tool:st-rejected",
+      "name": "reject · reviewer"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:39",
+      "@type": [
+        "arch:Relationship",
+        "arch:Transition"
+      ],
+      "source": "urn:architecture:image-annotation-tool:st-rejected",
+      "target": "urn:architecture:image-annotation-tool:st-in-progress",
+      "name": "reopen · annotator"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:40",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:upload-batch",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "INSERT Image + pending Task"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:41",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:claim-next",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "FOR UPDATE SKIP LOCKED"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:42",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:list-tasks",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "SELECT tasks"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:43",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:submit-task",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "commit status"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:44",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:reopen-task",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "commit status"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:45",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:annotations",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "replaces Annotation rows"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:46",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:review-queue",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "SELECT submitted tasks"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:47",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:review-task",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "INSERT Review"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:48",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:request-export",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "INSERT Export (queued)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:49",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:get-export",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "loads Export"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:50",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:models",
+      "target": "urn:architecture:image-annotation-tool:postgres",
+      "name": "SQL (SQLAlchemy)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:51",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:task-to-dict",
+      "target": "urn:architecture:image-annotation-tool:image-to-dict",
+      "name": "embeds image"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:52",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:image-to-dict",
+      "target": "urn:architecture:image-annotation-tool:presigned-url",
+      "name": "image + thumbnail URLs"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:53",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:export-to-dict",
+      "target": "urn:architecture:image-annotation-tool:presigned-url",
+      "name": "download_url"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:54",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:upload-batch",
+      "target": "urn:architecture:image-annotation-tool:upload-image",
+      "name": "stores each original"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:55",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:upload-image",
+      "target": "urn:architecture:image-annotation-tool:minio",
+      "name": "PUT originals"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:56",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:upload-batch",
+      "target": "urn:architecture:image-annotation-tool:enqueue-thumbnail",
+      "name": "per image, after commit"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:57",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:request-export",
+      "target": "urn:architecture:image-annotation-tool:enqueue-export",
+      "name": "enqueue export"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:58",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:enqueue-thumbnail",
+      "target": "urn:architecture:image-annotation-tool:redis",
+      "name": "enqueue \"thumbnails\"",
+      "dashed": true
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:59",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:enqueue-export",
+      "target": "urn:architecture:image-annotation-tool:redis",
+      "name": "enqueue \"exports\"",
+      "dashed": true
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:60",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:wmain",
+      "target": "urn:architecture:image-annotation-tool:redis",
+      "name": "consumes jobs",
+      "dashed": true
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:61",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:wmain",
+      "target": "urn:architecture:image-annotation-tool:thumb",
+      "name": "runs generate_thumbnail"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:62",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:wmain",
+      "target": "urn:architecture:image-annotation-tool:export-approved",
+      "name": "runs export_approved"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:63",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:thumb",
+      "target": "urn:architecture:image-annotation-tool:postgres",
+      "name": "thumb key + size"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:64",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:thumb",
+      "target": "urn:architecture:image-annotation-tool:minio",
+      "name": "GET original · PUT thumb"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:65",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:export-approved",
+      "target": "urn:architecture:image-annotation-tool:approved-boxes",
+      "name": "executes"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:66",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:export-approved",
+      "target": "urn:architecture:image-annotation-tool:build-coco",
+      "name": "rows → COCO dict"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:67",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:export-approved",
+      "target": "urn:architecture:image-annotation-tool:postgres",
+      "name": "reads approved · updates exports"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:68",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:export-approved",
+      "target": "urn:architecture:image-annotation-tool:minio",
+      "name": "PUT COCO file"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:rel:69",
+      "@type": "arch:Relationship",
+      "source": "urn:architecture:image-annotation-tool:minio-init",
+      "target": "urn:architecture:image-annotation-tool:minio",
+      "name": "creates buckets",
+      "dashed": true
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:scenario:upload",
+      "@type": "arch:Scenario",
+      "name": "Upload a batch + thumbnails",
+      "identifier": "upload",
+      "description": "An admin uploads images. The API stores them and creates one pending task per image; thumbnails are produced afterwards by the worker. All /api calls pass through the nginx proxy.",
+      "isPartOf": "urn:architecture:image-annotation-tool:model:image-annotation-tool",
+      "step": [
+        "urn:architecture:image-annotation-tool:step:upload:1",
+        "urn:architecture:image-annotation-tool:step:upload:2",
+        "urn:architecture:image-annotation-tool:step:upload:3",
+        "urn:architecture:image-annotation-tool:step:upload:4",
+        "urn:architecture:image-annotation-tool:step:upload:5",
+        "urn:architecture:image-annotation-tool:step:upload:6",
+        "urn:architecture:image-annotation-tool:step:upload:7",
+        "urn:architecture:image-annotation-tool:step:upload:8",
+        "urn:architecture:image-annotation-tool:step:upload:9",
+        "urn:architecture:image-annotation-tool:step:upload:10",
+        "urn:architecture:image-annotation-tool:step:upload:11",
+        "urn:architecture:image-annotation-tool:step:upload:12",
+        "urn:architecture:image-annotation-tool:step:upload:13",
+        "urn:architecture:image-annotation-tool:step:upload:14",
+        "urn:architecture:image-annotation-tool:step:upload:15",
+        "urn:architecture:image-annotation-tool:step:upload:16",
+        "urn:architecture:image-annotation-tool:step:upload:17"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:1",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 1,
+      "source": "urn:architecture:image-annotation-tool:admin",
+      "target": "urn:architecture:image-annotation-tool:admin-page",
+      "name": "batch name + files, Upload"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:2",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 2,
+      "source": "urn:architecture:image-annotation-tool:admin-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "uploadBatch(batchName, files)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:3",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 3,
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:upload-batch",
+      "name": "POST /api/images (multipart)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:4",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 4,
+      "source": "urn:architecture:image-annotation-tool:upload-batch",
+      "target": "urn:architecture:image-annotation-tool:require-role",
+      "name": "require_role(\"admin\")"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:5",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 5,
+      "source": "urn:architecture:image-annotation-tool:upload-batch",
+      "target": "urn:architecture:image-annotation-tool:upload-image",
+      "name": "per file: upload_image(key, bytes)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:6",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 6,
+      "source": "urn:architecture:image-annotation-tool:upload-image",
+      "target": "urn:architecture:image-annotation-tool:minio",
+      "name": "PUT images/<batch>/<uuid>-<name>"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:7",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 7,
+      "source": "urn:architecture:image-annotation-tool:upload-batch",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "add Image, flush, add Task(pending)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:8",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 8,
+      "source": "urn:architecture:image-annotation-tool:models",
+      "target": "urn:architecture:image-annotation-tool:postgres",
+      "name": "INSERT images, tasks · COMMIT"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:9",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 9,
+      "source": "urn:architecture:image-annotation-tool:upload-batch",
+      "target": "urn:architecture:image-annotation-tool:enqueue-thumbnail",
+      "name": "per image: enqueue_thumbnail(id)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:10",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 10,
+      "source": "urn:architecture:image-annotation-tool:enqueue-thumbnail",
+      "target": "urn:architecture:image-annotation-tool:redis",
+      "name": "enqueue generate_thumbnail"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:11",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 11,
+      "source": "urn:architecture:image-annotation-tool:upload-batch",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "201 · image_ids",
+      "reply": true
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:12",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 12,
+      "source": "urn:architecture:image-annotation-tool:redis",
+      "target": "urn:architecture:image-annotation-tool:wmain",
+      "name": "job from queue \"thumbnails\""
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:13",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 13,
+      "source": "urn:architecture:image-annotation-tool:wmain",
+      "target": "urn:architecture:image-annotation-tool:thumb",
+      "name": "generate_thumbnail(image_id)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:14",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 14,
+      "source": "urn:architecture:image-annotation-tool:thumb",
+      "target": "urn:architecture:image-annotation-tool:postgres",
+      "name": "SELECT storage_key"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:15",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 15,
+      "source": "urn:architecture:image-annotation-tool:thumb",
+      "target": "urn:architecture:image-annotation-tool:minio",
+      "name": "GET original from images"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:16",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 16,
+      "source": "urn:architecture:image-annotation-tool:thumb",
+      "target": "urn:architecture:image-annotation-tool:minio",
+      "name": "PUT thumbnails/<id>.jpg (≤ 320 px)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:upload:17",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:upload",
+      "position": 17,
+      "source": "urn:architecture:image-annotation-tool:thumb",
+      "target": "urn:architecture:image-annotation-tool:postgres",
+      "name": "UPDATE images: thumbnail_key, w, h"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "@type": "arch:Scenario",
+      "name": "Annotate + submit",
+      "identifier": "annotate",
+      "description": "An annotator claims the oldest pending task, draws boxes and submits it. Status: pending → in_progress → submitted.",
+      "isPartOf": "urn:architecture:image-annotation-tool:model:image-annotation-tool",
+      "step": [
+        "urn:architecture:image-annotation-tool:step:annotate:1",
+        "urn:architecture:image-annotation-tool:step:annotate:2",
+        "urn:architecture:image-annotation-tool:step:annotate:3",
+        "urn:architecture:image-annotation-tool:step:annotate:4",
+        "urn:architecture:image-annotation-tool:step:annotate:5",
+        "urn:architecture:image-annotation-tool:step:annotate:6",
+        "urn:architecture:image-annotation-tool:step:annotate:7",
+        "urn:architecture:image-annotation-tool:step:annotate:8",
+        "urn:architecture:image-annotation-tool:step:annotate:9",
+        "urn:architecture:image-annotation-tool:step:annotate:10",
+        "urn:architecture:image-annotation-tool:step:annotate:11",
+        "urn:architecture:image-annotation-tool:step:annotate:12",
+        "urn:architecture:image-annotation-tool:step:annotate:13",
+        "urn:architecture:image-annotation-tool:step:annotate:14",
+        "urn:architecture:image-annotation-tool:step:annotate:15",
+        "urn:architecture:image-annotation-tool:step:annotate:16",
+        "urn:architecture:image-annotation-tool:step:annotate:17",
+        "urn:architecture:image-annotation-tool:step:annotate:18",
+        "urn:architecture:image-annotation-tool:step:annotate:19",
+        "urn:architecture:image-annotation-tool:step:annotate:20",
+        "urn:architecture:image-annotation-tool:step:annotate:21",
+        "urn:architecture:image-annotation-tool:step:annotate:22",
+        "urn:architecture:image-annotation-tool:step:annotate:23",
+        "urn:architecture:image-annotation-tool:step:annotate:24"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:1",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 1,
+      "source": "urn:architecture:image-annotation-tool:annotator",
+      "target": "urn:architecture:image-annotation-tool:annotate-page",
+      "name": "opens /annotate"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:2",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 2,
+      "source": "urn:architecture:image-annotation-tool:annotate-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "claimNextTask()"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:3",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 3,
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:claim-next",
+      "name": "POST /api/tasks/next"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:4",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 4,
+      "source": "urn:architecture:image-annotation-tool:claim-next",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "no open task → oldest pending, SKIP LOCKED"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:5",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 5,
+      "source": "urn:architecture:image-annotation-tool:claim-next",
+      "target": "urn:architecture:image-annotation-tool:apply-action",
+      "name": "apply_action(task, CLAIM, annotator)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:6",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 6,
+      "source": "urn:architecture:image-annotation-tool:apply-action",
+      "target": "urn:architecture:image-annotation-tool:next-status",
+      "name": "pending + claim → in_progress"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:7",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 7,
+      "source": "urn:architecture:image-annotation-tool:claim-next",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "set assignee_id · commit"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:8",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 8,
+      "source": "urn:architecture:image-annotation-tool:claim-next",
+      "target": "urn:architecture:image-annotation-tool:task-to-dict",
+      "name": "task_to_dict(task)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:9",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 9,
+      "source": "urn:architecture:image-annotation-tool:task-to-dict",
+      "target": "urn:architecture:image-annotation-tool:image-to-dict",
+      "name": "image_to_dict(task.image)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:10",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 10,
+      "source": "urn:architecture:image-annotation-tool:image-to-dict",
+      "target": "urn:architecture:image-annotation-tool:presigned-url",
+      "name": "sign image + thumbnail URLs"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:11",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 11,
+      "source": "urn:architecture:image-annotation-tool:claim-next",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "200 · task with image.url",
+      "reply": true
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:12",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 12,
+      "source": "urn:architecture:image-annotation-tool:annotate-page",
+      "target": "urn:architecture:image-annotation-tool:canvas",
+      "name": "render image + boxes"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:13",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 13,
+      "source": "urn:architecture:image-annotation-tool:canvas",
+      "target": "urn:architecture:image-annotation-tool:minio",
+      "name": "GET image (presigned URL)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:14",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 14,
+      "source": "urn:architecture:image-annotation-tool:annotator",
+      "target": "urn:architecture:image-annotation-tool:canvas",
+      "name": "drags to draw labelled boxes"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:15",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 15,
+      "source": "urn:architecture:image-annotation-tool:annotator",
+      "target": "urn:architecture:image-annotation-tool:annotate-page",
+      "name": "Submit for review"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:16",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 16,
+      "source": "urn:architecture:image-annotation-tool:annotate-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "saveAnnotations(task.id, boxes)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:17",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 17,
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:annotations",
+      "name": "PUT /api/tasks/{id}/annotations"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:18",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 18,
+      "source": "urn:architecture:image-annotation-tool:annotations",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "in_progress? replace Annotation rows"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:19",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 19,
+      "source": "urn:architecture:image-annotation-tool:annotate-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "submitTask(task.id)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:20",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 20,
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:submit-task",
+      "name": "POST /api/tasks/{id}/submit"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:21",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 21,
+      "source": "urn:architecture:image-annotation-tool:submit-task",
+      "target": "urn:architecture:image-annotation-tool:apply-action",
+      "name": "apply_action(task, SUBMIT, annotator)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:22",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 22,
+      "source": "urn:architecture:image-annotation-tool:apply-action",
+      "target": "urn:architecture:image-annotation-tool:next-status",
+      "name": "in_progress + submit → submitted"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:23",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 23,
+      "source": "urn:architecture:image-annotation-tool:submit-task",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "commit"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:annotate:24",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:annotate",
+      "position": 24,
+      "source": "urn:architecture:image-annotation-tool:models",
+      "target": "urn:architecture:image-annotation-tool:postgres",
+      "name": "UPDATE tasks SET status = 'submitted'"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:scenario:review",
+      "@type": "arch:Scenario",
+      "name": "Review: reject, rework, approve",
+      "identifier": "review",
+      "description": "A reviewer rejects a submitted task with a comment, the annotator reopens and resubmits it, and the reviewer approves. Status: submitted → rejected → in_progress → submitted → approved.",
+      "isPartOf": "urn:architecture:image-annotation-tool:model:image-annotation-tool",
+      "step": [
+        "urn:architecture:image-annotation-tool:step:review:1",
+        "urn:architecture:image-annotation-tool:step:review:2",
+        "urn:architecture:image-annotation-tool:step:review:3",
+        "urn:architecture:image-annotation-tool:step:review:4",
+        "urn:architecture:image-annotation-tool:step:review:5",
+        "urn:architecture:image-annotation-tool:step:review:6",
+        "urn:architecture:image-annotation-tool:step:review:7",
+        "urn:architecture:image-annotation-tool:step:review:8",
+        "urn:architecture:image-annotation-tool:step:review:9",
+        "urn:architecture:image-annotation-tool:step:review:10",
+        "urn:architecture:image-annotation-tool:step:review:11",
+        "urn:architecture:image-annotation-tool:step:review:12",
+        "urn:architecture:image-annotation-tool:step:review:13",
+        "urn:architecture:image-annotation-tool:step:review:14",
+        "urn:architecture:image-annotation-tool:step:review:15",
+        "urn:architecture:image-annotation-tool:step:review:16",
+        "urn:architecture:image-annotation-tool:step:review:17",
+        "urn:architecture:image-annotation-tool:step:review:18",
+        "urn:architecture:image-annotation-tool:step:review:19",
+        "urn:architecture:image-annotation-tool:step:review:20",
+        "urn:architecture:image-annotation-tool:step:review:21",
+        "urn:architecture:image-annotation-tool:step:review:22",
+        "urn:architecture:image-annotation-tool:step:review:23",
+        "urn:architecture:image-annotation-tool:step:review:24",
+        "urn:architecture:image-annotation-tool:step:review:25",
+        "urn:architecture:image-annotation-tool:step:review:26",
+        "urn:architecture:image-annotation-tool:step:review:27",
+        "urn:architecture:image-annotation-tool:step:review:28",
+        "urn:architecture:image-annotation-tool:step:review:29",
+        "urn:architecture:image-annotation-tool:step:review:30"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:1",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 1,
+      "source": "urn:architecture:image-annotation-tool:reviewer",
+      "target": "urn:architecture:image-annotation-tool:review-page",
+      "name": "opens /review"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:2",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 2,
+      "source": "urn:architecture:image-annotation-tool:review-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "getReviewQueue()"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:3",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 3,
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:review-queue",
+      "name": "GET /api/reviews/queue"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:4",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 4,
+      "source": "urn:architecture:image-annotation-tool:review-queue",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "SELECT submitted ORDER BY updated_at"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:5",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 5,
+      "source": "urn:architecture:image-annotation-tool:review-page",
+      "target": "urn:architecture:image-annotation-tool:minio",
+      "name": "GET thumbnails (presigned URLs)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:6",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 6,
+      "source": "urn:architecture:image-annotation-tool:review-page",
+      "target": "urn:architecture:image-annotation-tool:canvas",
+      "name": "selected task, read-only"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:7",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 7,
+      "source": "urn:architecture:image-annotation-tool:reviewer",
+      "target": "urn:architecture:image-annotation-tool:review-page",
+      "name": "types comment, Reject"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:8",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 8,
+      "source": "urn:architecture:image-annotation-tool:review-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "reviewTask(id, \"rejected\", comment)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:9",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 9,
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:review-task",
+      "name": "POST /api/tasks/{id}/reviews"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:10",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 10,
+      "source": "urn:architecture:image-annotation-tool:review-task",
+      "target": "urn:architecture:image-annotation-tool:apply-action",
+      "name": "apply_action(task, REJECT, reviewer)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:11",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 11,
+      "source": "urn:architecture:image-annotation-tool:apply-action",
+      "target": "urn:architecture:image-annotation-tool:next-status",
+      "name": "submitted + reject → rejected"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:12",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 12,
+      "source": "urn:architecture:image-annotation-tool:review-task",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "add Review(rejected, comment) · commit"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:13",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 13,
+      "source": "urn:architecture:image-annotation-tool:annotate-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "listMyRejectedTasks()"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:14",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 14,
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:list-tasks",
+      "name": "GET /api/tasks?status=rejected&mine=true"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:15",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 15,
+      "source": "urn:architecture:image-annotation-tool:list-tasks",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "tasks with last_review.comment",
+      "reply": true
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:16",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 16,
+      "source": "urn:architecture:image-annotation-tool:annotator",
+      "target": "urn:architecture:image-annotation-tool:annotate-page",
+      "name": "reads comment, Fix"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:17",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 17,
+      "source": "urn:architecture:image-annotation-tool:annotate-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "reopenTask(id)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:18",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 18,
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:reopen-task",
+      "name": "POST /api/tasks/{id}/reopen"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:19",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 19,
+      "source": "urn:architecture:image-annotation-tool:reopen-task",
+      "target": "urn:architecture:image-annotation-tool:apply-action",
+      "name": "apply_action(task, REOPEN, annotator)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:20",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 20,
+      "source": "urn:architecture:image-annotation-tool:apply-action",
+      "target": "urn:architecture:image-annotation-tool:next-status",
+      "name": "rejected + reopen → in_progress"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:21",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 21,
+      "source": "urn:architecture:image-annotation-tool:annotator",
+      "target": "urn:architecture:image-annotation-tool:canvas",
+      "name": "corrects the boxes"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:22",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 22,
+      "source": "urn:architecture:image-annotation-tool:annotate-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "saveAnnotations() then submitTask()"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:23",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 23,
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:submit-task",
+      "name": "POST /api/tasks/{id}/submit"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:24",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 24,
+      "source": "urn:architecture:image-annotation-tool:submit-task",
+      "target": "urn:architecture:image-annotation-tool:apply-action",
+      "name": "in_progress + submit → submitted"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:25",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 25,
+      "source": "urn:architecture:image-annotation-tool:reviewer",
+      "target": "urn:architecture:image-annotation-tool:review-page",
+      "name": "Approve"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:26",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 26,
+      "source": "urn:architecture:image-annotation-tool:review-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "reviewTask(id, \"approved\", \"\")"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:27",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 27,
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:review-task",
+      "name": "POST /api/tasks/{id}/reviews"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:28",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 28,
+      "source": "urn:architecture:image-annotation-tool:review-task",
+      "target": "urn:architecture:image-annotation-tool:apply-action",
+      "name": "apply_action(task, APPROVE, reviewer)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:29",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 29,
+      "source": "urn:architecture:image-annotation-tool:apply-action",
+      "target": "urn:architecture:image-annotation-tool:next-status",
+      "name": "submitted + approve → approved (final)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:review:30",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:review",
+      "position": 30,
+      "source": "urn:architecture:image-annotation-tool:review-task",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "add Review(approved) · commit"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:scenario:export",
+      "@type": "arch:Scenario",
+      "name": "Export approved tasks (COCO)",
+      "identifier": "export",
+      "description": "An admin requests an export. The API only queues it; the worker builds the file and the page polls until a download URL appears.",
+      "isPartOf": "urn:architecture:image-annotation-tool:model:image-annotation-tool",
+      "step": [
+        "urn:architecture:image-annotation-tool:step:export:1",
+        "urn:architecture:image-annotation-tool:step:export:2",
+        "urn:architecture:image-annotation-tool:step:export:3",
+        "urn:architecture:image-annotation-tool:step:export:4",
+        "urn:architecture:image-annotation-tool:step:export:5",
+        "urn:architecture:image-annotation-tool:step:export:6",
+        "urn:architecture:image-annotation-tool:step:export:7",
+        "urn:architecture:image-annotation-tool:step:export:8",
+        "urn:architecture:image-annotation-tool:step:export:9",
+        "urn:architecture:image-annotation-tool:step:export:10",
+        "urn:architecture:image-annotation-tool:step:export:11",
+        "urn:architecture:image-annotation-tool:step:export:12",
+        "urn:architecture:image-annotation-tool:step:export:13",
+        "urn:architecture:image-annotation-tool:step:export:14",
+        "urn:architecture:image-annotation-tool:step:export:15",
+        "urn:architecture:image-annotation-tool:step:export:16",
+        "urn:architecture:image-annotation-tool:step:export:17",
+        "urn:architecture:image-annotation-tool:step:export:18",
+        "urn:architecture:image-annotation-tool:step:export:19",
+        "urn:architecture:image-annotation-tool:step:export:20",
+        "urn:architecture:image-annotation-tool:step:export:21",
+        "urn:architecture:image-annotation-tool:step:export:22"
+      ]
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:1",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 1,
+      "source": "urn:architecture:image-annotation-tool:admin",
+      "target": "urn:architecture:image-annotation-tool:admin-page",
+      "name": "Export approved annotations"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:2",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 2,
+      "source": "urn:architecture:image-annotation-tool:admin-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "requestExport()"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:3",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 3,
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:request-export",
+      "name": "POST /api/exports"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:4",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 4,
+      "source": "urn:architecture:image-annotation-tool:request-export",
+      "target": "urn:architecture:image-annotation-tool:models",
+      "name": "add Export(status=queued) · commit"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:5",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 5,
+      "source": "urn:architecture:image-annotation-tool:request-export",
+      "target": "urn:architecture:image-annotation-tool:enqueue-export",
+      "name": "enqueue_export(export.id)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:6",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 6,
+      "source": "urn:architecture:image-annotation-tool:enqueue-export",
+      "target": "urn:architecture:image-annotation-tool:redis",
+      "name": "enqueue export_approved (600 s)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:7",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 7,
+      "source": "urn:architecture:image-annotation-tool:request-export",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "202 · status queued",
+      "reply": true
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:8",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 8,
+      "source": "urn:architecture:image-annotation-tool:redis",
+      "target": "urn:architecture:image-annotation-tool:wmain",
+      "name": "job from queue \"exports\""
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:9",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 9,
+      "source": "urn:architecture:image-annotation-tool:wmain",
+      "target": "urn:architecture:image-annotation-tool:export-approved",
+      "name": "export_approved(export_id)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:10",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 10,
+      "source": "urn:architecture:image-annotation-tool:export-approved",
+      "target": "urn:architecture:image-annotation-tool:postgres",
+      "name": "UPDATE exports SET status = 'running'"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:11",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 11,
+      "source": "urn:architecture:image-annotation-tool:export-approved",
+      "target": "urn:architecture:image-annotation-tool:approved-boxes",
+      "name": "execute APPROVED_BOXES"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:12",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 12,
+      "source": "urn:architecture:image-annotation-tool:export-approved",
+      "target": "urn:architecture:image-annotation-tool:postgres",
+      "name": "SELECT boxes WHERE status = 'approved'"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:13",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 13,
+      "source": "urn:architecture:image-annotation-tool:export-approved",
+      "target": "urn:architecture:image-annotation-tool:build-coco",
+      "name": "build_coco(rows)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:14",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 14,
+      "source": "urn:architecture:image-annotation-tool:export-approved",
+      "target": "urn:architecture:image-annotation-tool:minio",
+      "name": "PUT exports/export-<id>.coco.json"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:15",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 15,
+      "source": "urn:architecture:image-annotation-tool:export-approved",
+      "target": "urn:architecture:image-annotation-tool:postgres",
+      "name": "UPDATE exports: done, key, task_count"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:16",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 16,
+      "source": "urn:architecture:image-annotation-tool:admin-page",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "getExport(id) every 2 s"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:17",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 17,
+      "source": "urn:architecture:image-annotation-tool:client",
+      "target": "urn:architecture:image-annotation-tool:get-export",
+      "name": "GET /api/exports/{id}"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:18",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 18,
+      "source": "urn:architecture:image-annotation-tool:get-export",
+      "target": "urn:architecture:image-annotation-tool:export-to-dict",
+      "name": "export_to_dict(export)"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:19",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 19,
+      "source": "urn:architecture:image-annotation-tool:export-to-dict",
+      "target": "urn:architecture:image-annotation-tool:presigned-url",
+      "name": "sign exports/<storage_key>"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:20",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 20,
+      "source": "urn:architecture:image-annotation-tool:get-export",
+      "target": "urn:architecture:image-annotation-tool:client",
+      "name": "200 · done + download_url",
+      "reply": true
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:21",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 21,
+      "source": "urn:architecture:image-annotation-tool:admin",
+      "target": "urn:architecture:image-annotation-tool:admin-page",
+      "name": "clicks Download COCO JSON"
+    },
+    {
+      "@id": "urn:architecture:image-annotation-tool:step:export:22",
+      "@type": "arch:Step",
+      "scenario": "urn:architecture:image-annotation-tool:scenario:export",
+      "position": 22,
+      "source": "urn:architecture:image-annotation-tool:admin-page",
+      "target": "urn:architecture:image-annotation-tool:minio",
+      "name": "GET export file (presigned URL)"
+    }
+  ]
+}
